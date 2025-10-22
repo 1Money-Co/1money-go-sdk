@@ -94,7 +94,7 @@ version-tag VERSION_NUM:
 
 [doc("run `go fmt` and `goimports` to format code")]
 [group("👆 Code Quality")]
-fmt:
+fmt: hawkeye-fix
     @echo "🔧 Formatting code..."
     gofmt -w -s .
     {{ GOIMPORTS }} -w -local {{ MODULE_NAME }} .
