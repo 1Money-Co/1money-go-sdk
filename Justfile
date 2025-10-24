@@ -141,12 +141,28 @@ verify: check
 # Testing
 # ========================================================================================
 
-[doc("run all tests")]
+[doc("run unit tests only")]
 [group("🧪 Testing")]
 test:
-    @echo "🧪 Running tests..."
+    @echo "🧪 Running unit tests..."
     {{ GO }} test -v -race -cover ./...
-    @echo "✅ Tests passed!"
+    @echo "✅ Unit tests passed!"
+
+[doc("run integration tests (requires API credentials)")]
+[group("🧪 Testing")]
+test-integration:
+    @echo "🌐 Running integration tests..."
+    @echo "📝 Loading credentials from .env file..."
+    INTEGRATION_TEST=true {{ GO }} test -v -race ./scp/...
+    @echo "✅ Integration tests passed!"
+
+[doc("run all tests (unit + integration)")]
+[group("🧪 Testing")]
+test-all:
+    @echo "🎯 Running all tests..."
+    @just test
+    @just test-integration
+    @echo "✅ All tests passed!"
 
 [doc("run tests with coverage report")]
 [group("🧪 Testing")]
@@ -155,6 +171,14 @@ test-coverage:
     {{ GO }} test -v -race -coverprofile=coverage.out -covermode=atomic ./...
     {{ GO }} tool cover -html=coverage.out -o coverage.html
     @echo "✅ Coverage report generated: coverage.html"
+
+[doc("run integration tests with coverage")]
+[group("🧪 Testing")]
+test-integration-coverage:
+    @echo "📊 Running integration tests with coverage..."
+    INTEGRATION_TEST=true {{ GO }} test -v -race -coverprofile=coverage-integration.out -covermode=atomic ./scp/...
+    {{ GO }} tool cover -html=coverage-integration.out -o coverage-integration.html
+    @echo "✅ Integration coverage report generated: coverage-integration.html"
 
 [doc("run benchmarks")]
 [group("🧪 Testing")]
@@ -262,7 +286,7 @@ clean:
     @echo "🧹 Cleaning build artifacts..."
     {{ GO }} clean -cache -testcache -modcache
     rm -rf {{ BIN_DIR }}/
-    rm -rf coverage.out coverage.html
+    rm -rf coverage*.out coverage*.html
     rm -f {{ CLI_NAME }}
     rm -f security-report.json
     @echo "✅ Cleaned!"

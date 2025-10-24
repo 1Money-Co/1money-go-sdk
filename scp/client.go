@@ -214,6 +214,7 @@ import (
 	"github.com/1Money-Co/1money-go-sdk/internal/auth"
 	"github.com/1Money-Co/1money-go-sdk/internal/credentials"
 	"github.com/1Money-Co/1money-go-sdk/internal/transport"
+	"github.com/1Money-Co/1money-go-sdk/scp/service/customer"
 	"github.com/1Money-Co/1money-go-sdk/scp/service/echo"
 )
 
@@ -223,7 +224,8 @@ type Client struct {
 	transport *transport.Transport
 
 	// Service modules
-	Echo echo.Service
+	Echo     echo.Service
+	Customer customer.Service
 }
 
 // Config holds the client configuration.
@@ -356,11 +358,13 @@ func NewClient(cfg *Config, opts ...Option) (*Client, error) {
 
 	// Initialize all service modules with transport
 	echoSvc := echo.NewService(tr)
+	customerSvc := customer.NewService(tr)
 
 	// Create client with pre-initialized services
 	return &Client{
 		transport: tr,
 		Echo:      echoSvc,
+		Customer:  customerSvc,
 	}, nil
 }
 

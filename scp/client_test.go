@@ -102,7 +102,7 @@
  *           that You distribute, all copyright, patent, trademark, and
  *           attribution notices from the Source form of the Work,
  *           excluding those notices that do not pertain to any part of
- *           the Derivative Works; and
+ *           the Derivatives Works; and
  *
  *       (d) If the Work includes a "NOTICE" text file as part of its
  *           distribution, then any Derivative Works that You distribute must
@@ -202,98 +202,195 @@
  *    limitations under the License.
  */
 
-package credentials
+package scp
 
 import (
-	"errors"
-	"fmt"
-	"strings"
+	"context"
+	"os"
+	"testing"
+	"time"
+
+	"github.com/joho/godotenv"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/1Money-Co/1money-go-sdk/scp/service/customer"
+	"github.com/1Money-Co/1money-go-sdk/scp/service/echo"
 )
 
-// ChainProvider chains multiple providers and retrieves credentials from the first
-// provider that returns valid credentials.
-//
-// This is similar to AWS SDK's credential chain:
-// 1. Static credentials (command-line flags)
-// 2. Environment variables
-// 3. Config file (~/.onemoney/credentials)
-type ChainProvider struct {
-	providers []Provider
+// ClientTestSuite defines the integration test suite for the OneMoney client.
+type ClientTestSuite struct {
+	suite.Suite
+	client *Client
+	ctx    context.Context
 }
 
-// NewChainProvider creates a new chain provider with the given providers.
-// Providers are checked in order until one returns valid credentials.
-func NewChainProvider(providers ...Provider) *ChainProvider {
-	return &ChainProvider{
-		providers: providers,
+// SetupSuite runs once before all tests in the suite.
+func (s *ClientTestSuite) SetupSuite() {
+	// Load environment variables from .env file if present
+	_ = godotenv.Load()
+
+	// Create client configuration
+	cfg := &Config{
+		BaseURL:   os.Getenv("ONEMONEY_BASE_URL"),
+		AccessKey: os.Getenv("ONEMONEY_API_KEY"),
+		SecretKey: os.Getenv("ONEMONEY_SECRET_KEY"),
+		Timeout:   30 * time.Second,
 	}
+
+	// Create client
+	client, err := NewClient(cfg)
+	if err != nil {
+		s.T().Fatalf("failed to create client: %v", err)
+	}
+
+	s.client = client
+	s.ctx = context.Background()
 }
 
-// NewDefaultChainProvider creates a chain provider with the default provider chain:
-// 1. Static provider (if credentials are provided)
-// 2. Environment variable provider
-// 3. File provider (with optional profile)
-func NewDefaultChainProvider(accessKey, secretKey, baseURL, profile string) *ChainProvider {
-	var providers []Provider
-
-	// 1. Static credentials (highest priority)
-	if accessKey != "" && secretKey != "" {
-		providers = append(providers, NewStaticProvider(accessKey, secretKey, baseURL))
-	}
-
-	// 2. Environment variables
-	providers = append(providers, NewEnvProvider())
-
-	// 3. Config file (lowest priority)
-	providers = append(providers, NewFileProvider("", profile))
-
-	return &ChainProvider{
-		providers: providers,
-	}
+// SetupTest runs before each test.
+func (s *ClientTestSuite) SetupTest() {
+	// Reset state if needed
 }
 
-// Retrieve attempts to retrieve credentials from each provider in the chain.
-// Returns the first valid credentials found.
-// If no provider can supply valid credentials, returns a detailed error listing all attempts.
-func (p *ChainProvider) Retrieve() (*Credentials, error) {
-	var providerErrors []string
+// TearDownTest runs after each test.
+func (s *ClientTestSuite) TearDownTest() {
+	// Cleanup if needed
+}
 
-	for _, provider := range p.providers {
-		creds, err := provider.Retrieve()
-		if err == nil && creds != nil && creds.IsValid() {
-			// Successfully retrieved valid credentials
-			return creds, nil
-		}
+// TearDownSuite runs once after all tests.
+func (s *ClientTestSuite) TearDownSuite() {
+	// Final cleanup
+}
 
-		// Record the failure
-		if err != nil {
-			// Check if it's a ProviderError with details
-			var provErr *ProviderError
-			if errors.As(err, &provErr) {
-				providerErrors = append(providerErrors, fmt.Sprintf("  - %s", err.Error()))
+// TestClient_Initialization tests client initialization.
+func (s *ClientTestSuite) TestClient_Initialization() {
+	// Assert
+	require.NotNil(s.T(), s.client, "Client should not be nil")
+	require.NotNil(s.T(), s.client.Echo, "Echo service should be initialized")
+	require.NotNil(s.T(), s.client.Customer, "Customer service should be initialized")
+	assert.NotEmpty(s.T(), s.client.Version(), "Version should not be empty")
+}
+
+// TestEchoService_Get tests the Echo service GET endpoint.
+func (s *ClientTestSuite) TestEchoService_Get() {
+	// Act
+	resp, err := s.client.Echo.Get(s.ctx)
+
+	// Assert
+	require.NoError(s.T(), err, "Echo.Get should not return error")
+	require.NotNil(s.T(), resp, "Response should not be nil")
+	assert.NotEmpty(s.T(), resp.Message, "Message should not be empty")
+}
+
+// TestEchoService_Post tests the Echo service POST endpoint.
+func (s *ClientTestSuite) TestEchoService_Post() {
+	// Arrange
+	req := &echo.Request{
+		Message: "Hello from test",
+	}
+
+	// Act
+	resp, err := s.client.Echo.Post(s.ctx, req)
+
+	// Assert
+	require.NoError(s.T(), err, "Echo.Post should not return error")
+	require.NotNil(s.T(), resp, "Response should not be nil")
+	assert.Equal(s.T(), req.Message, resp.Message, "Message should match request")
+}
+
+// TestCustomerService_CreateCustomer tests customer creation.
+func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
+	// Arrange
+	req := &customer.CreateCustomerRequest{
+		Name:  "John Doe",
+		Email: "john.doe@example.com",
+	}
+
+	// Act
+	resp, err := s.client.Customer.CreateCustomer(s.ctx, req)
+
+	// Assert
+	require.NoError(s.T(), err, "CreateCustomer should not return error")
+	require.NotNil(s.T(), resp, "Response should not be nil")
+	assert.NotEmpty(s.T(), resp.ID, "Customer ID should not be empty")
+	assert.Equal(s.T(), req.Name, resp.Name, "Customer name should match")
+	assert.Equal(s.T(), req.Email, resp.Email, "Customer email should match")
+	assert.NotEmpty(s.T(), resp.CreatedAt, "CreatedAt should not be empty")
+}
+
+// TestCustomerService_CreateCustomer_InvalidInput tests validation.
+func (s *ClientTestSuite) TestCustomerService_CreateCustomer_InvalidInput() {
+	tests := []struct {
+		name    string
+		request *customer.CreateCustomerRequest
+		wantErr bool
+	}{
+		{
+			name: "empty name",
+			request: &customer.CreateCustomerRequest{
+				Name:  "",
+				Email: "test@example.com",
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty email",
+			request: &customer.CreateCustomerRequest{
+				Name:  "Test User",
+				Email: "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid email format",
+			request: &customer.CreateCustomerRequest{
+				Name:  "Test User",
+				Email: "invalid-email",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			// Act
+			resp, err := s.client.Customer.CreateCustomer(s.ctx, tt.request)
+			s.T().Logf("Response: %+v; error: %v", resp, err)
+
+			// Assert
+			if tt.wantErr {
+				assert.Error(s.T(), err, "Should return error for invalid input")
+				assert.Nil(s.T(), resp, "Response should be nil on error")
 			} else {
-				providerErrors = append(providerErrors, fmt.Sprintf("  - %s: %v", provider.Name(), err))
+				assert.NoError(s.T(), err, "Should not return error")
+				assert.NotNil(s.T(), resp, "Response should not be nil")
 			}
-		} else {
-			// Credentials were returned but invalid
-			providerErrors = append(providerErrors, fmt.Sprintf("  - %s: returned invalid credentials", provider.Name()))
-		}
-	}
-
-	// Build detailed error message
-	errorMsg := fmt.Errorf("%w: attempted to load credentials from %d provider(s):\n%s",
-		ErrNoCredentials,
-		len(p.providers),
-		strings.Join(providerErrors, "\n"))
-
-	return nil, &ProviderError{
-		Provider: p.Name(),
-		Err:      ErrNoCredentials,
-		Message:  errorMsg.Error(),
+		})
 	}
 }
 
-// Name returns the provider name.
-func (p *ChainProvider) Name() string {
-	return "ChainProvider"
+// TestClient_ContextTimeout tests timeout handling.
+func (s *ClientTestSuite) TestClient_ContextTimeout() {
+	// Arrange - create a context with very short timeout
+	ctx, cancel := context.WithTimeout(s.ctx, 1*time.Millisecond)
+	defer cancel()
+
+	req := &customer.CreateCustomerRequest{
+		Name:  "Timeout Test",
+		Email: "timeout@example.com",
+	}
+
+	// Act
+	resp, err := s.client.Customer.CreateCustomer(ctx, req)
+
+	// Assert
+	assert.Error(s.T(), err, "Should return timeout error")
+	assert.Nil(s.T(), resp, "Response should be nil on timeout")
+}
+
+// TestClientTestSuite runs the test suite.
+func TestClientTestSuite(t *testing.T) {
+	suite.Run(t, new(ClientTestSuite))
 }

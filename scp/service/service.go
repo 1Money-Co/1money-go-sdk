@@ -207,6 +207,8 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
 	"github.com/1Money-Co/1money-go-sdk/internal/transport"
 )
@@ -273,4 +275,105 @@ func (s *BaseService) Patch(ctx context.Context, path string, body []byte) (*tra
 // Do performs a custom request with full control.
 func (s *BaseService) Do(ctx context.Context, req *transport.Request) (*transport.Response, error) {
 	return s.transport.Do(ctx, req)
+}
+
+// GenericResponse represents the standard API response wrapper.
+// It encapsulates the response code, message, and typed data.
+type GenericResponse[T any] struct {
+	Code string `json:"code"`
+	Msg  string `json:"message"`
+	Data T      `json:"data"`
+}
+
+// GetJSON performs a GET request and unmarshals the response into GenericResponse[T].
+func GetJSON[T any](ctx context.Context, s *BaseService, path string) (*GenericResponse[T], error) {
+	resp, err := s.Get(ctx, path)
+	if err != nil {
+		return nil, err
+	}
+
+	var result GenericResponse[T]
+	if err := json.Unmarshal(resp.Body, &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return &result, nil
+}
+
+// PostJSON performs a POST request with automatic JSON marshaling/unmarshaling.
+// It marshals the request body and unmarshals the response into GenericResponse[Resp].
+func PostJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, req Req) (*GenericResponse[Resp], error) {
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	resp, err := s.Post(ctx, path, body)
+	if err != nil {
+		return nil, err
+	}
+
+	var result GenericResponse[Resp]
+	if err := json.Unmarshal(resp.Body, &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return &result, nil
+}
+
+// PutJSON performs a PUT request with automatic JSON marshaling/unmarshaling.
+// It marshals the request body and unmarshals the response into GenericResponse[Resp].
+func PutJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, req Req) (*GenericResponse[Resp], error) {
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	resp, err := s.Put(ctx, path, body)
+	if err != nil {
+		return nil, err
+	}
+
+	var result GenericResponse[Resp]
+	if err := json.Unmarshal(resp.Body, &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return &result, nil
+}
+
+// PatchJSON performs a PATCH request with automatic JSON marshaling/unmarshaling.
+// It marshals the request body and unmarshals the response into GenericResponse[Resp].
+func PatchJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, req Req) (*GenericResponse[Resp], error) {
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	resp, err := s.Patch(ctx, path, body)
+	if err != nil {
+		return nil, err
+	}
+
+	var result GenericResponse[Resp]
+	if err := json.Unmarshal(resp.Body, &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return &result, nil
+}
+
+// DeleteJSON performs a DELETE request and unmarshals the response into GenericResponse[T].
+func DeleteJSON[T any](ctx context.Context, s *BaseService, path string) (*GenericResponse[T], error) {
+	resp, err := s.Delete(ctx, path)
+	if err != nil {
+		return nil, err
+	}
+
+	var result GenericResponse[T]
+	if err := json.Unmarshal(resp.Body, &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return &result, nil
 }
