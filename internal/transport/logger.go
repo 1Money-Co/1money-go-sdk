@@ -208,14 +208,16 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 var (
-	logger     *zap.Logger
-	loggerOnce sync.Once
+	// loggerValue stores the logger instance using atomic.Value for thread-safe access
+	loggerValue atomic.Value
+	loggerOnce  sync.Once
 )
 
 // initLogger initializes the package-level logger.
@@ -233,9 +235,12 @@ func initLogger() {
 		logLevelEnv := os.Getenv("ONEMONEY_LOG_LEVEL")
 		stacktraceEnv := os.Getenv("ONEMONEY_ENABLE_STACKTRACE")
 
+		var l *zap.Logger
+
 		// Default to no-op logger (no logging)
 		if debugEnv == "" && logLevelEnv == "" {
-			logger = zap.NewNop()
+			l = zap.NewNop()
+			loggerValue.Store(l)
 			return
 		}
 
@@ -274,25 +279,40 @@ func initLogger() {
 		}
 
 		var err error
-		logger, err = config.Build()
+		l, err = config.Build()
 		if err != nil {
 			// Fallback to a no-op logger if initialization fails
-			logger = zap.NewNop()
+			l = zap.NewNop()
 		}
+
+		loggerValue.Store(l)
 	})
 }
 
 // getLogger returns the package-level logger instance.
-// It initializes the logger on first call.
+// It initializes the logger on first call using sync.Once.
+// This function is thread-safe and can be called concurrently.
 func getLogger() *zap.Logger {
 	initLogger()
-	return logger
+	l := loggerValue.Load()
+	if l == nil {
+		// This should never happen, but return a no-op logger as a safety fallback
+		return zap.NewNop()
+	}
+	return l.(*zap.Logger)
 }
 
 // SetLogger allows users to configure a custom logger for the transport package.
 // This is useful for integrating with application-wide logging configuration.
+//
+// This function is thread-safe and can be called concurrently with getLogger()
+// and other logging operations. The logger update is atomic and will be visible
+// to all goroutines immediately.
+//
+// Note: It's recommended to call SetLogger during application initialization,
+// before any transport operations begin, to ensure consistent logging behavior.
 func SetLogger(l *zap.Logger) {
 	if l != nil {
-		logger = l
+		loggerValue.Store(l)
 	}
 }

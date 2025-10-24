@@ -462,9 +462,18 @@ func PatchJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, 
 
 // DeleteJSON performs a DELETE request and unmarshals the response into GenericResponse[T].
 func DeleteJSON[T any](ctx context.Context, s *BaseService, path string) (*transport.GenericResponse[T], error) {
-	resp, err := s.Delete(ctx, path)
+	resp, err := s.Do(ctx, &transport.Request{
+		Method:  "DELETE",
+		Path:    path,
+		Headers: map[string]string{"Accept": "application/json"},
+	})
 	if err != nil {
 		return nil, err
+	}
+
+	if resp.StatusCode == 204 || len(resp.Body) == 0 {
+		var zero transport.GenericResponse[T]
+		return &zero, nil
 	}
 
 	var result transport.GenericResponse[T]

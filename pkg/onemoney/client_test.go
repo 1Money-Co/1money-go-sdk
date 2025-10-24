@@ -235,9 +235,14 @@ func (s *ClientTestSuite) SetupSuite() {
 	// Create client configuration
 	cfg := &Config{
 		BaseURL:   os.Getenv("ONEMONEY_BASE_URL"),
-		AccessKey: os.Getenv("ONEMONEY_API_KEY"),
+		AccessKey: os.Getenv("ONEMONEY_ACCESS_KEY"),
 		SecretKey: os.Getenv("ONEMONEY_SECRET_KEY"),
 		Timeout:   30 * time.Second,
+	}
+
+	// Skip tests if required environment variables are missing
+	if cfg.BaseURL == "" || cfg.AccessKey == "" || cfg.SecretKey == "" {
+		s.T().Skipf("missing required environment variables (ONEMONEY_BASE_URL, ONEMONEY_ACCESS_KEY, ONEMONEY_SECRET_KEY)")
 	}
 
 	// Create client
