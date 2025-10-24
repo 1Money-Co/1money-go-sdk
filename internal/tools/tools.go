@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-// Package onemoney provides version information for the OneMoney Go SDK.
-package onemoney
+//go:build tools
+// +build tools
 
-// Version is the semantic version of the SDK.
-// For development builds, this will be "dev".
-// For release builds, run: just version-update
-// This will update the version based on the latest git tag.
-const Version = "0.0.0-dev"
+// Package tools tracks tool dependencies for go generate commands.
+// This file ensures tool dependencies are included in go.mod.
+package tools
+
+// Import tool packages to track dependencies
+import (
+	_ "github.com/abice/go-enum"
+)
