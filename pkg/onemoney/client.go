@@ -202,83 +202,174 @@
  *    limitations under the License.
  */
 
-// Package echo provides a simple echo service for demonstrating SDK usage.
-package echo
+// Package scp provides the main SDK for OneMoney API.
+package onemoney
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
+	"net/http"
+	"time"
 
+	onemoney "github.com/1Money-Co/1money-go-sdk"
+	"github.com/1Money-Co/1money-go-sdk/internal/auth"
+	"github.com/1Money-Co/1money-go-sdk/internal/credentials"
 	"github.com/1Money-Co/1money-go-sdk/internal/transport"
-	svc "github.com/1Money-Co/1money-go-sdk/scp/service"
+	"github.com/1Money-Co/1money-go-sdk/pkg/service/customer"
+	"github.com/1Money-Co/1money-go-sdk/pkg/service/echo"
 )
 
-// Service defines the echo service interface.
-// All supported operations are visible in this interface.
-type Service interface {
-	// Get performs a GET echo request.
-	Get(ctx context.Context) (*Response, error)
+// Client is the main OneMoney API client.
+// It provides access to all service modules through a clean interface.
+type Client struct {
+	transport *transport.Transport
 
-	// Post performs a POST echo request with the given message.
-	Post(ctx context.Context, req *Request) (*Response, error)
+	// Service modules
+	Echo     echo.Service
+	Customer customer.Service
 }
 
-// Request represents an echo request.
-type Request struct {
-	Message string `json:"message"`
+// Config holds the client configuration.
+// Credentials can be provided in multiple ways (similar to AWS SDK):
+// 1. Directly via AccessKey/SecretKey fields (highest priority)
+// 2. Environment variables: ONEMONEY_ACCESS_KEY, ONEMONEY_SECRET_KEY
+// 3. Config file: ~/.onemoney/credentials (with optional Profile)
+type Config struct {
+	// BaseURL is the API base URL (e.g., "http://localhost:9000")
+	// Can also be set via ONEMONEY_BASE_URL environment variable or config file
+	BaseURL string
+
+	// AccessKey is the API access key (optional if using env vars or config file)
+	AccessKey string
+
+	// SecretKey is the API secret key (optional if using env vars or config file)
+	SecretKey string
+
+	// Profile specifies which profile to use from the credentials file
+	// (default: "default")
+	Profile string
+
+	// HTTPClient is an optional custom HTTP client
+	HTTPClient *http.Client
+
+	// Timeout is the request timeout (default: 30 seconds)
+	Timeout time.Duration
 }
 
-// Response represents an echo response.
-type Response struct {
-	Message   string `json:"message"`
-	Timestamp string `json:"timestamp,omitempty"`
-}
+// Option is a function that configures the client.
+type Option func(*Config)
 
-// serviceImpl is the concrete implementation of the echo service (private).
-type serviceImpl struct {
-	svc.BaseService
-}
-
-// NewService creates a new echo service instance with the given transport.
-// Returns interface type, not implementation.
-func NewService(t *transport.Transport) Service {
-	return &serviceImpl{
-		BaseService: svc.NewBaseService(t),
+// WithHTTPClient sets a custom HTTP client.
+func WithHTTPClient(client *http.Client) Option {
+	return func(c *Config) {
+		c.HTTPClient = client
 	}
 }
 
-// Get performs a GET echo request.
-func (s *serviceImpl) Get(ctx context.Context) (*Response, error) {
-	resp, err := s.BaseService.Get(ctx, "/openapi/echo")
+// WithTimeout sets the request timeout.
+func WithTimeout(timeout time.Duration) Option {
+	return func(c *Config) {
+		c.Timeout = timeout
+	}
+}
+
+// WithBaseURL sets the API base URL.
+func WithBaseURL(baseURL string) Option {
+	return func(c *Config) {
+		c.BaseURL = baseURL
+	}
+}
+
+// NewClient creates a new OneMoney API client with all services pre-initialized.
+//
+// Credentials are loaded using a chain of providers (similar to AWS SDK):
+// 1. Config fields (AccessKey/SecretKey) - if provided
+// 2. Environment variables (ONEMONEY_ACCESS_KEY, ONEMONEY_SECRET_KEY)
+// 3. Config file (~/.onemoney/credentials) - using the specified Profile
+//
+// Example with explicit credentials:
+//
+//	c := scp.NewClient(&scp.Config{
+//	    AccessKey: "your-access-key",
+//	    SecretKey: "your-secret-key",
+//	    BaseURL:   "http://localhost:9000",
+//	})
+//
+// Example with environment variables:
+//
+//	// Set: export ONEMONEY_ACCESS_KEY=xxx ONEMONEY_SECRET_KEY=yyy
+//	c := scp.NewClient(&scp.Config{})
+//
+// Example with config file:
+//
+//	// Create ~/.onemoney/credentials with [default] or [production] profile
+//	c := scp.NewClient(&scp.Config{Profile: "production"})
+//
+// Usage:
+//
+//	resp, err := c.Echo.Get(ctx)
+//	resp, err := c.Echo.Post(ctx, &echo.Request{Message: "hello"})
+func NewClient(cfg *Config, opts ...Option) (*Client, error) {
+	if cfg == nil {
+		cfg = &Config{}
+	}
+
+	// Apply options
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
+	// Load credentials using the provider chain
+	provider := credentials.NewDefaultChainProvider(
+		cfg.AccessKey,
+		cfg.SecretKey,
+		cfg.BaseURL,
+		cfg.Profile,
+	)
+
+	creds, err := provider.Retrieve()
 	if err != nil {
-		return nil, fmt.Errorf("failed to perform GET echo: %w", err)
+		return nil, fmt.Errorf("failed to load credentials: %w", err)
 	}
 
-	var result Response
-	if err := json.Unmarshal(resp.Body, &result); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	// Use BaseURL from credentials if not explicitly set
+	if cfg.BaseURL == "" && creds.BaseURL != "" {
+		cfg.BaseURL = creds.BaseURL
 	}
 
-	return &result, nil
+	// Set defaults
+	if cfg.BaseURL == "" {
+		cfg.BaseURL = "http://localhost:9000"
+	}
+	if cfg.Timeout == 0 {
+		cfg.Timeout = 30 * time.Second
+	}
+
+	// Create auth credentials and signer
+	authCreds := auth.NewCredentials(creds.AccessKey, creds.SecretKey)
+	signer := auth.NewSigner(authCreds)
+
+	// Create transport
+	transportCfg := &transport.Config{
+		BaseURL:    cfg.BaseURL,
+		HTTPClient: cfg.HTTPClient,
+		Timeout:    cfg.Timeout,
+	}
+	tr := transport.NewTransport(transportCfg, signer)
+
+	// Initialize all service modules with transport
+	echoSvc := echo.NewService(tr)
+	customerSvc := customer.NewService(tr)
+
+	// Create client with pre-initialized services
+	return &Client{
+		transport: tr,
+		Echo:      echoSvc,
+		Customer:  customerSvc,
+	}, nil
 }
 
-// Post performs a POST echo request with the given message.
-func (s *serviceImpl) Post(ctx context.Context, req *Request) (*Response, error) {
-	body, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	resp, err := s.BaseService.Post(ctx, "/openapi/echo", body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to perform POST echo: %w", err)
-	}
-
-	var result Response
-	if err := json.Unmarshal(resp.Body, &result); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
-	}
-
-	return &result, nil
+// Version returns the SDK version.
+// This can be used for logging, debugging, or telemetry purposes.
+func (c *Client) Version() string {
+	return onemoney.Version
 }

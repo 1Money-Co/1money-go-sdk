@@ -102,7 +102,7 @@
  *           that You distribute, all copyright, patent, trademark, and
  *           attribution notices from the Source form of the Work,
  *           excluding those notices that do not pertain to any part of
- *           the Derivative Works; and
+ *           the Derivatives Works; and
  *
  *       (d) If the Work includes a "NOTICE" text file as part of its
  *           distribution, then any Derivative Works that You distribute must
@@ -202,174 +202,130 @@
  *    limitations under the License.
  */
 
-// Package scp provides the main SDK for OneMoney API.
-package scp
+package onemoney
 
 import (
+	"context"
 	"fmt"
-	"net/http"
+	"os"
+	"testing"
 	"time"
 
-	onemoney "github.com/1Money-Co/1money-go-sdk"
-	"github.com/1Money-Co/1money-go-sdk/internal/auth"
-	"github.com/1Money-Co/1money-go-sdk/internal/credentials"
-	"github.com/1Money-Co/1money-go-sdk/internal/transport"
-	"github.com/1Money-Co/1money-go-sdk/scp/service/customer"
-	"github.com/1Money-Co/1money-go-sdk/scp/service/echo"
+	"github.com/brianvoe/gofakeit/v7"
+	"github.com/joho/godotenv"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/1Money-Co/1money-go-sdk/pkg/service/customer"
 )
 
-// Client is the main OneMoney API client.
-// It provides access to all service modules through a clean interface.
-type Client struct {
-	transport *transport.Transport
-
-	// Service modules
-	Echo     echo.Service
-	Customer customer.Service
+// ClientTestSuite defines the integration test suite for the OneMoney client.
+type ClientTestSuite struct {
+	suite.Suite
+	client *Client
+	ctx    context.Context
 }
 
-// Config holds the client configuration.
-// Credentials can be provided in multiple ways (similar to AWS SDK):
-// 1. Directly via AccessKey/SecretKey fields (highest priority)
-// 2. Environment variables: ONEMONEY_ACCESS_KEY, ONEMONEY_SECRET_KEY
-// 3. Config file: ~/.onemoney/credentials (with optional Profile)
-type Config struct {
-	// BaseURL is the API base URL (e.g., "http://localhost:9000")
-	// Can also be set via ONEMONEY_BASE_URL environment variable or config file
-	BaseURL string
+// SetupSuite runs once before all tests in the suite.
+func (s *ClientTestSuite) SetupSuite() {
+	// Load environment variables from .env file if present
+	_ = godotenv.Load()
 
-	// AccessKey is the API access key (optional if using env vars or config file)
-	AccessKey string
-
-	// SecretKey is the API secret key (optional if using env vars or config file)
-	SecretKey string
-
-	// Profile specifies which profile to use from the credentials file
-	// (default: "default")
-	Profile string
-
-	// HTTPClient is an optional custom HTTP client
-	HTTPClient *http.Client
-
-	// Timeout is the request timeout (default: 30 seconds)
-	Timeout time.Duration
-}
-
-// Option is a function that configures the client.
-type Option func(*Config)
-
-// WithHTTPClient sets a custom HTTP client.
-func WithHTTPClient(client *http.Client) Option {
-	return func(c *Config) {
-		c.HTTPClient = client
-	}
-}
-
-// WithTimeout sets the request timeout.
-func WithTimeout(timeout time.Duration) Option {
-	return func(c *Config) {
-		c.Timeout = timeout
-	}
-}
-
-// WithBaseURL sets the API base URL.
-func WithBaseURL(baseURL string) Option {
-	return func(c *Config) {
-		c.BaseURL = baseURL
-	}
-}
-
-// NewClient creates a new OneMoney API client with all services pre-initialized.
-//
-// Credentials are loaded using a chain of providers (similar to AWS SDK):
-// 1. Config fields (AccessKey/SecretKey) - if provided
-// 2. Environment variables (ONEMONEY_ACCESS_KEY, ONEMONEY_SECRET_KEY)
-// 3. Config file (~/.onemoney/credentials) - using the specified Profile
-//
-// Example with explicit credentials:
-//
-//	c := scp.NewClient(&scp.Config{
-//	    AccessKey: "your-access-key",
-//	    SecretKey: "your-secret-key",
-//	    BaseURL:   "http://localhost:9000",
-//	})
-//
-// Example with environment variables:
-//
-//	// Set: export ONEMONEY_ACCESS_KEY=xxx ONEMONEY_SECRET_KEY=yyy
-//	c := scp.NewClient(&scp.Config{})
-//
-// Example with config file:
-//
-//	// Create ~/.onemoney/credentials with [default] or [production] profile
-//	c := scp.NewClient(&scp.Config{Profile: "production"})
-//
-// Usage:
-//
-//	resp, err := c.Echo.Get(ctx)
-//	resp, err := c.Echo.Post(ctx, &echo.Request{Message: "hello"})
-func NewClient(cfg *Config, opts ...Option) (*Client, error) {
-	if cfg == nil {
-		cfg = &Config{}
+	// Create client configuration
+	cfg := &Config{
+		BaseURL:   os.Getenv("ONEMONEY_BASE_URL"),
+		AccessKey: os.Getenv("ONEMONEY_API_KEY"),
+		SecretKey: os.Getenv("ONEMONEY_SECRET_KEY"),
+		Timeout:   30 * time.Second,
 	}
 
-	// Apply options
-	for _, opt := range opts {
-		opt(cfg)
-	}
-
-	// Load credentials using the provider chain
-	provider := credentials.NewDefaultChainProvider(
-		cfg.AccessKey,
-		cfg.SecretKey,
-		cfg.BaseURL,
-		cfg.Profile,
-	)
-
-	creds, err := provider.Retrieve()
+	// Create client
+	client, err := NewClient(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load credentials: %w", err)
+		s.T().Fatalf("failed to create client: %v", err)
 	}
 
-	// Use BaseURL from credentials if not explicitly set
-	if cfg.BaseURL == "" && creds.BaseURL != "" {
-		cfg.BaseURL = creds.BaseURL
-	}
-
-	// Set defaults
-	if cfg.BaseURL == "" {
-		cfg.BaseURL = "http://localhost:9000"
-	}
-	if cfg.Timeout == 0 {
-		cfg.Timeout = 30 * time.Second
-	}
-
-	// Create auth credentials and signer
-	authCreds := auth.NewCredentials(creds.AccessKey, creds.SecretKey)
-	signer := auth.NewSigner(authCreds)
-
-	// Create transport
-	transportCfg := &transport.Config{
-		BaseURL:    cfg.BaseURL,
-		HTTPClient: cfg.HTTPClient,
-		Timeout:    cfg.Timeout,
-	}
-	tr := transport.NewTransport(transportCfg, signer)
-
-	// Initialize all service modules with transport
-	echoSvc := echo.NewService(tr)
-	customerSvc := customer.NewService(tr)
-
-	// Create client with pre-initialized services
-	return &Client{
-		transport: tr,
-		Echo:      echoSvc,
-		Customer:  customerSvc,
-	}, nil
+	s.client = client
+	s.ctx = context.Background()
 }
 
-// Version returns the SDK version.
-// This can be used for logging, debugging, or telemetry purposes.
-func (c *Client) Version() string {
-	return onemoney.Version
+// SetupTest runs before each test.
+func (s *ClientTestSuite) SetupTest() {
+	// Reset state if needed
+}
+
+// TearDownTest runs after each test.
+func (s *ClientTestSuite) TearDownTest() {
+	// Cleanup if needed
+}
+
+// TearDownSuite runs once after all tests.
+func (s *ClientTestSuite) TearDownSuite() {
+	// Final cleanup
+}
+
+// TestClient_Initialization tests client initialization.
+func (s *ClientTestSuite) TestClient_Initialization() {
+	// Assert
+	require.NotNil(s.T(), s.client, "Client should not be nil")
+	require.NotNil(s.T(), s.client.Echo, "Echo service should be initialized")
+	require.NotNil(s.T(), s.client.Customer, "Customer service should be initialized")
+	assert.NotEmpty(s.T(), s.client.Version(), "Version should not be empty")
+}
+
+// TestCustomerService_CreateCustomer tests customer creation.
+func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
+	// Arrange - Generate fake data using gofakeit
+	faker := gofakeit.New(0)
+
+	// Valid business industries from API specification
+	validIndustries := []string{
+		"bank_credit_unions_regulated_financial_institution",
+		"professional_services",
+		"technology_e_commerce_platforms",
+		"general_manufacturing",
+		"general_wholesalers",
+		"healthcare_and_social_assistance",
+		"educational_services",
+		"scientific_and_technical_services",
+		"non_bank_financial_institution",
+		"investment_fund",
+	}
+
+	req := &customer.CreateCustomerRequest{
+		BusinessLegalName:          faker.Company(),
+		BusinessDescription:        faker.JobDescriptor() + " " + faker.BS(),
+		BusinessRegistrationNumber: fmt.Sprintf("%s-%d", faker.LetterN(3), faker.Number(100000, 999999)),
+		Email:                      faker.Email(),
+		BusinessType:               faker.RandomString([]string{"corporation", "llc", "cooperative", "partnership"}),
+		BusinessIndustry:           faker.RandomString(validIndustries),
+		RegisteredAddress: &customer.Address{
+			StreetLine1: faker.Street(),
+			StreetLine2: fmt.Sprintf("Suite %d", faker.Number(100, 999)),
+			City:        faker.City(),
+			State:       faker.StateAbr(),
+			Country:     faker.Country(),
+			PostalCode:  faker.Zip(),
+			Subdivision: faker.State(),
+		},
+		DateOfIncorporation: faker.Date().Format("2006-01-02"),
+		SignedAgreementID:   faker.UUID(),
+	}
+
+	// Act
+	resp, err := s.client.Customer.CreateCustomer(s.ctx, req)
+
+	// Assert
+	require.NoError(s.T(), err, "CreateCustomer should not return error")
+	require.NotNil(s.T(), resp, "Response should not be nil")
+	assert.NotEmpty(s.T(), resp.ID, "Customer ID should not be empty")
+	assert.Equal(s.T(), req.BusinessLegalName, resp.Name, "Business name should match")
+	assert.Equal(s.T(), req.Email, resp.Email, "Customer email should match")
+	assert.NotEmpty(s.T(), resp.CreatedAt, "CreatedAt should not be empty")
+}
+
+// TestClientTestSuite runs the test suite.
+func TestClientTestSuite(t *testing.T) {
+	suite.Run(t, new(ClientTestSuite))
 }

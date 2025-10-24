@@ -202,8 +202,8 @@
  *    limitations under the License.
  */
 
-// Package service provides base functionality for all service modules.
-package service
+// Package echo provides a simple echo service for demonstrating SDK usage.
+package echo
 
 import (
 	"context"
@@ -211,88 +211,51 @@ import (
 	"fmt"
 
 	"github.com/1Money-Co/1money-go-sdk/internal/transport"
+	svc "github.com/1Money-Co/1money-go-sdk/pkg/service"
 )
 
-// BaseService provides common functionality for all service implementations.
-// Business modules should embed this struct to inherit transport capabilities.
-type BaseService struct {
-	transport *transport.Transport
+// Service defines the echo service interface.
+// All supported operations are visible in this interface.
+type Service interface {
+	// Get performs a GET echo request.
+	Get(ctx context.Context) (*Response, error)
+
+	// Post performs a POST echo request with the given message.
+	Post(ctx context.Context, req *Request) (*Response, error)
 }
 
-// NewBaseService creates a new base service with the given transport.
-func NewBaseService(t *transport.Transport) BaseService {
-	return BaseService{transport: t}
+// Request represents an echo request.
+type Request struct {
+	Message string `json:"message"`
 }
 
-// Get performs a GET request.
-func (s *BaseService) Get(ctx context.Context, path string) (*transport.Response, error) {
-	req := &transport.Request{
-		Method: "GET",
-		Path:   path,
+// Response represents an echo response.
+type Response struct {
+	Message   string `json:"message"`
+	Timestamp string `json:"timestamp,omitempty"`
+}
+
+// serviceImpl is the concrete implementation of the echo service (private).
+type serviceImpl struct {
+	svc.BaseService
+}
+
+// NewService creates a new echo service instance with the given transport.
+// Returns interface type, not implementation.
+func NewService(t *transport.Transport) Service {
+	return &serviceImpl{
+		BaseService: svc.NewBaseService(t),
 	}
-	return s.transport.Do(ctx, req)
 }
 
-// Post performs a POST request with the given body.
-func (s *BaseService) Post(ctx context.Context, path string, body []byte) (*transport.Response, error) {
-	req := &transport.Request{
-		Method: "POST",
-		Path:   path,
-		Body:   body,
-	}
-	return s.transport.Do(ctx, req)
-}
-
-// Put performs a PUT request with the given body.
-func (s *BaseService) Put(ctx context.Context, path string, body []byte) (*transport.Response, error) {
-	req := &transport.Request{
-		Method: "PUT",
-		Path:   path,
-		Body:   body,
-	}
-	return s.transport.Do(ctx, req)
-}
-
-// Delete performs a DELETE request.
-func (s *BaseService) Delete(ctx context.Context, path string) (*transport.Response, error) {
-	req := &transport.Request{
-		Method: "DELETE",
-		Path:   path,
-	}
-	return s.transport.Do(ctx, req)
-}
-
-// Patch performs a PATCH request with the given body.
-func (s *BaseService) Patch(ctx context.Context, path string, body []byte) (*transport.Response, error) {
-	req := &transport.Request{
-		Method: "PATCH",
-		Path:   path,
-		Body:   body,
-	}
-	return s.transport.Do(ctx, req)
-}
-
-// Do performs a custom request with full control.
-func (s *BaseService) Do(ctx context.Context, req *transport.Request) (*transport.Response, error) {
-	return s.transport.Do(ctx, req)
-}
-
-// GenericResponse represents the standard API response wrapper.
-// It encapsulates the response code, message, and typed data.
-type GenericResponse[T any] struct {
-	Code string `json:"code"`
-	Msg  string `json:"message"`
-	Data T      `json:"data"`
-}
-
-// GetJSON performs a GET request and unmarshals the response into GenericResponse[T].
-func GetJSON[T any](ctx context.Context, s *BaseService, path string) (*GenericResponse[T], error) {
-	resp, err := s.Get(ctx, path)
+// Get performs a GET echo request.
+func (s *serviceImpl) Get(ctx context.Context) (*Response, error) {
+	resp, err := s.BaseService.Get(ctx, "/openapi/echo")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to perform GET echo: %w", err)
 	}
 
-	var result GenericResponse[T]
+	var result Response
 	if err := json.Unmarshal(resp.Body, &result); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
@@ -300,77 +263,19 @@ func GetJSON[T any](ctx context.Context, s *BaseService, path string) (*GenericR
 	return &result, nil
 }
 
-// PostJSON performs a POST request with automatic JSON marshaling/unmarshaling.
-// It marshals the request body and unmarshals the response into GenericResponse[Resp].
-func PostJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, req Req) (*GenericResponse[Resp], error) {
+// Post performs a POST echo request with the given message.
+func (s *serviceImpl) Post(ctx context.Context, req *Request) (*Response, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	resp, err := s.Post(ctx, path, body)
+	resp, err := s.BaseService.Post(ctx, "/openapi/echo", body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to perform POST echo: %w", err)
 	}
 
-	var result GenericResponse[Resp]
-	if err := json.Unmarshal(resp.Body, &result); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
-	}
-
-	return &result, nil
-}
-
-// PutJSON performs a PUT request with automatic JSON marshaling/unmarshaling.
-// It marshals the request body and unmarshals the response into GenericResponse[Resp].
-func PutJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, req Req) (*GenericResponse[Resp], error) {
-	body, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	resp, err := s.Put(ctx, path, body)
-	if err != nil {
-		return nil, err
-	}
-
-	var result GenericResponse[Resp]
-	if err := json.Unmarshal(resp.Body, &result); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
-	}
-
-	return &result, nil
-}
-
-// PatchJSON performs a PATCH request with automatic JSON marshaling/unmarshaling.
-// It marshals the request body and unmarshals the response into GenericResponse[Resp].
-func PatchJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, req Req) (*GenericResponse[Resp], error) {
-	body, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	resp, err := s.Patch(ctx, path, body)
-	if err != nil {
-		return nil, err
-	}
-
-	var result GenericResponse[Resp]
-	if err := json.Unmarshal(resp.Body, &result); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
-	}
-
-	return &result, nil
-}
-
-// DeleteJSON performs a DELETE request and unmarshals the response into GenericResponse[T].
-func DeleteJSON[T any](ctx context.Context, s *BaseService, path string) (*GenericResponse[T], error) {
-	resp, err := s.Delete(ctx, path)
-	if err != nil {
-		return nil, err
-	}
-
-	var result GenericResponse[T]
+	var result Response
 	if err := json.Unmarshal(resp.Body, &result); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}

@@ -282,18 +282,18 @@ func (p *FileProvider) Retrieve() (*Credentials, error) {
 		}
 	}
 
-	// Read credentials
-	accessKey := section.Key("access_key").String()
-	secretKey := section.Key("secret_key").String()
-	baseURL := section.Key("base_url").String()
+	// Read credentials (using ONEMONEY_* format for consistency with env vars)
+	accessKey := section.Key("ONEMONEY_ACCESS_KEY").String()
+	secretKey := section.Key("ONEMONEY_SECRET_KEY").String()
+	baseURL := section.Key("ONEMONEY_BASE_URL").String()
 
 	// Check which required keys are missing
 	var missing []string
 	if accessKey == "" {
-		missing = append(missing, "access_key")
+		missing = append(missing, "ONEMONEY_ACCESS_KEY")
 	}
 	if secretKey == "" {
-		missing = append(missing, "secret_key")
+		missing = append(missing, "ONEMONEY_SECRET_KEY")
 	}
 
 	if len(missing) > 0 {

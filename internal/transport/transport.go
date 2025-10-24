@@ -208,6 +208,7 @@ package transport
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -216,6 +217,8 @@ import (
 
 	onemoney "github.com/1Money-Co/1money-go-sdk"
 	"github.com/1Money-Co/1money-go-sdk/internal/auth"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 // Request represents an HTTP request to be sent.
@@ -233,6 +236,14 @@ type Response struct {
 	Status     string
 	Body       []byte
 	Headers    http.Header
+}
+
+// GenericResponse represents the standard API response wrapper.
+// It encapsulates the response code, message, and typed data.
+type GenericResponse[T any] struct {
+	Code string `json:"code"`
+	Msg  string `json:"msg"`
+	Data T      `json:"data"`
 }
 
 // Transport handles HTTP communication with the API.
@@ -270,37 +281,100 @@ func NewTransport(cfg *Config, signer *auth.Signer) *Transport {
 
 // Do executes an HTTP request with automatic signature generation.
 func (t *Transport) Do(ctx context.Context, req *Request) (*Response, error) {
+	log := getLogger()
+
+	log.Debug("executing HTTP request",
+		zap.String("method", req.Method),
+		zap.String("path", req.Path),
+		zap.Int("body_size", len(req.Body)),
+	)
+
 	// Generate signature
 	sigResult, err := t.signer.SignRequest(req.Method, req.Path, req.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to sign request: %w", err)
+		log.Error("failed to sign request",
+			zap.String("method", req.Method),
+			zap.String("path", req.Path),
+			zap.Error(err),
+		)
+		return nil, errors.Wrap(err, "failed to sign request")
 	}
 
 	// Build HTTP request
 	httpReq, err := t.buildHTTPRequest(ctx, req, sigResult)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build HTTP request: %w", err)
+		log.Error("failed to build HTTP request",
+			zap.String("method", req.Method),
+			zap.String("path", req.Path),
+			zap.Error(err),
+		)
+		return nil, errors.Wrap(err, "failed to build HTTP request")
 	}
 
 	// Execute request
 	httpResp, err := t.httpClient.Do(httpReq)
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute HTTP request: %w", err)
+		log.Error("failed to execute HTTP request",
+			zap.String("method", req.Method),
+			zap.String("path", req.Path),
+			zap.String("url", httpReq.URL.String()),
+			zap.Error(err),
+		)
+		return nil, errors.Wrap(err, "failed to execute HTTP request")
 	}
 	defer httpResp.Body.Close()
+
+	log.Debug("received HTTP response",
+		zap.Int("status_code", httpResp.StatusCode),
+		zap.String("status", httpResp.Status),
+	)
 
 	// Read response body
 	respBody, err := io.ReadAll(httpResp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		log.Error("failed to read response body",
+			zap.Int("status_code", httpResp.StatusCode),
+			zap.Error(err),
+		)
+		return nil, errors.Wrap(err, "failed to read response body")
 	}
 
 	// Check for HTTP error status codes
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
+		// Try to parse response as JSON for better logging
+		logFields := []zap.Field{
+			zap.Int("status_code", httpResp.StatusCode),
+			zap.String("status", httpResp.Status),
+			zap.String("method", req.Method),
+			zap.String("path", req.Path),
+		}
+
+		// Attempt to parse and log response body as structured data
+		if len(respBody) > 0 && respBody[0] == '{' {
+			var responseData map[string]interface{}
+			if err := json.Unmarshal(respBody, &responseData); err == nil {
+				// Successfully parsed as JSON, log as structured object
+				logFields = append(logFields, zap.Any("response", responseData))
+			} else {
+				// Failed to parse, log as string
+				logFields = append(logFields, zap.String("response_body", string(respBody)))
+			}
+		} else {
+			// Not JSON, log as string
+			logFields = append(logFields, zap.String("response_body", string(respBody)))
+		}
+
+		log.Warn("received error status code", logFields...)
+
 		// Parse and return API error
 		apiErr := parseErrorResponse(httpResp.StatusCode, httpResp.Status, respBody)
 		return nil, apiErr
 	}
+
+	log.Debug("request completed successfully",
+		zap.Int("status_code", httpResp.StatusCode),
+		zap.Int("response_size", len(respBody)),
+	)
 
 	return &Response{
 		StatusCode: httpResp.StatusCode,

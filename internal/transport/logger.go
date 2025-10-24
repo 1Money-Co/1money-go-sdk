@@ -102,7 +102,7 @@
  *           that You distribute, all copyright, patent, trademark, and
  *           attribution notices from the Source form of the Work,
  *           excluding those notices that do not pertain to any part of
- *           the Derivatives Works; and
+ *           the Derivative Works; and
  *
  *       (d) If the Work includes a "NOTICE" text file as part of its
  *           distribution, then any Derivative Works that You distribute must
@@ -202,195 +202,97 @@
  *    limitations under the License.
  */
 
-package scp
+package transport
 
 import (
-	"context"
 	"os"
-	"testing"
-	"time"
+	"strings"
+	"sync"
 
-	"github.com/joho/godotenv"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-
-	"github.com/1Money-Co/1money-go-sdk/scp/service/customer"
-	"github.com/1Money-Co/1money-go-sdk/scp/service/echo"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-// ClientTestSuite defines the integration test suite for the OneMoney client.
-type ClientTestSuite struct {
-	suite.Suite
-	client *Client
-	ctx    context.Context
-}
+var (
+	logger     *zap.Logger
+	loggerOnce sync.Once
+)
 
-// SetupSuite runs once before all tests in the suite.
-func (s *ClientTestSuite) SetupSuite() {
-	// Load environment variables from .env file if present
-	_ = godotenv.Load()
+// initLogger initializes the package-level logger.
+// It uses sync.Once to ensure the logger is only created once.
+// Logger is only enabled when ONEMONEY_DEBUG or ONEMONEY_LOG_LEVEL environment variable is set.
+//
+// Environment variables:
+//   - ONEMONEY_DEBUG: Enable debug level logging
+//   - ONEMONEY_LOG_LEVEL: Set log level (debug, info, warn, error)
+//   - ONEMONEY_ENABLE_STACKTRACE: Enable stack trace output (default: disabled)
+func initLogger() {
+	loggerOnce.Do(func() {
+		// Check if logging is enabled via environment variables
+		debugEnv := os.Getenv("ONEMONEY_DEBUG")
+		logLevelEnv := os.Getenv("ONEMONEY_LOG_LEVEL")
+		stacktraceEnv := os.Getenv("ONEMONEY_ENABLE_STACKTRACE")
 
-	// Create client configuration
-	cfg := &Config{
-		BaseURL:   os.Getenv("ONEMONEY_BASE_URL"),
-		AccessKey: os.Getenv("ONEMONEY_API_KEY"),
-		SecretKey: os.Getenv("ONEMONEY_SECRET_KEY"),
-		Timeout:   30 * time.Second,
-	}
+		// Default to no-op logger (no logging)
+		if debugEnv == "" && logLevelEnv == "" {
+			logger = zap.NewNop()
+			return
+		}
 
-	// Create client
-	client, err := NewClient(cfg)
-	if err != nil {
-		s.T().Fatalf("failed to create client: %v", err)
-	}
-
-	s.client = client
-	s.ctx = context.Background()
-}
-
-// SetupTest runs before each test.
-func (s *ClientTestSuite) SetupTest() {
-	// Reset state if needed
-}
-
-// TearDownTest runs after each test.
-func (s *ClientTestSuite) TearDownTest() {
-	// Cleanup if needed
-}
-
-// TearDownSuite runs once after all tests.
-func (s *ClientTestSuite) TearDownSuite() {
-	// Final cleanup
-}
-
-// TestClient_Initialization tests client initialization.
-func (s *ClientTestSuite) TestClient_Initialization() {
-	// Assert
-	require.NotNil(s.T(), s.client, "Client should not be nil")
-	require.NotNil(s.T(), s.client.Echo, "Echo service should be initialized")
-	require.NotNil(s.T(), s.client.Customer, "Customer service should be initialized")
-	assert.NotEmpty(s.T(), s.client.Version(), "Version should not be empty")
-}
-
-// TestEchoService_Get tests the Echo service GET endpoint.
-func (s *ClientTestSuite) TestEchoService_Get() {
-	// Act
-	resp, err := s.client.Echo.Get(s.ctx)
-
-	// Assert
-	require.NoError(s.T(), err, "Echo.Get should not return error")
-	require.NotNil(s.T(), resp, "Response should not be nil")
-	assert.NotEmpty(s.T(), resp.Message, "Message should not be empty")
-}
-
-// TestEchoService_Post tests the Echo service POST endpoint.
-func (s *ClientTestSuite) TestEchoService_Post() {
-	// Arrange
-	req := &echo.Request{
-		Message: "Hello from test",
-	}
-
-	// Act
-	resp, err := s.client.Echo.Post(s.ctx, req)
-
-	// Assert
-	require.NoError(s.T(), err, "Echo.Post should not return error")
-	require.NotNil(s.T(), resp, "Response should not be nil")
-	assert.Equal(s.T(), req.Message, resp.Message, "Message should match request")
-}
-
-// TestCustomerService_CreateCustomer tests customer creation.
-func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
-	// Arrange
-	req := &customer.CreateCustomerRequest{
-		Name:  "John Doe",
-		Email: "john.doe@example.com",
-	}
-
-	// Act
-	resp, err := s.client.Customer.CreateCustomer(s.ctx, req)
-
-	// Assert
-	require.NoError(s.T(), err, "CreateCustomer should not return error")
-	require.NotNil(s.T(), resp, "Response should not be nil")
-	assert.NotEmpty(s.T(), resp.ID, "Customer ID should not be empty")
-	assert.Equal(s.T(), req.Name, resp.Name, "Customer name should match")
-	assert.Equal(s.T(), req.Email, resp.Email, "Customer email should match")
-	assert.NotEmpty(s.T(), resp.CreatedAt, "CreatedAt should not be empty")
-}
-
-// TestCustomerService_CreateCustomer_InvalidInput tests validation.
-func (s *ClientTestSuite) TestCustomerService_CreateCustomer_InvalidInput() {
-	tests := []struct {
-		name    string
-		request *customer.CreateCustomerRequest
-		wantErr bool
-	}{
-		{
-			name: "empty name",
-			request: &customer.CreateCustomerRequest{
-				Name:  "",
-				Email: "test@example.com",
-			},
-			wantErr: true,
-		},
-		{
-			name: "empty email",
-			request: &customer.CreateCustomerRequest{
-				Name:  "Test User",
-				Email: "",
-			},
-			wantErr: true,
-		},
-		{
-			name: "invalid email format",
-			request: &customer.CreateCustomerRequest{
-				Name:  "Test User",
-				Email: "invalid-email",
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		s.Run(tt.name, func() {
-			// Act
-			resp, err := s.client.Customer.CreateCustomer(s.ctx, tt.request)
-			s.T().Logf("Response: %+v; error: %v", resp, err)
-
-			// Assert
-			if tt.wantErr {
-				assert.Error(s.T(), err, "Should return error for invalid input")
-				assert.Nil(s.T(), resp, "Response should be nil on error")
-			} else {
-				assert.NoError(s.T(), err, "Should not return error")
-				assert.NotNil(s.T(), resp, "Response should not be nil")
+		// Determine log level
+		level := zapcore.InfoLevel
+		if logLevelEnv != "" {
+			switch strings.ToLower(logLevelEnv) {
+			case "debug":
+				level = zapcore.DebugLevel
+			case "info":
+				level = zapcore.InfoLevel
+			case "warn", "warning":
+				level = zapcore.WarnLevel
+			case "error":
+				level = zapcore.ErrorLevel
+			default:
+				level = zapcore.InfoLevel
 			}
-		})
-	}
+		} else if debugEnv != "" {
+			// If ONEMONEY_DEBUG is set, enable debug level
+			level = zapcore.DebugLevel
+		}
+
+		// Create development config for human-readable output
+		config := zap.NewDevelopmentConfig()
+		config.Level = zap.NewAtomicLevelAt(level)
+		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+
+		// Disable stack trace by default
+		// Only enable if ONEMONEY_ENABLE_STACKTRACE is explicitly set
+		if stacktraceEnv == "" || strings.ToLower(stacktraceEnv) == "false" || stacktraceEnv == "0" {
+			config.DisableStacktrace = true
+		} else {
+			config.DisableStacktrace = false
+		}
+
+		var err error
+		logger, err = config.Build()
+		if err != nil {
+			// Fallback to a no-op logger if initialization fails
+			logger = zap.NewNop()
+		}
+	})
 }
 
-// TestClient_ContextTimeout tests timeout handling.
-func (s *ClientTestSuite) TestClient_ContextTimeout() {
-	// Arrange - create a context with very short timeout
-	ctx, cancel := context.WithTimeout(s.ctx, 1*time.Millisecond)
-	defer cancel()
-
-	req := &customer.CreateCustomerRequest{
-		Name:  "Timeout Test",
-		Email: "timeout@example.com",
-	}
-
-	// Act
-	resp, err := s.client.Customer.CreateCustomer(ctx, req)
-
-	// Assert
-	assert.Error(s.T(), err, "Should return timeout error")
-	assert.Nil(s.T(), resp, "Response should be nil on timeout")
+// getLogger returns the package-level logger instance.
+// It initializes the logger on first call.
+func getLogger() *zap.Logger {
+	initLogger()
+	return logger
 }
 
-// TestClientTestSuite runs the test suite.
-func TestClientTestSuite(t *testing.T) {
-	suite.Run(t, new(ClientTestSuite))
+// SetLogger allows users to configure a custom logger for the transport package.
+// This is useful for integrating with application-wide logging configuration.
+func SetLogger(l *zap.Logger) {
+	if l != nil {
+		logger = l
+	}
 }

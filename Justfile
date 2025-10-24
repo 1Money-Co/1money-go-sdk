@@ -1,6 +1,9 @@
 # OneMoney Go SDK - Task Runner
 # Inspired by RustFS project style
 
+# Load .env file automatically
+set dotenv-load := true
+
 # ========================================================================================
 # Environment Variables
 # ========================================================================================
@@ -15,6 +18,7 @@ GOIMPORTS := env("GOIMPORTS", "goimports")
 BIN_DIR := env("BIN_DIR", "bin")
 CLI_NAME := env("CLI_NAME", "onemoney-cli")
 MODULE_NAME := env("MODULE_NAME", "github.com/1Money-Co/1money-go-sdk")
+DOCS_PORT := env("DOCS_PORT", "7070")
 
 # Version information (for build-time injection)
 # Try to get version from git tag first, fallback to version.go
@@ -320,7 +324,7 @@ init:
     {{ GO }} install golang.org/x/tools/cmd/goimports@latest
     {{ GO }} install github.com/securego/gosec/v2/cmd/gosec@latest
     {{ GO }} install golang.org/x/vuln/cmd/govulncheck@latest
-    {{ GO }} install golang.org/x/tools/cmd/goimports@latest
+    {{ GO }} install golang.org/x/pkgsite/cmd/pkgsite@latest
     cargo install hawkeye
     @echo "📥 Downloading dependencies..."
     {{ GO }} mod download
@@ -426,10 +430,25 @@ example:
     @echo "🚀 Running example..."
     {{ GO }} run main_new.go
 
-[doc("generate API documentation")]
-[group("🛠️ Tools")]
+[doc("start documentation server (uses pkgsite or godoc)")]
+[group("📚 Documentation")]
 docs:
-    @echo "📚 Generating documentation..."
-    godoc -http=:6060 &
-    @echo "✅ Documentation server started at http://localhost:6060"
-    @echo "Press Ctrl+C to stop"
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if command -v pkgsite >/dev/null 2>&1; then
+        echo "📚 Starting pkgsite documentation server..."
+        echo "🌐 Open http://localhost:{{ DOCS_PORT }}/{{ MODULE_NAME }} in your browser"
+        echo "🛑 Press Ctrl+C to stop the server"
+        pkgsite -http=:{{ DOCS_PORT }}
+    elif command -v godoc >/dev/null 2>&1; then
+        echo "📚 Starting godoc documentation server..."
+        echo "🌐 Open http://localhost:{{ DOCS_PORT }}/pkg/{{ MODULE_NAME }} in your browser"
+        echo "🛑 Press Ctrl+C to stop the server"
+        godoc -http=:{{ DOCS_PORT }}
+    else
+        echo "❌ Neither pkgsite nor godoc found."
+        echo "📦 Installing pkgsite..."
+        {{ GO }} install golang.org/x/pkgsite/cmd/pkgsite@latest
+        echo "✅ Installed! Starting server..."
+        pkgsite -http=:{{ DOCS_PORT }}
+    fi

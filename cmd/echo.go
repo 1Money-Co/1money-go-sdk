@@ -210,8 +210,8 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"github.com/1Money-Co/1money-go-sdk/scp"
-	"github.com/1Money-Co/1money-go-sdk/scp/service/echo"
+	"github.com/1Money-Co/1money-go-sdk/pkg/onemoney"
+	"github.com/1Money-Co/1money-go-sdk/pkg/service/echo"
 )
 
 // echoCommand returns the echo command with all its subcommands.
@@ -291,8 +291,8 @@ func echoPost(c *cli.Context) error {
 	return printJSON(resp)
 }
 
-func createClient() (*scp.Client, error) {
-	return scp.NewClient(&scp.Config{
+func createClient() (*onemoney.Client, error) {
+	return onemoney.NewClient(&onemoney.Config{
 		AccessKey: accessKey,
 		SecretKey: secretKey,
 		BaseURL:   baseURL,
