@@ -1,6 +1,9 @@
 # OneMoney Go SDK - Task Runner
 # Inspired by RustFS project style
 
+# Load .env file automatically
+set dotenv-load := true
+
 # ========================================================================================
 # Environment Variables
 # ========================================================================================
@@ -15,6 +18,7 @@ GOIMPORTS := env("GOIMPORTS", "goimports")
 BIN_DIR := env("BIN_DIR", "bin")
 CLI_NAME := env("CLI_NAME", "onemoney-cli")
 MODULE_NAME := env("MODULE_NAME", "github.com/1Money-Co/1money-go-sdk")
+DOCS_PORT := env("DOCS_PORT", "7070")
 
 # Version information (for build-time injection)
 # Try to get version from git tag first, fallback to version.go
@@ -141,12 +145,28 @@ verify: check
 # Testing
 # ========================================================================================
 
-[doc("run all tests")]
+[doc("run unit tests only")]
 [group("🧪 Testing")]
 test:
-    @echo "🧪 Running tests..."
+    @echo "🧪 Running unit tests..."
     {{ GO }} test -v -race -cover ./...
-    @echo "✅ Tests passed!"
+    @echo "✅ Unit tests passed!"
+
+[doc("run integration tests (requires API credentials)")]
+[group("🧪 Testing")]
+test-integration:
+    @echo "🌐 Running integration tests..."
+    @echo "📝 Loading credentials from .env file..."
+    INTEGRATION_TEST=true {{ GO }} test -v -race ./pkg/onemoney/...
+    @echo "✅ Integration tests passed!"
+
+[doc("run all tests (unit + integration)")]
+[group("🧪 Testing")]
+test-all:
+    @echo "🎯 Running all tests..."
+    @just test
+    @just test-integration
+    @echo "✅ All tests passed!"
 
 [doc("run tests with coverage report")]
 [group("🧪 Testing")]
@@ -155,6 +175,14 @@ test-coverage:
     {{ GO }} test -v -race -coverprofile=coverage.out -covermode=atomic ./...
     {{ GO }} tool cover -html=coverage.out -o coverage.html
     @echo "✅ Coverage report generated: coverage.html"
+
+[doc("run integration tests with coverage")]
+[group("🧪 Testing")]
+test-integration-coverage:
+    @echo "📊 Running integration tests with coverage..."
+    INTEGRATION_TEST=true {{ GO }} test -v -race -coverprofile=coverage-integration.out -covermode=atomic ./pkg/onemoney/...
+    {{ GO }} tool cover -html=coverage-integration.out -o coverage-integration.html
+    @echo "✅ Integration coverage report generated: coverage-integration.html"
 
 [doc("run benchmarks")]
 [group("🧪 Testing")]
@@ -262,7 +290,7 @@ clean:
     @echo "🧹 Cleaning build artifacts..."
     {{ GO }} clean -cache -testcache -modcache
     rm -rf {{ BIN_DIR }}/
-    rm -rf coverage.out coverage.html
+    rm -rf coverage*.out coverage*.html
     rm -f {{ CLI_NAME }}
     rm -f security-report.json
     @echo "✅ Cleaned!"
@@ -284,6 +312,27 @@ update:
     @echo "✅ Dependencies updated!"
 
 # ========================================================================================
+# Code Generation
+# ========================================================================================
+
+[doc("generate code (enums, mocks, etc.)")]
+[group("⚙️ Code Generation")]
+generate:
+    @echo "⚙️ Generating code..."
+    {{ GO }} generate ./...
+    @echo "✅ Code generation completed!"
+
+[doc("generate enums only")]
+[group("⚙️ Code Generation")]
+generate-enums:
+    @echo "⚙️ Generating enums..."
+    @{{ GO }} tool go-enum --version >/dev/null 2>&1 || (echo "❌ go-enum not found. Run 'just init' to install" && exit 1)
+    {{ GO }} generate ./pkg/service/customer/enums.go
+    @echo "✅ Enums generated!"
+
+alias gen := generate
+
+# ========================================================================================
 # Development
 # ========================================================================================
 
@@ -296,7 +345,8 @@ init:
     {{ GO }} install golang.org/x/tools/cmd/goimports@latest
     {{ GO }} install github.com/securego/gosec/v2/cmd/gosec@latest
     {{ GO }} install golang.org/x/vuln/cmd/govulncheck@latest
-    {{ GO }} install golang.org/x/tools/cmd/goimports@latest
+    {{ GO }} install golang.org/x/pkgsite/cmd/pkgsite@latest
+    {{ GO }} install github.com/abice/go-enum@latest
     cargo install hawkeye
     @echo "📥 Downloading dependencies..."
     {{ GO }} mod download
@@ -355,40 +405,16 @@ deps-outdated:
 # Tools & Utilities
 # ========================================================================================
 
-[doc("create a new service from template")]
+[doc("create a new service from template using go generate")]
 [group("🛠️ Tools")]
 new-service name:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    echo "🔧 Creating new service: {{name}}"
-    mkdir -p scp/services/{{name}}
-    printf '%s\n' \
-        '// Package {{name}} provides {{name}} service functionality.' \
-        'package {{name}}' \
-        '' \
-        'import (' \
-        '    "context"' \
-        '    "github.com/1Money-Co/1money-go-sdk/scp"' \
-        ')' \
-        '' \
-        '// Service defines the {{name}} service interface.' \
-        '// All supported operations are visible here.' \
-        'type Service interface {' \
-        '    // Add your methods here' \
-        '}' \
-        '' \
-        '// serviceImpl is the concrete implementation (private).' \
-        'type serviceImpl struct {' \
-        '    scp.BaseService' \
-        '}' \
-        '' \
-        '// NewService creates a new {{name}} service instance.' \
-        '// Returns interface type, not implementation.' \
-        'func NewService() Service {' \
-        '    return &serviceImpl{}' \
-        '}' \
-        > scp/services/{{name}}/{{name}}.go
-    echo "✅ Service template created at scp/services/{{name}}/{{name}}.go"
+    @echo "🔧 Creating new service: {{name}}"
+    {{ GO }} run cmd/tools/svcgen/main.go {{name}}
+    @echo ""
+    @echo "📝 Next steps:"
+    @echo "  1. Implement service methods in pkg/service/{{name}}/service.go"
+    @echo "  2. Add tests in pkg/service/{{name}}/service_test.go"
+    @echo "  3. Register service in pkg/onemoney/client.go"
 
 [doc("run CLI tool with parameters")]
 [group("🛠️ Tools")]
@@ -396,16 +422,31 @@ run-cli access-key secret-key:
     @echo "🚀 Running CLI tool..."
     {{ GO }} run cmd/main.go -access-key {{ access-key }} -secret-key {{ secret-key }} echo
 
-[doc("run example code")]
+[doc("Count lines of code")]
 [group("🛠️ Tools")]
-example:
-    @echo "🚀 Running example..."
-    {{ GO }} run main_new.go
+cloc:
+    @echo "🚀 Counting lines of code..."
+    tokei
 
-[doc("generate API documentation")]
-[group("🛠️ Tools")]
+[doc("start documentation server (uses pkgsite or godoc)")]
+[group("📚 Documentation")]
 docs:
-    @echo "📚 Generating documentation..."
-    godoc -http=:6060 &
-    @echo "✅ Documentation server started at http://localhost:6060"
-    @echo "Press Ctrl+C to stop"
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if command -v pkgsite >/dev/null 2>&1; then
+        echo "📚 Starting pkgsite documentation server..."
+        echo "🌐 Open http://localhost:{{ DOCS_PORT }}/{{ MODULE_NAME }} in your browser"
+        echo "🛑 Press Ctrl+C to stop the server"
+        pkgsite -http=:{{ DOCS_PORT }}
+    elif command -v godoc >/dev/null 2>&1; then
+        echo "📚 Starting godoc documentation server..."
+        echo "🌐 Open http://localhost:{{ DOCS_PORT }}/pkg/{{ MODULE_NAME }} in your browser"
+        echo "🛑 Press Ctrl+C to stop the server"
+        godoc -http=:{{ DOCS_PORT }}
+    else
+        echo "❌ Neither pkgsite nor godoc found."
+        echo "📦 Installing pkgsite..."
+        {{ GO }} install golang.org/x/pkgsite/cmd/pkgsite@latest
+        echo "✅ Installed! Starting server..."
+        pkgsite -http=:{{ DOCS_PORT }}
+    fi
