@@ -81,7 +81,7 @@
 //	}
 //	// Process customer list
 //	for _, customer := range listResp.Data {
-//	    fmt.Printf("Customer: %s (%s)\n", customer.Name, customer.Email)
+//	    fmt.Printf("Customer: %s (%s)\n", customer.BusinessLegalName, customer.Email)
 //	}
 //
 // # KYB Compliance
@@ -170,9 +170,11 @@ type IdentifyingInformation struct {
 	Type IDType `json:"type"`
 	// IssuingCountry is the country that issued the identification document.
 	IssuingCountry string `json:"issuing_country"`
-	// ImageFront is the base64-encoded front image of the ID document.
+	// ImageFront is the front image of the ID document in data-uri format (e.g., "data:image/jpeg;base64,/9j/4AAQ...").
+	// Supported formats: jpeg, jpg, png, heic, tif.
 	ImageFront string `json:"image_front"`
-	// ImageBack is the base64-encoded back image of the ID document (optional for some ID types).
+	// ImageBack is the back image of the ID document in data-uri format (optional for some ID types).
+	// Supported formats: jpeg, jpg, png, heic, tif.
 	ImageBack string `json:"image_back,omitempty"`
 }
 
@@ -218,19 +220,32 @@ type AssociatedPerson struct {
 	TaxType TaxIDType `json:"tax_type"`
 	// TaxIDNumber is the person's tax identification number.
 	TaxIDNumber string `json:"tax_id_number"`
-	// POA is the base64-encoded Power of Attorney document (optional).
+	// POA is the Power of Attorney document in data-uri format (optional).
+	// Format: "data:image/[type];base64,[base64_data]" where type is jpeg, jpg, png, heic, or tif.
 	POA string `json:"poa,omitempty"`
 }
 
 // Document represents a business document attachment for KYB verification.
 // Documents may include certificates of incorporation, operating agreements, or other legal documents.
 type Document struct {
-	// DocType is the type of document (e.g., "CERT_OF_INC" for Certificate of Incorporation).
+	// DocType is the type of document (e.g., "certificate_of_incorporation" for Certificate of Incorporation).
 	DocType DocumentType `json:"doc_type"`
-	// File is the base64-encoded document file.
+	// File is the document file in data-uri format.
+	// Format: "data:image/[type];base64,[base64_data]" where type is jpeg, jpg, png, heic, or tif.
 	File string `json:"file"`
 	// Description is an optional description of the document.
 	Description string `json:"description,omitempty"`
+}
+
+// ValidationError represents a validation error detail in response.
+// This is returned when the API processes a request but finds validation issues.
+type ValidationError struct {
+	// ErrorType is the type of error (e.g., "missing_field", "invalid_value").
+	ErrorType string `json:"error_type"`
+	// Location is the location of the error (field path or index).
+	Location string `json:"location"`
+	// Message is the detailed error message.
+	Message string `json:"message"`
 }
 
 // CreateCustomerRequest represents the request body for creating a business customer.
@@ -303,12 +318,21 @@ type CreateCustomerRequest struct {
 type CreateCustomerResponse struct {
 	// ID is the unique identifier assigned to the newly created customer.
 	ID string `json:"id"`
-	// Name is the business name (typically the BusinessLegalName from the request).
-	Name string `json:"name"`
 	// Email is the primary contact email for the customer.
 	Email string `json:"email"`
-	// CreatedAt is the timestamp when the customer account was created (ISO format).
+	// BusinessLegalName is the legal business name.
+	BusinessLegalName string `json:"business_legal_name"`
+	// BusinessType is the type of business entity.
+	BusinessType BusinessType `json:"business_type"`
+	// Status is the current customer account status.
+	Status CustomerStatus `json:"status"`
+	// CreatedAt is the timestamp when the customer account was created (ISO 8601 format).
 	CreatedAt string `json:"created_at"`
+	// UpdatedAt is the timestamp when the customer account was last updated (ISO 8601 format).
+	UpdatedAt string `json:"updated_at"`
+	// ValidationErrors contains validation errors if any were found during processing.
+	// This field is present when the request was processed but validation issues were found.
+	ValidationErrors []ValidationError `json:"validation_errors,omitempty"`
 }
 
 // ListCustomersRequest represents the request parameters for listing customers.
@@ -331,16 +355,18 @@ type ListCustomersRequest struct {
 type CustomerSummary struct {
 	// ID is the unique identifier of the customer.
 	ID string `json:"id"`
-	// Name is the business name.
-	Name string `json:"name"`
 	// Email is the primary contact email.
 	Email string `json:"email"`
+	// BusinessLegalName is the legal business name.
+	BusinessLegalName string `json:"business_legal_name"`
+	// BusinessType is the type of business entity.
+	BusinessType BusinessType `json:"business_type"`
 	// Status is the current account status.
-	Status string `json:"status"`
-	// CreatedAt is the timestamp when the customer was created (ISO format).
+	Status CustomerStatus `json:"status"`
+	// CreatedAt is the timestamp when the customer was created (ISO 8601 format).
 	CreatedAt string `json:"created_at"`
-	// UpdatedAt is the timestamp when the customer was last updated (ISO format).
-	UpdatedAt string `json:"updated_at,omitempty"`
+	// UpdatedAt is the timestamp when the customer was last updated (ISO 8601 format).
+	UpdatedAt string `json:"updated_at"`
 }
 
 // ListCustomersResponse represents the response data for listing customers.

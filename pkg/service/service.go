@@ -308,6 +308,8 @@ func DeleteJSON[T any](ctx context.Context, s *BaseService, path string) (*trans
 		return &zero, nil
 	}
 
+	fmt.Println(resp.Body)
+
 	var result transport.GenericResponse[T]
 	if err := json.Unmarshal(resp.Body, &result); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)

@@ -149,7 +149,7 @@ verify: check
 [group("🧪 Testing")]
 test:
     @echo "🧪 Running unit tests..."
-    {{ GO }} test -v -race -cover ./...
+    {{ GO }} test -count=1 -v -race -cover ./...
     @echo "✅ Unit tests passed!"
 
 [doc("run integration tests (requires API credentials)")]

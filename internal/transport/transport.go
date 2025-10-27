@@ -187,6 +187,7 @@ func (t *Transport) Do(ctx context.Context, req *Request) (*Response, error) {
 	log.Debug("request completed successfully",
 		zap.Int("status_code", httpResp.StatusCode),
 		zap.Int("response_size", len(respBody)),
+		zap.String("resp", string(respBody)),
 	)
 
 	return &Response{

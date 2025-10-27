@@ -71,7 +71,47 @@ type AccountPurpose string
 type MoneyRange string
 
 // DocumentType represents the type of business document.
-// ENUM(CERT_OF_INC, OPERATING_AGREEMENT, BYLAWS, PARTNERSHIP_AGREEMENT, BUSINESS_LICENSE, TAX_DOCUMENT, BANK_STATEMENT, UTILITY_BILL, OTHER)
+/* ENUM(
+certificate_of_incorporation
+certificate_of_formation_registration
+certificate_of_incorporation_and_articles_of_organization
+constitutional_or_formation_documents
+partnership_agreement
+articles_of_organization
+articles_of_incorporation
+operating_lp_agreement_if_applicable
+prospectus_offering_memorandum_or_private_placement_memorandum
+aml_attestation_letter
+fund_structure_chart
+articles_of_incorporation_by_laws_or_equivalent_document
+irs_determination_letter
+annual_reports
+business_license
+trade_name_registration_doing_business_as_dba_filing
+tax_filings
+list_manager_or_similar_persons_that_has_have_the_ability_to_legally_bind_the_dao_and_carry_out_the_daos_instructions
+voting_records
+trust_agreement
+certificate_of_good_standing
+ownership_and_formation_documents
+ownership_structure_llc
+ownership_structure_corp
+ownership_structure_part
+ownership_structure_dao
+ownership_structure_gov
+authorized_representative_list
+proof_of_source_of_funds
+proof_of_business_entity_address
+proof_of_business_entity_address_dao
+w9_form
+state_local_money_transmission_licensing_evidence_or_equivalent_regulatory_authorization_non_us
+aml_policy
+certificate_of_incumbency_or_register_of_directors
+tax_exemption_or_charity_registration_letter
+memorandum_of_association_or_article_of_association_or_equivalent_document
+supporting_documents
+)
+*/
 type DocumentType string
 
 // Gender represents the gender of an individual.
@@ -93,3 +133,13 @@ type SourceOfWealth string
 // HighRiskActivity represents potentially high-risk business activities.
 // ENUM(adult_entertainment, cannabis, cryptocurrency, gambling, money_services, precious_metals, weapons, none)
 type HighRiskActivity string
+
+// ImageFormat represents supported image formats for document uploads.
+// ENUM(jpeg, jpg, png, heic, tif)
+type ImageFormat string
+
+// CustomerStatus represents the current status of a customer account.
+// This status represents the overall state of the customer account,
+// including KYB verification progress and account operational status.
+// ENUM(active, awaiting_questionnaire, awaiting_ubo, incomplete, not_started, offboarded, paused, rejected, under_review)
+type CustomerStatus string

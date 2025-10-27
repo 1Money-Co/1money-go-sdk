@@ -18,6 +18,7 @@ package onemoney
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
@@ -37,6 +38,15 @@ type ClientTestSuite struct {
 	suite.Suite
 	client *Client
 	ctx    context.Context
+}
+
+// prettyJSON formats any value as indented JSON string.
+func prettyJSON(v interface{}) string {
+	b, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("%+v", v)
+	}
+	return string(b)
 }
 
 // SetupSuite runs once before all tests in the suite.
@@ -96,8 +106,6 @@ func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
 	// Arrange - Generate fake data using gofakeit
 	faker := gofakeit.New(0)
 
-	const FakeContentString = "base64encodedfile"
-
 	// Create at least one associated person
 	associatedPerson := customer.AssociatedPerson{
 		FirstName: faker.FirstName(),
@@ -123,21 +131,14 @@ func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
 			{
 				Type:           customer.IDTypeDriversLicense,
 				IssuingCountry: "USA",
-				ImageFront:     "base64encodedimagefront",
-				ImageBack:      "base64encodedimageback",
+				ImageFront:     customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				ImageBack:      customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
 			},
 		},
 		CountryOfTax: faker.Country(),
 		TaxType:      customer.TaxIDTypeEIN,
 		TaxIDNumber:  fmt.Sprintf("%d-%d", faker.Number(10, 99), faker.Number(1000000, 9999999)),
-		POA:          "base64encodedproofofaddress", // POA is required for directors and beneficial owners
-	}
-
-	// Create at least one document
-	doc := customer.Document{
-		DocType:     customer.DocumentTypeCERTOFINC,
-		File:        "base64encodedfile", // Placeholder for base64 encoded file
-		Description: "Certificate of Incorporation",
+		POA:          customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg), // POA is required for directors and beneficial owners
 	}
 
 	req := &customer.CreateCustomerRequest{
@@ -156,12 +157,53 @@ func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
 			PostalCode:  faker.Zip(),
 			Subdivision: faker.State(),
 		},
-		DateOfIncorporation:            faker.Date().Format("2006-01-02"),
-		SignedAgreementID:              faker.UUID(),
-		AssociatedPersons:              []customer.AssociatedPerson{associatedPerson},
-		SourceOfFunds:                  []customer.SourceOfFunds{customer.SourceOfFundsSalesOfGoodsAndServices},
-		SourceOfWealth:                 []customer.SourceOfWealth{customer.SourceOfWealthBusinessDividendsOrProfits},
-		Documents:                      []customer.Document{doc},
+		DateOfIncorporation: faker.Date().Format("2006-01-02"),
+		SignedAgreementID:   faker.UUID(),
+		AssociatedPersons:   []customer.AssociatedPerson{associatedPerson},
+		SourceOfFunds:       []customer.SourceOfFunds{customer.SourceOfFundsSalesOfGoodsAndServices},
+		SourceOfWealth:      []customer.SourceOfWealth{customer.SourceOfWealthBusinessDividendsOrProfits},
+		Documents: []customer.Document{
+			{
+				DocType:     customer.DocumentTypeCertificateOfIncorporation,
+				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				Description: "Certificate of Incorporation",
+			},
+			{
+				DocType:     customer.DocumentTypeCertificateOfGoodStanding,
+				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				Description: "Certificate of Good Standing",
+			},
+			{
+				DocType:     customer.DocumentTypeProofOfSourceOfFunds,
+				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				Description: "Proof of Source of Funds",
+			},
+			{
+				DocType:     customer.DocumentTypeAuthorizedRepresentativeList,
+				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				Description: "Authorized Representative List",
+			},
+			{
+				DocType:     customer.DocumentTypeOwnershipStructureCorp,
+				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				Description: "Ownership Structure - Corporation",
+			},
+			{
+				DocType:     customer.DocumentTypeProofOfBusinessEntityAddress,
+				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				Description: "Proof of Business Entity Address",
+			},
+			{
+				DocType:     customer.DocumentTypeCertificateOfIncumbencyOrRegisterOfDirectors,
+				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				Description: "Certificate of Incumbency",
+			},
+			{
+				DocType:     customer.DocumentTypeMemorandumOfAssociationOrArticleOfAssociationOrEquivalentDocument,
+				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				Description: "Memorandum of Association",
+			},
+		},
 		AccountPurpose:                 customer.AccountPurposeTreasuryManagement,
 		IsDAO:                          false,
 		PubliclyTraded:                 false,
@@ -180,9 +222,12 @@ func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
 	require.NoError(s.T(), err, "CreateCustomer should not return error")
 	require.NotNil(s.T(), resp, "Response should not be nil")
 	assert.NotEmpty(s.T(), resp.ID, "Customer ID should not be empty")
-	assert.Equal(s.T(), req.BusinessLegalName, resp.Name, "Business name should match")
+	assert.Equal(s.T(), req.BusinessLegalName, resp.BusinessLegalName, "Business name should match")
 	assert.Equal(s.T(), req.Email, resp.Email, "Customer email should match")
+	assert.Equal(s.T(), req.BusinessType, resp.BusinessType, "Business type should match")
+	assert.NotEmpty(s.T(), resp.Status, "Status should not be empty")
 	assert.NotEmpty(s.T(), resp.CreatedAt, "CreatedAt should not be empty")
+	assert.NotEmpty(s.T(), resp.UpdatedAt, "UpdatedAt should not be empty")
 }
 
 // TestCustomerService_ListCustomers tests listing customers.
@@ -202,16 +247,18 @@ func (s *ClientTestSuite) TestCustomerService_ListCustomers() {
 	assert.GreaterOrEqual(s.T(), resp.Total, 0, "Total should be non-negative")
 	assert.NotNil(s.T(), resp.Data, "Data should not be nil")
 
-	s.T().Logf("Total customers: %+v", resp)
+	s.T().Logf("List customers response:\n%s", prettyJSON(resp))
 
 	// If there are customers, verify structure
 	if len(resp.Data) > 0 {
 		firstCustomer := resp.Data[0]
 		assert.NotEmpty(s.T(), firstCustomer.ID, "Customer ID should not be empty")
-		assert.NotEmpty(s.T(), firstCustomer.Name, "Customer name should not be empty")
+		assert.NotEmpty(s.T(), firstCustomer.BusinessLegalName, "Customer business name should not be empty")
 		assert.NotEmpty(s.T(), firstCustomer.Email, "Customer email should not be empty")
+		assert.NotEmpty(s.T(), firstCustomer.BusinessType, "Customer business type should not be empty")
 		assert.NotEmpty(s.T(), firstCustomer.Status, "Customer status should not be empty")
 		assert.NotEmpty(s.T(), firstCustomer.CreatedAt, "CreatedAt should not be empty")
+		assert.NotEmpty(s.T(), firstCustomer.UpdatedAt, "UpdatedAt should not be empty")
 	}
 }
 
