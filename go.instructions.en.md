@@ -4,6 +4,7 @@
 - **ALL code, comments, documentation, variable names, function names, and any code-related text MUST be written in FULL ENGLISH**
 - **ALL responses to users MUST be in Chinese (中文)**
 - **Never mix Chinese in code, comments, or documentation**
+- **CRITICAL: After making any code changes, you MUST run `just check` to verify code quality, formatting, linting, and tests**
 
 This document is based on [Google Go Style Guide](https://google.github.io/styleguide/go/) to guide AI in writing Go code that meets Google standards.
 
@@ -997,6 +998,24 @@ results := make([]Result, 0, len(inputs))
 
 ## Toolchain
 
+### Code Quality Verification
+
+**MANDATORY: After any code changes, run the comprehensive check:**
+
+```bash
+# Run all checks: formatting, linting, testing, and building
+just check
+```
+
+This command will automatically execute:
+- Code formatting verification (`go fmt`)
+- Linting (`golangci-lint run`)
+- All tests with race detection
+- Build verification
+- Any other project-specific quality checks
+
+**You MUST run `just check` before considering your work complete.**
+
 ### Required Tools
 
 ```bash
@@ -1033,6 +1052,7 @@ godoc -http=:6060
 
 Before committing code, check:
 
+- [ ] **CRITICAL: Run `just check` to verify all code quality checks pass**
 - [ ] Run `go fmt` to format code
 - [ ] All exported names have doc comments
 - [ ] Use camel case naming, no underscores (except exceptions)
@@ -1050,6 +1070,8 @@ Before committing code, check:
 - [ ] Avoid generic package names (util, common)
 - [ ] All tests pass
 - [ ] Run race detector
+
+**Note: Running `just check` covers most of the formatting, linting, testing, and building checks above.**
 
 ## Language Requirements for Code
 
