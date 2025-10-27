@@ -66,6 +66,6 @@ func joinStringsHelper(strs []string, sep string) string {
 }
 
 // Name returns the provider name.
-func (p *StaticProvider) Name() string {
+func (*StaticProvider) Name() string {
 	return "StaticProvider"
 }

@@ -1,3 +1,6 @@
+//go:build tools
+// +build tools
+
 /*
  * Copyright 2025 1Money Co.
  *
@@ -13,9 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-//go:build tools
-// +build tools
 
 // Package tools tracks tool dependencies for go generate commands.
 // This file ensures tool dependencies are included in go.mod.

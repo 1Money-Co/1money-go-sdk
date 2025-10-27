@@ -26,8 +26,6 @@ import (
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/joho/godotenv"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/customer"
@@ -41,7 +39,7 @@ type ClientTestSuite struct {
 }
 
 // prettyJSON formats any value as indented JSON string.
-func prettyJSON(v interface{}) string {
+func prettyJSON(v any) string {
 	b, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return fmt.Sprintf("%+v", v)
@@ -78,27 +76,27 @@ func (s *ClientTestSuite) SetupSuite() {
 }
 
 // SetupTest runs before each test.
-func (s *ClientTestSuite) SetupTest() {
+func (*ClientTestSuite) SetupTest() {
 	// Reset state if needed
 }
 
 // TearDownTest runs after each test.
-func (s *ClientTestSuite) TearDownTest() {
+func (*ClientTestSuite) TearDownTest() {
 	// Cleanup if needed
 }
 
 // TearDownSuite runs once after all tests.
-func (s *ClientTestSuite) TearDownSuite() {
+func (*ClientTestSuite) TearDownSuite() {
 	// Final cleanup
 }
 
 // TestClient_Initialization tests client initialization.
 func (s *ClientTestSuite) TestClient_Initialization() {
 	// Assert
-	require.NotNil(s.T(), s.client, "Client should not be nil")
-	require.NotNil(s.T(), s.client.Echo, "Echo service should be initialized")
-	require.NotNil(s.T(), s.client.Customer, "Customer service should be initialized")
-	assert.NotEmpty(s.T(), s.client.Version(), "Version should not be empty")
+	s.Require().NotNil(s.client, "Client should not be nil")
+	s.Require().NotNil(s.client.Echo, "Echo service should be initialized")
+	s.Require().NotNil(s.client.Customer, "Customer service should be initialized")
+	s.NotEmpty(s.client.Version(), "Version should not be empty")
 }
 
 // TestCustomerService_CreateCustomer tests customer creation.
@@ -219,15 +217,15 @@ func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
 	resp, err := s.client.Customer.CreateCustomer(s.ctx, req)
 
 	// Assert
-	require.NoError(s.T(), err, "CreateCustomer should not return error")
-	require.NotNil(s.T(), resp, "Response should not be nil")
-	assert.NotEmpty(s.T(), resp.ID, "Customer ID should not be empty")
-	assert.Equal(s.T(), req.BusinessLegalName, resp.BusinessLegalName, "Business name should match")
-	assert.Equal(s.T(), req.Email, resp.Email, "Customer email should match")
-	assert.Equal(s.T(), req.BusinessType, resp.BusinessType, "Business type should match")
-	assert.NotEmpty(s.T(), resp.Status, "Status should not be empty")
-	assert.NotEmpty(s.T(), resp.CreatedAt, "CreatedAt should not be empty")
-	assert.NotEmpty(s.T(), resp.UpdatedAt, "UpdatedAt should not be empty")
+	s.Require().NoError(err, "CreateCustomer should not return error")
+	s.Require().NotNil(resp, "Response should not be nil")
+	s.NotEmpty(resp.ID, "Customer ID should not be empty")
+	s.Equal(req.BusinessLegalName, resp.BusinessLegalName, "Business name should match")
+	s.Equal(req.Email, resp.Email, "Customer email should match")
+	s.Equal(req.BusinessType, resp.BusinessType, "Business type should match")
+	s.NotEmpty(resp.Status, "Status should not be empty")
+	s.NotEmpty(resp.CreatedAt, "CreatedAt should not be empty")
+	s.NotEmpty(resp.UpdatedAt, "UpdatedAt should not be empty")
 }
 
 // TestCustomerService_ListCustomers tests listing customers.
@@ -242,23 +240,23 @@ func (s *ClientTestSuite) TestCustomerService_ListCustomers() {
 	resp, err := s.client.Customer.ListCustomers(s.ctx, req)
 
 	// Assert
-	require.NoError(s.T(), err, "ListCustomers should not return error")
-	require.NotNil(s.T(), resp, "Response should not be nil")
-	assert.GreaterOrEqual(s.T(), resp.Total, 0, "Total should be non-negative")
-	assert.NotNil(s.T(), resp.Data, "Data should not be nil")
+	s.Require().NoError(err, "ListCustomers should not return error")
+	s.Require().NotNil(resp, "Response should not be nil")
+	s.GreaterOrEqual(resp.Total, 0, "Total should be non-negative")
+	s.NotNil(resp.Data, "Data should not be nil")
 
 	s.T().Logf("List customers response:\n%s", prettyJSON(resp))
 
 	// If there are customers, verify structure
 	if len(resp.Data) > 0 {
 		firstCustomer := resp.Data[0]
-		assert.NotEmpty(s.T(), firstCustomer.ID, "Customer ID should not be empty")
-		assert.NotEmpty(s.T(), firstCustomer.BusinessLegalName, "Customer business name should not be empty")
-		assert.NotEmpty(s.T(), firstCustomer.Email, "Customer email should not be empty")
-		assert.NotEmpty(s.T(), firstCustomer.BusinessType, "Customer business type should not be empty")
-		assert.NotEmpty(s.T(), firstCustomer.Status, "Customer status should not be empty")
-		assert.NotEmpty(s.T(), firstCustomer.CreatedAt, "CreatedAt should not be empty")
-		assert.NotEmpty(s.T(), firstCustomer.UpdatedAt, "UpdatedAt should not be empty")
+		s.NotEmpty(firstCustomer.ID, "Customer ID should not be empty")
+		s.NotEmpty(firstCustomer.BusinessLegalName, "Customer business name should not be empty")
+		s.NotEmpty(firstCustomer.Email, "Customer email should not be empty")
+		s.NotEmpty(firstCustomer.BusinessType, "Customer business type should not be empty")
+		s.NotEmpty(firstCustomer.Status, "Customer status should not be empty")
+		s.NotEmpty(firstCustomer.CreatedAt, "CreatedAt should not be empty")
+		s.NotEmpty(firstCustomer.UpdatedAt, "UpdatedAt should not be empty")
 	}
 }
 

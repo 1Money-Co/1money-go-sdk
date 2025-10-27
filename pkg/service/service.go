@@ -210,7 +210,11 @@ func GetJSON[T any](ctx context.Context, s *BaseService, path string) (*transpor
 }
 
 // GetJSONWithParams performs a GET request with query parameters and unmarshals the response into GenericResponse[T].
-func GetJSONWithParams[T any](ctx context.Context, s *BaseService, path string, params map[string]string) (*transport.GenericResponse[T], error) {
+func GetJSONWithParams[T any](ctx context.Context,
+	s *BaseService,
+	path string,
+	params map[string]string,
+) (*transport.GenericResponse[T], error) {
 	req := &transport.Request{
 		Method:      "GET",
 		Path:        path,
@@ -229,15 +233,19 @@ func GetJSONWithParams[T any](ctx context.Context, s *BaseService, path string, 
 	return &result, nil
 }
 
-// PostJSON performs a POST request with automatic JSON marshaling/unmarshaling.
-// It marshals the request body and unmarshals the response into GenericResponse[Resp].
-func PostJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, req Req) (*transport.GenericResponse[Resp], error) {
+// sendJSONRequest is a helper function that handles JSON marshaling/unmarshaling for HTTP requests.
+// It marshals the request body, sends it using the provided method, and unmarshals the response.
+func sendJSONRequest[Req, Resp any](ctx context.Context,
+	path string,
+	req Req,
+	method func(context.Context, string, []byte) (*transport.Response, error),
+) (*transport.GenericResponse[Resp], error) {
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	resp, err := s.Post(ctx, path, body)
+	resp, err := method(ctx, path, body)
 	if err != nil {
 		return nil, err
 	}
@@ -248,48 +256,24 @@ func PostJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, r
 	}
 
 	return &result, nil
+}
+
+// PostJSON performs a POST request with automatic JSON marshaling/unmarshaling.
+// It marshals the request body and unmarshals the response into GenericResponse[Resp].
+func PostJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, req Req) (*transport.GenericResponse[Resp], error) {
+	return sendJSONRequest[Req, Resp](ctx, path, req, s.Post)
 }
 
 // PutJSON performs a PUT request with automatic JSON marshaling/unmarshaling.
 // It marshals the request body and unmarshals the response into GenericResponse[Resp].
 func PutJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, req Req) (*transport.GenericResponse[Resp], error) {
-	body, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	resp, err := s.Put(ctx, path, body)
-	if err != nil {
-		return nil, err
-	}
-
-	var result transport.GenericResponse[Resp]
-	if err := json.Unmarshal(resp.Body, &result); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
-	}
-
-	return &result, nil
+	return sendJSONRequest[Req, Resp](ctx, path, req, s.Put)
 }
 
 // PatchJSON performs a PATCH request with automatic JSON marshaling/unmarshaling.
 // It marshals the request body and unmarshals the response into GenericResponse[Resp].
 func PatchJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, req Req) (*transport.GenericResponse[Resp], error) {
-	body, err := json.Marshal(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	resp, err := s.Patch(ctx, path, body)
-	if err != nil {
-		return nil, err
-	}
-
-	var result transport.GenericResponse[Resp]
-	if err := json.Unmarshal(resp.Body, &result); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
-	}
-
-	return &result, nil
+	return sendJSONRequest[Req, Resp](ctx, path, req, s.Patch)
 }
 
 // DeleteJSON performs a DELETE request and unmarshals the response into GenericResponse[T].
@@ -308,7 +292,7 @@ func DeleteJSON[T any](ctx context.Context, s *BaseService, path string) (*trans
 		return &zero, nil
 	}
 
-	fmt.Println(resp.Body)
+	fmt.Println(string(resp.Body))
 
 	var result transport.GenericResponse[T]
 	if err := json.Unmarshal(resp.Body, &result); err != nil {

@@ -54,10 +54,8 @@ func NewDefaultChainProvider(accessKey, secretKey, baseURL, profile string) *Cha
 	}
 
 	// 2. Environment variables
-	providers = append(providers, NewEnvProvider())
-
 	// 3. Config file (lowest priority)
-	providers = append(providers, NewFileProvider("", profile))
+	providers = append(providers, NewEnvProvider(), NewFileProvider("", profile))
 
 	return &ChainProvider{
 		providers: providers,
@@ -106,6 +104,6 @@ func (p *ChainProvider) Retrieve() (*Credentials, error) {
 }
 
 // Name returns the provider name.
-func (p *ChainProvider) Name() string {
+func (*ChainProvider) Name() string {
 	return "ChainProvider"
 }

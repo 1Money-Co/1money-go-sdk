@@ -140,7 +140,7 @@ func TestEncodeFileToDataURI(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			filePath := filepath.Join(tempDir, tt.fileName)
-			if err := os.WriteFile(filePath, tt.fileData, 0644); err != nil {
+			if err := os.WriteFile(filePath, tt.fileData, 0600); err != nil {
 				t.Fatalf("failed to create test file: %v", err)
 			}
 

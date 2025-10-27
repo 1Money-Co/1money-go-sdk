@@ -34,11 +34,9 @@ func echoCommand() *cli.Command {
 		Usage:   "Test echo service",
 		Subcommands: []*cli.Command{
 			{
-				Name:  "get",
-				Usage: "Send a GET echo request",
-				Action: func(c *cli.Context) error {
-					return echoGet(c)
-				},
+				Name:   "get",
+				Usage:  "Send a GET echo request",
+				Action: echoGet,
 			},
 			{
 				Name:  "post",
@@ -51,18 +49,14 @@ func echoCommand() *cli.Command {
 						Value:   "Hello from CLI",
 					},
 				},
-				Action: func(c *cli.Context) error {
-					return echoPost(c)
-				},
+				Action: echoPost,
 			},
 		},
-		Action: func(c *cli.Context) error {
-			return echoGet(c)
-		},
+		Action: echoGet,
 	}
 }
 
-func echoGet(c *cli.Context) error {
+func echoGet(*cli.Context) error {
 	client, err := createClient()
 	if err != nil {
 		return fmt.Errorf("failed to create client: %w", err)

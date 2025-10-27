@@ -147,6 +147,6 @@ func joinStringsFile(strs []string, sep string) string {
 }
 
 // Name returns the provider name.
-func (p *FileProvider) Name() string {
+func (*FileProvider) Name() string {
 	return "FileProvider"
 }

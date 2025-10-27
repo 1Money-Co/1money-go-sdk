@@ -101,7 +101,7 @@ func main() {
 			versionCommand(),
 			echoCommand(),
 		},
-		Before: func(c *cli.Context) error {
+		Before: func(*cli.Context) error {
 			// Credentials validation is now handled by the credential provider chain
 			// No need to validate here as credentials can come from:
 			// 1. Command-line flags
@@ -118,7 +118,7 @@ func main() {
 }
 
 // printJSON prints the given value as JSON (shared utility function).
-func printJSON(v interface{}) error {
+func printJSON(v any) error {
 	var output []byte
 	var err error
 

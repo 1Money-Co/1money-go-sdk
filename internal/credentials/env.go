@@ -92,6 +92,6 @@ func joinStrings(strs []string, sep string) string {
 }
 
 // Name returns the provider name.
-func (p *EnvProvider) Name() string {
+func (*EnvProvider) Name() string {
 	return "EnvProvider"
 }

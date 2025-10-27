@@ -27,7 +27,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
 	onemoney "github.com/1Money-Co/1money-go-sdk"
@@ -110,7 +109,7 @@ func (t *Transport) Do(ctx context.Context, req *Request) (*Response, error) {
 			zap.String("path", req.Path),
 			zap.Error(err),
 		)
-		return nil, errors.Wrap(err, "failed to sign request")
+		return nil, fmt.Errorf("failed to sign request: %w", err)
 	}
 
 	// Build HTTP request
@@ -121,7 +120,7 @@ func (t *Transport) Do(ctx context.Context, req *Request) (*Response, error) {
 			zap.String("path", req.Path),
 			zap.Error(err),
 		)
-		return nil, errors.Wrap(err, "failed to build HTTP request")
+		return nil, fmt.Errorf("failed to build HTTP request: %w", err)
 	}
 
 	// Execute request
@@ -133,7 +132,7 @@ func (t *Transport) Do(ctx context.Context, req *Request) (*Response, error) {
 			zap.String("url", httpReq.URL.String()),
 			zap.Error(err),
 		)
-		return nil, errors.Wrap(err, "failed to execute HTTP request")
+		return nil, fmt.Errorf("failed to execute HTTP request: %w", err)
 	}
 	defer httpResp.Body.Close()
 
@@ -149,7 +148,7 @@ func (t *Transport) Do(ctx context.Context, req *Request) (*Response, error) {
 			zap.Int("status_code", httpResp.StatusCode),
 			zap.Error(err),
 		)
-		return nil, errors.Wrap(err, "failed to read response body")
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	// Check for HTTP error status codes
@@ -164,7 +163,7 @@ func (t *Transport) Do(ctx context.Context, req *Request) (*Response, error) {
 
 		// Attempt to parse and log response body as structured data
 		if len(respBody) > 0 && respBody[0] == '{' {
-			var responseData map[string]interface{}
+			var responseData map[string]any
 			if err := json.Unmarshal(respBody, &responseData); err == nil {
 				// Successfully parsed as JSON, log as structured object
 				logFields = append(logFields, zap.Any("response", responseData))
@@ -245,7 +244,7 @@ func (t *Transport) buildHTTPRequest(ctx context.Context, req *Request, sigResul
 }
 
 // buildQueryString constructs a query string from parameters.
-func (t *Transport) buildQueryString(params map[string]string) string {
+func (*Transport) buildQueryString(params map[string]string) string {
 	if len(params) == 0 {
 		return ""
 	}

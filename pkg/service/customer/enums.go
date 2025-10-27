@@ -123,15 +123,42 @@ type Gender string
 type TaxIDType string
 
 // SourceOfFunds represents the origin of funds for business operations.
-// ENUM(business_loans, grants, inter_company_funds, investment_proceeds, legal_settlement, owners_capital, pension_retirement, sale_of_assets, sales_of_goods_and_services, tax_refund, third_party_funds, treasury_reserves)
+// ENUM(
+// business_loans,
+// grants,
+// inter_company_funds,
+// investment_proceeds,
+// legal_settlement,
+// owners_capital,
+// pension_retirement,
+// sale_of_assets,
+// sales_of_goods_and_services,
+// tax_refund,
+// third_party_funds,
+// treasury_reserves)
 type SourceOfFunds string
 
 // SourceOfWealth represents the origin of the business's accumulated wealth.
-// ENUM(business_dividends_or_profits, sale_of_business, inheritance, real_estate_investments, investment_returns, accumulated_revenue, other)
+// ENUM(
+// business_dividends_or_profits,
+// sale_of_business,
+// inheritance,
+// real_estate_investments,
+// investment_returns,
+// accumulated_revenue,
+// other)
 type SourceOfWealth string
 
 // HighRiskActivity represents potentially high-risk business activities.
-// ENUM(adult_entertainment, cannabis, cryptocurrency, gambling, money_services, precious_metals, weapons, none)
+// ENUM(
+// adult_entertainment,
+// cannabis,
+// cryptocurrency,
+// gambling,
+// money_services,
+// precious_metals,
+// weapons,
+// none)
 type HighRiskActivity string
 
 // ImageFormat represents supported image formats for document uploads.
@@ -141,5 +168,14 @@ type ImageFormat string
 // CustomerStatus represents the current status of a customer account.
 // This status represents the overall state of the customer account,
 // including KYB verification progress and account operational status.
-// ENUM(active, awaiting_questionnaire, awaiting_ubo, incomplete, not_started, offboarded, paused, rejected, under_review)
+// ENUM(
+// active,
+// awaiting_questionnaire,
+// awaiting_ubo,
+// incomplete,
+// not_started,
+// offboarded,
+// paused,
+// rejected,
+// under_review)
 type CustomerStatus string

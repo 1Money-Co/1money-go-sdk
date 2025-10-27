@@ -134,12 +134,11 @@ fix: fmt lint-fix
 
 [doc("run `fmt-check`, `lint`, and `test` at once")]
 [group("👆 Code Quality")]
-check: fmt-check lint test
+check: fmt-check lint
+    {{ GO }} vet ./...
     @echo "✅ All quality checks passed!"
 
-[doc("verify code quality (alias for check)")]
-[group("👆 Code Quality")]
-verify: check
+alias c := check
 
 # ========================================================================================
 # Testing

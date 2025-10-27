@@ -19,11 +19,11 @@ package transport
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -216,9 +216,9 @@ func getDefaultErrorMessage(statusCode int) string {
 	case http.StatusGatewayTimeout:
 		return "gateway timeout, the server took too long to respond"
 	default:
-		if statusCode >= 400 && statusCode < 500 {
+		if statusCode >= http.StatusBadRequest && statusCode < http.StatusInternalServerError {
 			return "client error occurred, please check your request parameters"
-		} else if statusCode >= 500 {
+		} else if statusCode >= http.StatusInternalServerError {
 			return "server error occurred, please try again later"
 		}
 		return "an unexpected error occurred"

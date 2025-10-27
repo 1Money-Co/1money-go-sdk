@@ -84,7 +84,7 @@ func initLogger() {
 
 		// Disable stack trace by default
 		// Only enable if ONEMONEY_ENABLE_STACKTRACE is explicitly set
-		if stacktraceEnv == "" || strings.ToLower(stacktraceEnv) == "false" || stacktraceEnv == "0" {
+		if stacktraceEnv == "" || strings.EqualFold(stacktraceEnv, "false") || stacktraceEnv == "0" {
 			config.DisableStacktrace = true
 		} else {
 			config.DisableStacktrace = false
