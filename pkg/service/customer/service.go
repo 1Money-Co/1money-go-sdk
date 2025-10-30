@@ -136,12 +136,41 @@ import (
 	svc "github.com/1Money-Co/1money-go-sdk/pkg/service"
 )
 
+const ROUTE_PREFIX = "/openapi/v1/customers"
+
 // Service defines the customer service interface for managing customer accounts.
 type Service interface {
 	// CreateCustomer creates a new business customer account with KYB information.
 	CreateCustomer(ctx context.Context, req *CreateCustomerRequest) (*CreateCustomerResponse, error)
 	// ListCustomers retrieves a list of customer accounts with pagination support.
 	ListCustomers(ctx context.Context, req *ListCustomersRequest) (*ListCustomersResponse, error)
+	// GetCustomer retrieves a specific customer by ID.
+	GetCustomer(ctx context.Context, customerID string) (*CustomerResponse, error)
+	// UpdateCustomer updates an existing business customer account with partial KYB information.
+	UpdateCustomer(ctx context.Context, customerID string, req *UpdateCustomerRequest) (*UpdateCustomerResponse, error)
+	// CreateAssociatedPerson creates a new associated person (beneficial owner, controller, signer) for a customer.
+	CreateAssociatedPerson(ctx context.Context, customerID string, req *CreateAssociatedPersonRequest) (*AssociatedPersonResponse, error)
+	// ListAssociatedPersons retrieves all associated persons for a specific customer.
+	ListAssociatedPersons(ctx context.Context, customerID string) (*ListAssociatedPersonsResponse, error)
+	// GetAssociatedPerson retrieves a specific associated person by ID.
+	GetAssociatedPerson(
+		ctx context.Context,
+		customerID string,
+		associatedPersonID string,
+	) (*AssociatedPersonResponse, error)
+	// UpdateAssociatedPerson updates an existing associated person with partial data.
+	UpdateAssociatedPerson(
+		ctx context.Context,
+		customerID string,
+		associatedPersonID string,
+		req *UpdateAssociatedPersonRequest,
+	) (*AssociatedPersonResponse, error)
+	// DeleteAssociatedPerson soft-deletes a specific associated person.
+	DeleteAssociatedPerson(
+		ctx context.Context,
+		customerID string,
+		associatedPersonID string,
+	) error
 }
 
 // Address represents a physical or registered address for business or personal use.
@@ -313,10 +342,10 @@ type CreateCustomerRequest struct {
 	TaxType TaxIDType `json:"tax_type"`
 }
 
-// CreateCustomerResponse represents the response data for customer creation.
-// This is returned after successfully creating a new business customer account.
-type CreateCustomerResponse struct {
-	// ID is the unique identifier assigned to the newly created customer.
+// CustomerResponse represents the standard customer response data.
+// This structure is used for customer creation, retrieval, and update operations.
+type CustomerResponse struct {
+	// ID is the unique identifier of the customer.
 	ID string `json:"id"`
 	// Email is the primary contact email for the customer.
 	Email string `json:"email"`
@@ -334,6 +363,78 @@ type CreateCustomerResponse struct {
 	// This field is present when the request was processed but validation issues were found.
 	ValidationErrors []ValidationError `json:"validation_errors,omitempty"`
 }
+
+// CreateCustomerResponse is an alias for CustomerResponse.
+// This type is used for clarity in the CreateCustomer method signature.
+type CreateCustomerResponse = CustomerResponse
+
+// UpdateCustomerRequest represents the request body for updating an existing business customer.
+// This request supports partial updates - only the fields that are provided will be updated.
+// All fields are optional (using pointers for primitive types and omitempty for complex types).
+//
+// The structure follows the generic update pattern where each field can be independently updated
+// without affecting other fields. Fields set to nil or omitted will not modify the existing values.
+type UpdateCustomerRequest struct {
+	// BusinessLegalName is the official registered legal name of the business entity.
+	BusinessLegalName *string `json:"business_legal_name,omitempty"`
+	// BusinessDescription provides a detailed description of the business operations and activities.
+	BusinessDescription *string `json:"business_description,omitempty"`
+	// BusinessRegistrationNumber is the official business registration or incorporation number.
+	BusinessRegistrationNumber *string `json:"business_registration_number,omitempty"`
+	// Email is the primary contact email address for the business.
+	Email *string `json:"email,omitempty"`
+	// BusinessType specifies the legal structure (e.g., "cooperative", "corporation", "llc").
+	BusinessType *BusinessType `json:"business_type,omitempty"`
+	// BusinessIndustry specifies the industry classification.
+	BusinessIndustry *BusinessIndustry `json:"business_industry,omitempty"`
+	// RegisteredAddress is the official registered address of the business.
+	RegisteredAddress *Address `json:"registered_address,omitempty"`
+	// DateOfIncorporation is the date when the business was officially incorporated (ISO format).
+	DateOfIncorporation *string `json:"date_of_incorporation,omitempty"`
+	// PhysicalAddress is the actual operating address if different from registered address.
+	PhysicalAddress *Address `json:"physical_address,omitempty"`
+	// SignedAgreementID is the identifier of the signed service agreement.
+	SignedAgreementID *string `json:"signed_agreement_id,omitempty"`
+	// IsDAO indicates whether this is a Decentralized Autonomous Organization.
+	IsDAO *bool `json:"is_dao,omitempty"`
+	// AssociatedPersons is a list of all persons associated with the business (owners, directors, signers).
+	// This can be used to add new associated persons to the customer account.
+	AssociatedPersons []AssociatedPerson `json:"associated_persons,omitempty"`
+	// AccountPurpose describes the primary purpose of the account.
+	AccountPurpose *AccountPurpose `json:"account_purpose,omitempty"`
+	// SourceOfFunds is a list of sources for the funds being used.
+	SourceOfFunds []SourceOfFunds `json:"source_of_funds,omitempty"`
+	// SourceOfWealth is a list of sources for the business's wealth.
+	SourceOfWealth []SourceOfWealth `json:"source_of_wealth,omitempty"`
+	// Documents is a list of supporting documents for KYB verification.
+	Documents []Document `json:"documents,omitempty"`
+	// PrimaryWebsite is the business's primary website URL.
+	PrimaryWebsite *string `json:"primary_website,omitempty"`
+	// PubliclyTraded indicates whether the business is publicly traded on a stock exchange.
+	PubliclyTraded *bool `json:"publicly_traded,omitempty"`
+	// EstimatedAnnualRevenueUSD is the estimated annual revenue range.
+	EstimatedAnnualRevenueUSD *MoneyRange `json:"estimated_annual_revenue_usd,omitempty"`
+	// ExpectedMonthlyFiatDeposits is the expected monthly fiat deposit range.
+	ExpectedMonthlyFiatDeposits *MoneyRange `json:"expected_monthly_fiat_deposits,omitempty"`
+	// ExpectedMonthlyFiatWithdrawals is the expected monthly fiat withdrawal range.
+	ExpectedMonthlyFiatWithdrawals *MoneyRange `json:"expected_monthly_fiat_withdrawals,omitempty"`
+	// AccountPurposeOther provides additional details if AccountPurpose is "other".
+	AccountPurposeOther *string `json:"account_purpose_other,omitempty"`
+	// HighRiskActivities is a list of high-risk business activities.
+	HighRiskActivities []HighRiskActivity `json:"high_risk_activities,omitempty"`
+	// HighRiskActivitiesExplanation provides additional context for high-risk activities.
+	HighRiskActivitiesExplanation *string `json:"high_risk_activities_explanation,omitempty"`
+	// ConductsMoneyServices indicates whether the business conducts money service business activities.
+	ConductsMoneyServices *bool `json:"conducts_money_services,omitempty"`
+	// TaxID is the business tax identification number.
+	TaxID *string `json:"tax_id,omitempty"`
+	// TaxType is the type of tax ID (e.g., "EIN", "TIN").
+	TaxType *TaxIDType `json:"tax_type,omitempty"`
+}
+
+// UpdateCustomerResponse is an alias for CustomerResponse.
+// This type is used for clarity in the UpdateCustomer method signature.
+type UpdateCustomerResponse = CustomerResponse
 
 // ListCustomersRequest represents the request parameters for listing customers.
 // This supports pagination and filtering of customer accounts.
@@ -380,6 +481,101 @@ type ListCustomersResponse struct {
 	Total int `json:"total"`
 }
 
+// CreateAssociatedPersonRequest represents the request body for creating an associated person.
+// This wraps the AssociatedPerson structure for the creation endpoint.
+type CreateAssociatedPersonRequest struct {
+	AssociatedPerson
+}
+
+// AssociatedPersonResponse represents the response data for an associated person.
+// This is returned after creating or retrieving associated persons (beneficial owners, controllers, signers).
+type AssociatedPersonResponse struct {
+	// ID is the unique identifier for this associated person.
+	ID string `json:"id"`
+	// Email is the person's contact email address.
+	Email string `json:"email"`
+	// FirstName is the person's legal first name.
+	FirstName string `json:"first_name"`
+	// MiddleName is the person's middle name (optional).
+	MiddleName string `json:"middle_name,omitempty"`
+	// LastName is the person's legal last name.
+	LastName string `json:"last_name"`
+	// BirthDate is the person's date of birth in ISO format (e.g., "1980-01-15").
+	BirthDate string `json:"birth_date"`
+	// PrimaryNationality is the person's primary nationality or citizenship (ISO 3166-1 alpha-2).
+	PrimaryNationality string `json:"primary_nationality"`
+	// ResidentialAddress is the person's current residential address.
+	ResidentialAddress *Address `json:"residential_address"`
+	// ApplicantType is the type based on role (e.g., "UltimateBeneficialOwner").
+	ApplicantType string `json:"applicant_type"`
+	// Title is the role titles (pipe-delimited IDs, e.g., "1|2").
+	Title string `json:"title"`
+	// HasOwnership indicates whether the person has ownership stake (≥25%).
+	HasOwnership bool `json:"has_ownership"`
+	// OwnershipPercentage is the percentage of ownership (0.01-100).
+	OwnershipPercentage float64 `json:"ownership_percentage,omitempty"`
+	// HasControl indicates whether the person has control over the business (CEO, CFO, etc.).
+	HasControl bool `json:"has_control"`
+	// IsSigner indicates whether the person is an authorized signer.
+	IsSigner bool `json:"is_signer"`
+	// IsDirector indicates whether the person serves as a director.
+	IsDirector bool `json:"is_director"`
+	// CreatedAt is the timestamp when the associated person was created (ISO 8601 format).
+	CreatedAt string `json:"created_at"`
+	// UpdatedAt is the timestamp when the associated person was last updated (ISO 8601 format).
+	UpdatedAt string `json:"updated_at"`
+}
+
+// UpdateAssociatedPersonRequest represents the request body for updating an associated person.
+// This request supports partial updates - only the fields that are provided will be updated.
+// All fields are optional (using pointers for primitive types and omitempty for complex types).
+type UpdateAssociatedPersonRequest struct {
+	// FirstName is the person's legal first name.
+	FirstName *string `json:"first_name,omitempty"`
+	// MiddleName is the person's middle name.
+	MiddleName *string `json:"middle_name,omitempty"`
+	// LastName is the person's legal last name.
+	LastName *string `json:"last_name,omitempty"`
+	// Email is the person's contact email address.
+	Email *string `json:"email,omitempty"`
+	// ResidentialAddress is the person's current residential address.
+	ResidentialAddress *Address `json:"residential_address,omitempty"`
+	// BirthDate is the person's date of birth in ISO format (e.g., "1980-01-15").
+	BirthDate *string `json:"birth_date,omitempty"`
+	// CountryOfBirth is the country where the person was born.
+	CountryOfBirth *string `json:"country_of_birth,omitempty"`
+	// Gender is the person's gender.
+	Gender *Gender `json:"gender,omitempty"`
+	// PrimaryNationality is the person's primary nationality or citizenship.
+	PrimaryNationality *string `json:"primary_nationality,omitempty"`
+	// HasOwnership indicates whether the person has ownership stake in the business.
+	HasOwnership *bool `json:"has_ownership,omitempty"`
+	// OwnershipPercentage is the percentage of ownership.
+	OwnershipPercentage *int `json:"ownership_percentage,omitempty"`
+	// HasControl indicates whether the person has control over the business operations.
+	HasControl *bool `json:"has_control,omitempty"`
+	// IsSigner indicates whether the person is authorized to sign on behalf of the business.
+	IsSigner *bool `json:"is_signer,omitempty"`
+	// IsDirector indicates whether the person serves as a director of the business.
+	IsDirector *bool `json:"is_director,omitempty"`
+	// IdentifyingInformation is a list of identification documents for this person.
+	IdentifyingInformation []IdentifyingInformation `json:"identifying_information,omitempty"`
+	// DualNationality is the person's second nationality if they hold dual citizenship.
+	DualNationality *string `json:"dual_nationality,omitempty"`
+	// CountryOfTax is the country where the person is subject to taxation.
+	CountryOfTax *string `json:"country_of_tax,omitempty"`
+	// TaxType is the type of tax identification.
+	TaxType *TaxIDType `json:"tax_type,omitempty"`
+	// TaxIDNumber is the person's tax identification number.
+	TaxIDNumber *string `json:"tax_id_number,omitempty"`
+	// POA is the Power of Attorney document in data-uri format.
+	POA *string `json:"poa,omitempty"`
+}
+
+// ListAssociatedPersonsResponse represents the response data for listing associated persons.
+// This contains the list of all associated persons for a specific customer.
+type ListAssociatedPersonsResponse []AssociatedPersonResponse
+
 type serviceImpl struct {
 	*svc.BaseService
 }
@@ -396,7 +592,7 @@ func (s *serviceImpl) CreateCustomer(ctx context.Context, req *CreateCustomerReq
 	resp, err := svc.PostJSON[*CreateCustomerRequest, CreateCustomerResponse](
 		ctx,
 		s.BaseService,
-		"/openapi/v1/customers",
+		ROUTE_PREFIX,
 		req,
 	)
 	if err != nil {
@@ -431,11 +627,117 @@ func (s *serviceImpl) ListCustomers(ctx context.Context, req *ListCustomersReque
 	resp, err := svc.GetJSONWithParams[ListCustomersResponse](
 		ctx,
 		s.BaseService,
-		"/openapi/v1/customers",
+		ROUTE_PREFIX,
 		params,
 	)
 	if err != nil {
 		return nil, err
 	}
 	return &resp.Data, nil
+}
+
+// GetCustomer retrieves a specific customer by ID.
+func (s *serviceImpl) GetCustomer(ctx context.Context, customerID string) (*CustomerResponse, error) {
+	path := fmt.Sprintf("%s/%s", ROUTE_PREFIX, customerID)
+	resp, err := svc.GetJSON[CustomerResponse](ctx, s.BaseService, path)
+	if err != nil {
+		return nil, err
+	}
+	return &resp.Data, nil
+}
+
+// UpdateCustomer updates an existing customer with partial KYB information.
+// Only the fields provided in the request will be updated; nil/omitted fields remain unchanged.
+func (s *serviceImpl) UpdateCustomer(ctx context.Context, customerID string, req *UpdateCustomerRequest) (*UpdateCustomerResponse, error) {
+	path := fmt.Sprintf("%s/%s", ROUTE_PREFIX, customerID)
+	resp, err := svc.PatchJSON[*UpdateCustomerRequest, UpdateCustomerResponse](
+		ctx,
+		s.BaseService,
+		path,
+		req,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp.Data, nil
+}
+
+// CreateAssociatedPerson creates a new associated person for a customer.
+func (s *serviceImpl) CreateAssociatedPerson(
+	ctx context.Context,
+	customerID string,
+	req *CreateAssociatedPersonRequest,
+) (*AssociatedPersonResponse, error) {
+	path := fmt.Sprintf("%s/%s/associated_persons", ROUTE_PREFIX, customerID)
+	resp, err := svc.PostJSON[*CreateAssociatedPersonRequest, AssociatedPersonResponse](
+		ctx,
+		s.BaseService,
+		path,
+		req,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp.Data, nil
+}
+
+// ListAssociatedPersons retrieves all associated persons for a specific customer.
+func (s *serviceImpl) ListAssociatedPersons(ctx context.Context, customerID string) (*ListAssociatedPersonsResponse, error) {
+	path := fmt.Sprintf("%s/%s/associated_persons", ROUTE_PREFIX, customerID)
+	resp, err := svc.GetJSON[ListAssociatedPersonsResponse](ctx, s.BaseService, path)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp.Data, nil
+}
+
+// GetAssociatedPerson retrieves a specific associated person by ID.
+func (s *serviceImpl) GetAssociatedPerson(
+	ctx context.Context,
+	customerID string,
+	associatedPersonID string,
+) (*AssociatedPersonResponse, error) {
+	path := fmt.Sprintf("%s/%s/associated_persons/%s", ROUTE_PREFIX, customerID, associatedPersonID)
+	resp, err := svc.GetJSON[AssociatedPersonResponse](ctx, s.BaseService, path)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp.Data, nil
+}
+
+// UpdateAssociatedPerson updates an existing associated person with partial data.
+// Only the fields provided in the request will be updated; nil/omitted fields remain unchanged.
+func (s *serviceImpl) UpdateAssociatedPerson(
+	ctx context.Context,
+	customerID string,
+	associatedPersonID string,
+	req *UpdateAssociatedPersonRequest,
+) (*AssociatedPersonResponse, error) {
+	path := fmt.Sprintf("%s/%s/associated_persons/%s", ROUTE_PREFIX, customerID, associatedPersonID)
+	resp, err := svc.PatchJSON[*UpdateAssociatedPersonRequest, AssociatedPersonResponse](
+		ctx,
+		s.BaseService,
+		path,
+		req,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp.Data, nil
+}
+
+// DeleteAssociatedPerson soft-deletes a specific associated person.
+func (s *serviceImpl) DeleteAssociatedPerson(
+	ctx context.Context,
+	customerID string,
+	associatedPersonID string,
+) error {
+	path := fmt.Sprintf("%s/%s/associated_persons/%s", ROUTE_PREFIX, customerID, associatedPersonID)
+	_, err := svc.DeleteJSON[any](ctx, s.BaseService, path)
+	return err
 }

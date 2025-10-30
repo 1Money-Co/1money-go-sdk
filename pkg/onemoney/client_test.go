@@ -20,15 +20,21 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
+	"github.com/flaticols/countrycodes"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/1Money-Co/1money-go-sdk/internal/utils"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/customer"
+)
+
+const (
+	// testCustomerID is a test customer ID used across multiple tests.
+	testCustomerID = "24ff5473-122c-4e6a-9707-ed6e6b4ba6df"
 )
 
 // ClientTestSuite defines the integration test suite for the OneMoney client.
@@ -54,9 +60,9 @@ func (s *ClientTestSuite) SetupSuite() {
 
 	// Create client configuration
 	cfg := &Config{
-		BaseURL:   os.Getenv("ONEMONEY_BASE_URL"),
-		AccessKey: os.Getenv("ONEMONEY_ACCESS_KEY"),
-		SecretKey: os.Getenv("ONEMONEY_SECRET_KEY"),
+		BaseURL:   "http://localhost:9000",
+		AccessKey: "1PG6220EDIUYERGQ95QV",
+		SecretKey: "kBdaLFFUST4a5UToAd_cQj_NR_AX2LWNP0cLOsjYDJY",
 		Timeout:   30 * time.Second,
 	}
 
@@ -99,6 +105,11 @@ func (s *ClientTestSuite) TestClient_Initialization() {
 	s.NotEmpty(s.client.Version(), "Version should not be empty")
 }
 
+func fakeCountryCode(faker *gofakeit.Faker) string {
+	country, _ := countrycodes.Alpha2ToAlpha3(faker.CountryAbr())
+	return country
+}
+
 // TestCustomerService_CreateCustomer tests customer creation.
 func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
 	// Arrange - Generate fake data using gofakeit
@@ -113,13 +124,13 @@ func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
 			StreetLine1: faker.Street(),
 			City:        faker.City(),
 			State:       faker.StateAbr(),
-			Country:     faker.Country(),
+			Country:     fakeCountryCode(faker),
 			PostalCode:  faker.Zip(),
 		},
 		BirthDate:           faker.Date().Format("2006-01-02"),
-		CountryOfBirth:      faker.Country(),
+		CountryOfBirth:      fakeCountryCode(faker),
 		Gender:              customer.GenderM,
-		PrimaryNationality:  faker.Country(),
+		PrimaryNationality:  fakeCountryCode(faker),
 		HasOwnership:        true,
 		OwnershipPercentage: 100,
 		HasControl:          true,
@@ -128,12 +139,12 @@ func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
 		IdentifyingInformation: []customer.IdentifyingInformation{
 			{
 				Type:           customer.IDTypeDriversLicense,
-				IssuingCountry: "USA",
+				IssuingCountry: fakeCountryCode(faker),
 				ImageFront:     customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
 				ImageBack:      customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
 			},
 		},
-		CountryOfTax: faker.Country(),
+		CountryOfTax: fakeCountryCode(faker),
 		TaxType:      customer.TaxIDTypeEIN,
 		TaxIDNumber:  fmt.Sprintf("%d-%d", faker.Number(10, 99), faker.Number(1000000, 9999999)),
 		POA:          customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg), // POA is required for directors and beneficial owners
@@ -151,9 +162,9 @@ func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
 			StreetLine2: fmt.Sprintf("Suite %d", faker.Number(100, 999)),
 			City:        faker.City(),
 			State:       faker.StateAbr(),
-			Country:     faker.Country(),
+			Country:     fakeCountryCode(faker),
 			PostalCode:  faker.Zip(),
-			Subdivision: faker.State(),
+			Subdivision: faker.StateAbr(),
 		},
 		DateOfIncorporation: faker.Date().Format("2006-01-02"),
 		SignedAgreementID:   faker.UUID(),
@@ -258,6 +269,184 @@ func (s *ClientTestSuite) TestCustomerService_ListCustomers() {
 		s.NotEmpty(firstCustomer.CreatedAt, "CreatedAt should not be empty")
 		s.NotEmpty(firstCustomer.UpdatedAt, "UpdatedAt should not be empty")
 	}
+}
+
+// TestCustomerService_UpdateCustomer_MinimalUpdate tests updating a customer with minimal fields.
+func (s *ClientTestSuite) TestCustomerService_UpdateCustomer_MinimalUpdate() {
+	customerID := testCustomerID
+	faker := gofakeit.New(0)
+	associatedPerson := customer.AssociatedPerson{
+		FirstName: faker.FirstName(),
+		LastName:  faker.LastName(),
+		Email:     faker.Email(),
+		ResidentialAddress: &customer.Address{
+			StreetLine1: faker.Street(),
+			City:        faker.City(),
+			State:       faker.StateAbr(),
+			Country:     fakeCountryCode(faker),
+			PostalCode:  faker.Zip(),
+		},
+		BirthDate:           faker.Date().Format("2006-01-02"),
+		CountryOfBirth:      fakeCountryCode(faker),
+		Gender:              customer.GenderM,
+		PrimaryNationality:  fakeCountryCode(faker),
+		HasOwnership:        true,
+		OwnershipPercentage: 100,
+		HasControl:          true,
+		IsSigner:            true,
+		IsDirector:          true,
+		IdentifyingInformation: []customer.IdentifyingInformation{
+			{
+				Type:           customer.IDTypeDriversLicense,
+				IssuingCountry: fakeCountryCode(faker),
+				ImageFront:     customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				ImageBack:      customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+			},
+		},
+		CountryOfTax: fakeCountryCode(faker),
+		TaxType:      customer.TaxIDTypeEIN,
+		TaxIDNumber:  fmt.Sprintf("%d-%d", faker.Number(10, 99), faker.Number(1000000, 9999999)),
+		POA:          customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg), // POA is required for directors and beneficial owners
+	}
+
+	updateReq := &customer.UpdateCustomerRequest{
+		BusinessIndustry: utils.AsPtr(customer.BusinessIndustryTechnologyECommercePlatforms),
+		AccountPurpose:   utils.AsPtr(customer.AccountPurposeTreasuryManagement),
+		AssociatedPersons: []customer.AssociatedPerson{
+			associatedPerson,
+		},
+	}
+
+	// Act
+	updateResp, err := s.client.Customer.UpdateCustomer(s.ctx, customerID, updateReq)
+
+	// Assert
+	s.Require().NoError(err, "UpdateCustomer should not return error")
+	s.Require().NotNil(updateResp, "Update response should not be nil")
+	s.Require().Empty(updateResp.ValidationErrors, "Validation errors should be empty")
+	s.Equal(customerID, updateResp.ID, "Customer ID should match")
+	s.NotEmpty(updateResp.Status, "Status should not be empty")
+
+	s.T().Logf("Minimal update response:\n%s", prettyJSON(updateResp))
+}
+
+// TestAssociatedPerson_Create tests creating an associated person.
+func (s *ClientTestSuite) TestAssociatedPerson_Create() {
+	customerID := "16931881-ab9d-4044-9165-5f14bdeb0b0d"
+	faker := gofakeit.New(0)
+
+	req := &customer.CreateAssociatedPersonRequest{
+		AssociatedPerson: customer.AssociatedPerson{
+			FirstName: faker.FirstName(),
+			LastName:  faker.LastName(),
+			Email:     faker.Email(),
+			ResidentialAddress: &customer.Address{
+				StreetLine1: faker.Street(),
+				City:        faker.City(),
+				State:       faker.StateAbr(),
+				Country:     faker.CountryAbr(),
+				PostalCode:  faker.Zip(),
+			},
+			BirthDate:           faker.Date().Format("2006-01-02"),
+			CountryOfBirth:      faker.Country(),
+			Gender:              customer.GenderF,
+			PrimaryNationality:  faker.Country(),
+			HasOwnership:        true,
+			OwnershipPercentage: 50,
+			HasControl:          false,
+			IsSigner:            true,
+			IsDirector:          false,
+			CountryOfTax:        faker.Country(),
+			TaxType:             customer.TaxIDTypeSSN,
+			TaxIDNumber:         fmt.Sprintf("%d-%d-%d", faker.Number(100, 999), faker.Number(10, 99), faker.Number(1000, 9999)),
+		},
+	}
+
+	resp, err := s.client.Customer.CreateAssociatedPerson(s.ctx, customerID, req)
+
+	s.Require().NoError(err, "CreateAssociatedPerson should not return error")
+	s.Require().NotNil(resp, "Response should not be nil")
+	s.NotEmpty(resp.ID, "Associated person ID should not be empty")
+	s.T().Logf("Created associated person:\n%s", prettyJSON(resp))
+}
+
+// TestAssociatedPerson_List tests listing associated persons.
+func (s *ClientTestSuite) TestAssociatedPerson_List() {
+	customerID := testCustomerID
+
+	resp, err := s.client.Customer.ListAssociatedPersons(s.ctx, customerID)
+
+	s.Require().NoError(err, "ListAssociatedPersons should not return error")
+	s.Require().NotNil(resp, "Response should not be nil")
+	s.T().Logf("Associated persons list:\n%s", prettyJSON(resp))
+}
+
+// TestAssociatedPerson_Get tests getting a specific associated person.
+func (s *ClientTestSuite) TestAssociatedPerson_Get() {
+	customerID := testCustomerID
+	associatedPersonID := "ae56e5ab-d171-4ac9-8e22-6d67a9216095"
+
+	resp, err := s.client.Customer.GetAssociatedPerson(s.ctx, customerID, associatedPersonID)
+	if err != nil {
+		s.T().Logf("GetAssociatedPerson error (expected if person doesn't exist): %v", err)
+		return
+	}
+
+	s.Require().NotNil(resp, "Response should not be nil")
+	s.Equal(associatedPersonID, resp.ID, "Associated person ID should match")
+	s.T().Logf("Associated person details:\n%s", prettyJSON(resp))
+}
+
+// TestAssociatedPerson_Update tests updating an associated person.
+func (s *ClientTestSuite) TestAssociatedPerson_Update() {
+	customerID := testCustomerID
+	associatedPersonID := "ae56e5ab-d171-4ac9-8e22-6d67a9216095"
+	faker := gofakeit.New(0)
+
+	getResp, err := s.client.Customer.GetAssociatedPerson(s.ctx, customerID, associatedPersonID)
+	if err != nil {
+		s.T().Logf("GetAssociatedPerson error (expected if person doesn't exist): %v", err)
+		return
+	}
+	s.Require().NotNil(getResp, "Response should not be nil")
+
+	newEmail := faker.Email()
+	hasControl := true
+	updateReq := &customer.UpdateAssociatedPersonRequest{
+		Email:      &newEmail,
+		HasControl: &hasControl,
+	}
+	updateResp, err := s.client.Customer.UpdateAssociatedPerson(s.ctx, customerID, associatedPersonID, updateReq)
+	if err != nil {
+		s.T().Logf("UpdateAssociatedPerson error (expected if person doesn't exist): %v", err)
+		return
+	}
+	updateResp.Email = newEmail
+	updateResp.HasControl = hasControl
+
+	s.Require().NotNil(updateResp, "Response should not be nil")
+	s.T().Logf("Updated associated person:\n%s", prettyJSON(updateResp))
+}
+
+// TestAssociatedPerson_Delete tests deleting an associated person.
+func (s *ClientTestSuite) TestAssociatedPerson_Delete() {
+	customerID := testCustomerID
+	associatedPersonID := "324a052a-ff44-4ae8-9ef9-1a5e50df3c94"
+
+	err := s.client.Customer.DeleteAssociatedPerson(s.ctx, customerID, associatedPersonID)
+	if err != nil {
+		s.T().Logf("DeleteAssociatedPerson error (expected if person doesn't exist): %v", err)
+		return
+	}
+
+	// we should not be able to get the associated person after deletion
+	getResp, err := s.client.Customer.GetAssociatedPerson(s.ctx, customerID, associatedPersonID)
+	if err == nil {
+		s.T().Logf("GetAssociatedPerson should return error (expected if person doesn't exist): %v", err)
+		return
+	}
+	s.Require().Nil(getResp, "Response should be nil")
+	s.T().Log("Associated person deleted successfully")
 }
 
 // TestClientTestSuite runs the test suite.

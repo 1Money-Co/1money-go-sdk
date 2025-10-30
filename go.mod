@@ -19,6 +19,7 @@ go 1.25.2
 require (
 	github.com/abice/go-enum v0.9.2
 	github.com/brianvoe/gofakeit/v7 v7.8.0
+	github.com/flaticols/countrycodes v0.0.2
 	github.com/joho/godotenv v1.5.1
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v2 v2.27.7
