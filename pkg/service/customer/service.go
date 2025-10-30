@@ -351,10 +351,40 @@ type CustomerResponse struct {
 	Email string `json:"email"`
 	// BusinessLegalName is the legal business name.
 	BusinessLegalName string `json:"business_legal_name"`
+	// BusinessDescription provides a detailed description of the business operations and activities.
+	BusinessDescription string `json:"business_description,omitempty"`
 	// BusinessType is the type of business entity.
 	BusinessType BusinessType `json:"business_type"`
+	// BusinessIndustry specifies the industry classification.
+	BusinessIndustry BusinessIndustry `json:"business_industry,omitempty"`
+	// BusinessRegistrationNumber is the official business registration or incorporation number.
+	BusinessRegistrationNumber string `json:"business_registration_number,omitempty"`
+	// DateOfIncorporation is the date when the business was officially incorporated (ISO format).
+	DateOfIncorporation string `json:"date_of_incorporation,omitempty"`
+	// IncorporationCountry is the country where the business was incorporated.
+	IncorporationCountry string `json:"incorporation_country,omitempty"`
+	// IncorporationState is the state or province where the business was incorporated.
+	IncorporationState string `json:"incorporation_state,omitempty"`
+	// RegisteredAddress is the official registered address of the business.
+	RegisteredAddress *Address `json:"registered_address,omitempty"`
+	// PhysicalAddress is the actual operating address if different from registered address.
+	PhysicalAddress *Address `json:"physical_address,omitempty"`
+	// PrimaryWebsite is the business's primary website URL.
+	PrimaryWebsite string `json:"primary_website,omitempty"`
+	// PubliclyTraded indicates whether the business is publicly traded on a stock exchange.
+	PubliclyTraded bool `json:"publicly_traded,omitempty"`
+	// TaxID is the business tax identification number.
+	TaxID string `json:"tax_id,omitempty"`
+	// TaxType is the type of tax ID (e.g., "EIN", "TIN").
+	TaxType TaxIDType `json:"tax_type,omitempty"`
+	// TaxCountry is the country where the business is subject to taxation.
+	TaxCountry string `json:"tax_country,omitempty"`
 	// Status is the current customer account status.
 	Status CustomerStatus `json:"status"`
+	// RiskScore is the calculated risk score for the customer (0-100).
+	RiskScore float64 `json:"risk_score,omitempty"`
+	// SubmittedAt is the timestamp when the customer application was submitted (ISO 8601 format).
+	SubmittedAt string `json:"submitted_at,omitempty"`
 	// CreatedAt is the timestamp when the customer account was created (ISO 8601 format).
 	CreatedAt string `json:"created_at"`
 	// UpdatedAt is the timestamp when the customer account was last updated (ISO 8601 format).

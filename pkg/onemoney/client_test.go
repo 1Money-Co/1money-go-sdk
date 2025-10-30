@@ -271,6 +271,28 @@ func (s *ClientTestSuite) TestCustomerService_ListCustomers() {
 	}
 }
 
+// TestCustomerService_GetCustomer tests getting a specific customer.
+func (s *ClientTestSuite) TestCustomerService_GetCustomer() {
+	// Arrange
+	customerID := testCustomerID
+
+	// Act
+	resp, err := s.client.Customer.GetCustomer(s.ctx, customerID)
+
+	// Assert
+	s.Require().NoError(err, "GetCustomer should not return error")
+	s.Require().NotNil(resp, "Response should not be nil")
+	s.Equal(customerID, resp.ID, "Customer ID should match")
+	s.NotEmpty(resp.BusinessLegalName, "Business name should not be empty")
+	s.NotEmpty(resp.Email, "Email should not be empty")
+	s.NotEmpty(resp.BusinessType, "Business type should not be empty")
+	s.NotEmpty(resp.Status, "Status should not be empty")
+	s.NotEmpty(resp.CreatedAt, "CreatedAt should not be empty")
+	s.NotEmpty(resp.UpdatedAt, "UpdatedAt should not be empty")
+
+	s.T().Logf("Get customer response:\n%s", prettyJSON(resp))
+}
+
 // TestCustomerService_UpdateCustomer_MinimalUpdate tests updating a customer with minimal fields.
 func (s *ClientTestSuite) TestCustomerService_UpdateCustomer_MinimalUpdate() {
 	customerID := testCustomerID
