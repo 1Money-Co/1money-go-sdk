@@ -23,7 +23,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"os"
 	"runtime"
 	"time"
 
@@ -240,7 +242,31 @@ func (t *Transport) buildHTTPRequest(ctx context.Context, req *Request, sigResul
 		httpReq.Header.Set(key, value)
 	}
 
+	// Add X-Forwarded-For header in debug mode for testing rate limiting
+	if os.Getenv("ONEMONEY_DEBUG") == "1" {
+		if localIP := getLocalIP(); localIP != "" {
+			httpReq.Header.Set("X-Forwarded-For", localIP)
+		}
+	}
+
 	return httpReq, nil
+}
+
+// getLocalIP retrieves the local IP address of the machine.
+func getLocalIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+
+	for _, addr := range addrs {
+		if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+			if ipNet.IP.To4() != nil {
+				return ipNet.IP.String()
+			}
+		}
+	}
+	return ""
 }
 
 // buildQueryString constructs a query string from parameters.

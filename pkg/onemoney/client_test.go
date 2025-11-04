@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -30,6 +31,7 @@ import (
 
 	"github.com/1Money-Co/1money-go-sdk/internal/utils"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/customer"
+	"github.com/1Money-Co/1money-go-sdk/pkg/service/echo"
 )
 
 const (
@@ -55,14 +57,19 @@ func prettyJSON(v any) string {
 
 // SetupSuite runs once before all tests in the suite.
 func (s *ClientTestSuite) SetupSuite() {
-	// Load environment variables from .env file if present
-	_ = godotenv.Load()
+	// Load environment variables from .env file in project root
+	// Find project root by looking for go.mod file
+	projectRoot, err := utils.FindProjectRoot()
+	if err == nil {
+		envPath := filepath.Join(projectRoot, ".env")
+		_ = godotenv.Load(envPath)
+	}
 
 	// Create client configuration
 	cfg := &Config{
 		BaseURL:   "http://localhost:9000",
-		AccessKey: "1PG6220EDIUYERGQ95QV",
-		SecretKey: "kBdaLFFUST4a5UToAd_cQj_NR_AX2LWNP0cLOsjYDJY",
+		AccessKey: "XLVXZY2Z3DLLCLKELVB4",
+		SecretKey: "LTCs85bMOvmLxjKmfMete2FsH-nfa3qP1PdVSOSbeLo",
 		Timeout:   30 * time.Second,
 	}
 
@@ -103,6 +110,33 @@ func (s *ClientTestSuite) TestClient_Initialization() {
 	s.Require().NotNil(s.client.Echo, "Echo service should be initialized")
 	s.Require().NotNil(s.client.Customer, "Customer service should be initialized")
 	s.NotEmpty(s.client.Version(), "Version should not be empty")
+}
+
+// TestCustomerService_TOSFlow tests the complete TOS signing flow.
+func (s *ClientTestSuite) TestCustomerService_TOSFlow() {
+	// Step 1: Create TOS link
+	tosResp, err := s.client.Customer.CreateTOSLink(s.ctx)
+	s.Require().NoError(err, "CreateTOSLink should not return error")
+	s.Require().NotNil(tosResp, "CreateTOSLink response should not be nil")
+	s.NotEmpty(tosResp.SessionToken, "Session token should not be empty")
+	s.T().Logf("Created TOS link with session token:\n%s", prettyJSON(tosResp))
+
+	// Step 2: Sign the agreement using the session token
+	signResp, err := s.client.Customer.SignTOSAgreement(s.ctx, tosResp.SessionToken)
+	s.Require().NoError(err, "SignTOSAgreement should not return error")
+	s.Require().NotNil(signResp, "SignTOSAgreement response should not be nil")
+	s.NotEmpty(signResp.SignedAgreementID, "Signed agreement ID should not be empty")
+	s.T().Logf("Signed agreement with ID:\n%s", prettyJSON(signResp))
+}
+
+func (s *ClientTestSuite) TestCustomerService_SignTOS() {
+	sessionToken := "8d8448b7-0246-4162-bfdd-6b3b50de8bf5" //nolint:gosec // test session token
+	// Step 2: Sign the agreement using the session token
+	signResp, err := s.client.Customer.SignTOSAgreement(s.ctx, sessionToken)
+	s.Require().NoError(err, "SignTOSAgreement should not return error")
+	s.Require().NotNil(signResp, "SignTOSAgreement response should not be nil")
+	s.NotEmpty(signResp.SignedAgreementID, "Signed agreement ID should not be empty")
+	s.T().Logf("Signed agreement with ID:\n%s", prettyJSON(signResp))
 }
 
 func fakeCountryCode(faker *gofakeit.Faker) string {
@@ -167,7 +201,7 @@ func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
 			Subdivision: faker.StateAbr(),
 		},
 		DateOfIncorporation: faker.Date().Format("2006-01-02"),
-		SignedAgreementID:   faker.UUID(),
+		SignedAgreementID:   957,
 		AssociatedPersons:   []customer.AssociatedPerson{associatedPerson},
 		SourceOfFunds:       []customer.SourceOfFunds{customer.SourceOfFundsSalesOfGoodsAndServices},
 		SourceOfWealth:      []customer.SourceOfWealth{customer.SourceOfWealthBusinessDividendsOrProfits},
@@ -469,6 +503,178 @@ func (s *ClientTestSuite) TestAssociatedPerson_Delete() {
 	}
 	s.Require().Nil(getResp, "Response should be nil")
 	s.T().Log("Associated person deleted successfully")
+}
+
+func (s *ClientTestSuite) TestEchoService_Get() {
+	resp, err := s.client.Echo.Get(s.ctx)
+	if err != nil {
+		s.T().Logf("Get error: %v", err)
+		return
+	}
+	s.Require().NotNil(resp, "Response should not be nil")
+	s.T().Logf("Echo response:\n%s", prettyJSON(resp))
+}
+
+func (s *ClientTestSuite) TestEchoService_Post() {
+	resp, err := s.client.Echo.Post(s.ctx, &echo.Request{Message: "Hello, World!"})
+	if err != nil {
+		s.T().Logf("Post error: %v", err)
+		return
+	}
+	s.Require().NotNil(resp, "Response should not be nil")
+	s.T().Logf("Echo response:\n%s", prettyJSON(resp))
+}
+
+// TestRateLimiter_IPBasedLimiting tests that the IP-based rate limiter is working correctly.
+// The backend is configured with a rate limit of 10 requests per second with a burst size of 10.
+func (s *ClientTestSuite) TestRateLimiter_IPBasedLimiting() {
+	// The rate limiter is configured with:
+	// - per_second: 10 (10 requests per second)
+	// - burst_size: 10 (can handle up to 10 burst requests)
+
+	const (
+		burstSize    = 10
+		extraRequest = 5
+		totalRequest = burstSize + extraRequest
+	)
+
+	s.T().Log("Testing rate limiter with concurrent requests...")
+
+	// Use channels to collect results from goroutines
+	type result struct {
+		index       int
+		success     bool
+		rateLimited bool
+		err         error
+		responseMsg string
+	}
+
+	resultChan := make(chan result, totalRequest)
+
+	// Launch all goroutines concurrently to simulate burst traffic
+	for i := range totalRequest {
+		go func(index int) {
+			resp, err := s.client.Echo.Post(s.ctx, &echo.Request{
+				Message: fmt.Sprintf("Rate limit test message #%d", index+1),
+			})
+
+			res := result{index: index + 1}
+			if err != nil {
+				res.err = err
+				// Check if it's a rate limit error (usually HTTP 429)
+				if containsRateLimitError(err.Error()) {
+					res.rateLimited = true
+				}
+			} else {
+				res.success = true
+				res.responseMsg = resp.Message
+			}
+			resultChan <- res
+		}(i)
+	}
+
+	// Collect all results
+	successCount := 0
+	rateLimitedCount := 0
+	unexpectedErrors := 0
+
+	for range totalRequest {
+		res := <-resultChan
+		if res.success {
+			successCount++
+			s.T().Logf("Request #%d: Success - %s", res.index, res.responseMsg)
+		} else if res.rateLimited {
+			rateLimitedCount++
+			s.T().Logf("Request #%d: Rate limited (expected after burst)", res.index)
+		} else {
+			unexpectedErrors++
+			s.T().Logf("Request #%d: Unexpected error: %v", res.index, res.err)
+		}
+	}
+	close(resultChan)
+
+	s.T().Logf("Rate limiter test results:")
+	s.T().Logf("  Total requests: %d", totalRequest)
+	s.T().Logf("  Successful: %d", successCount)
+	s.T().Logf("  Rate limited: %d", rateLimitedCount)
+	s.T().Logf("  Unexpected errors: %d", unexpectedErrors)
+
+	// Assertions:
+	// 1. We should have some successful requests (may vary due to concurrent execution)
+	s.Positive(successCount, "Should have at least some successful requests")
+
+	// 2. We should have some rate-limited requests (the extra requests beyond burst)
+	// Note: Due to concurrent execution, exact count may vary
+	s.Positive(rateLimitedCount,
+		"Should have at least one rate-limited request when exceeding burst size")
+
+	// 3. Total processed should match (excluding unexpected errors)
+	s.Equal(totalRequest, successCount+rateLimitedCount+unexpectedErrors,
+		"Total requests should equal successful + rate limited + unexpected errors")
+
+	// 4. We shouldn't have unexpected errors
+	s.Equal(0, unexpectedErrors, "Should not have unexpected errors")
+
+	// Wait for rate limiter to reset (1 second + buffer)
+	s.T().Log("Waiting for rate limiter to reset...")
+	time.Sleep(1500 * time.Millisecond)
+
+	// After waiting, we should be able to send requests again
+	resp, err := s.client.Echo.Post(s.ctx, &echo.Request{Message: "After reset"})
+	s.Require().NoError(err, "Request should succeed after rate limiter reset")
+	s.Require().NotNil(resp, "Response should not be nil")
+	s.T().Logf("After reset: Successfully sent request - %s", resp.Message)
+}
+
+// containsRateLimitError checks if an error message indicates a rate limit error.
+func containsRateLimitError(errMsg string) bool {
+	// Common rate limit indicators
+	indicators := []string{
+		"429",               // HTTP status code
+		"Too Many Requests", // Standard HTTP 429 message
+		"rate limit",        // Generic rate limit message
+		"too many requests", // Alternative message
+		"throttle",          // Alternative terminology
+	}
+
+	// Simple case-insensitive substring check
+	errMsgLower := toLower(errMsg)
+	for _, indicator := range indicators {
+		if contains(errMsgLower, toLower(indicator)) {
+			return true
+		}
+	}
+	return false
+}
+
+// toLower converts a string to lowercase (ASCII only).
+func toLower(s string) string {
+	result := make([]byte, len(s))
+	for i := range len(s) {
+		c := s[i]
+		if c >= 'A' && c <= 'Z' {
+			result[i] = c + 32
+		} else {
+			result[i] = c
+		}
+	}
+	return string(result)
+}
+
+// contains checks if string s contains substring substr.
+func contains(s, substr string) bool {
+	if substr == "" {
+		return true
+	}
+	if len(s) < len(substr) {
+		return false
+	}
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
 }
 
 // TestClientTestSuite runs the test suite.

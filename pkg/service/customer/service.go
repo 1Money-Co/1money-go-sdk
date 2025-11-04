@@ -140,6 +140,14 @@ const ROUTE_PREFIX = "/openapi/v1/customers"
 
 // Service defines the customer service interface for managing customer accounts.
 type Service interface {
+	// CreateTOSLink creates a session token for signing the Terms of Service agreement.
+	// This is the first step in the customer onboarding flow.
+	// The session expires in 1 hour.
+	CreateTOSLink(ctx context.Context) (*TOSLinkResponse, error)
+	// SignTOSAgreement signs the Terms of Service agreement using the session token.
+	// This is the second step in the customer onboarding flow.
+	// Returns a signed_agreement_id to be used in customer creation.
+	SignTOSAgreement(ctx context.Context, sessionToken string) (*SignAgreementResponse, error)
 	// CreateCustomer creates a new business customer account with KYB information.
 	CreateCustomer(ctx context.Context, req *CreateCustomerRequest) (*CreateCustomerResponse, error)
 	// ListCustomers retrieves a list of customer accounts with pagination support.
@@ -304,7 +312,7 @@ type CreateCustomerRequest struct {
 	// PhysicalAddress is the actual operating address if different from registered address (optional).
 	PhysicalAddress *Address `json:"physical_address,omitempty"`
 	// SignedAgreementID is the identifier of the signed service agreement.
-	SignedAgreementID string `json:"signed_agreement_id"`
+	SignedAgreementID int64 `json:"signed_agreement_id"`
 	// IsDAO indicates whether this is a Decentralized Autonomous Organization.
 	IsDAO bool `json:"is_dao"`
 	// AssociatedPersons is a list of all persons associated with the business (owners, directors, signers).
@@ -606,6 +614,24 @@ type UpdateAssociatedPersonRequest struct {
 // This contains the list of all associated persons for a specific customer.
 type ListAssociatedPersonsResponse []AssociatedPersonResponse
 
+// TOSLinkResponse represents the response data for creating a TOS signing link.
+// This contains the session token that can be used to sign the Terms of Service agreement.
+type TOSLinkResponse struct {
+	// SessionToken is the unique token for the TOS signing session.
+	// This token expires in 1 hour and should be used in the signing flow.
+	SessionToken string `json:"sessionToken"`
+	// ExpiresAt is the timestamp when the session token expires (ISO 8601 format).
+	ExpiresAt string `json:"expiresAt,omitempty"`
+}
+
+// SignAgreementResponse represents the response data for signing a TOS agreement.
+// This contains the signed agreement ID that should be used when creating a customer.
+type SignAgreementResponse struct {
+	// SignedAgreementID is the unique identifier for the signed agreement.
+	// This ID must be provided when creating a customer account.
+	SignedAgreementID int `json:"signedAgreementId"`
+}
+
 type serviceImpl struct {
 	*svc.BaseService
 }
@@ -615,6 +641,41 @@ func NewService(base *svc.BaseService) Service {
 	return &serviceImpl{
 		BaseService: base,
 	}
+}
+
+// CreateTOSLink creates a session token for signing the Terms of Service agreement.
+// This is the first step in the customer onboarding flow. The session expires in 1 hour.
+func (s *serviceImpl) CreateTOSLink(ctx context.Context) (*TOSLinkResponse, error) {
+	path := fmt.Sprintf("%s/tos_links", ROUTE_PREFIX)
+	resp, err := svc.PostJSON[any, TOSLinkResponse](
+		ctx,
+		s.BaseService,
+		path,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp.Data, nil
+}
+
+// SignTOSAgreement signs the Terms of Service agreement using the session token.
+// This is the second step in the customer onboarding flow.
+// Returns a signed_agreement_id to be used in customer creation.
+func (s *serviceImpl) SignTOSAgreement(ctx context.Context, sessionToken string) (*SignAgreementResponse, error) {
+	path := fmt.Sprintf("%s/tos_links/%s/sign", ROUTE_PREFIX, sessionToken)
+	resp, err := svc.PostJSON[any, SignAgreementResponse](
+		ctx,
+		s.BaseService,
+		path,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp.Data, nil
 }
 
 // CreateCustomer creates a new customer using the generic PostJSON function.
