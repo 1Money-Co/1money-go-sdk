@@ -114,12 +114,79 @@ supporting_documents
 */
 type DocumentType string
 
-// Gender represents the gender of an individual.
-// ENUM(M, F, O)
-type Gender string
-
-// TaxIDType represents the type of tax identification.
-// ENUM(EIN, SSN, TIN, ITIN)
+// TaxIDType represents the type of tax identification covering all supported countries.
+/* ENUM(
+SSN
+EIN
+TFN
+ABN
+ACN
+UTR
+NINO
+NRIC
+FIN
+ASDG
+ITR
+NIF
+TIN
+VAT
+CUIL
+CUIT
+DNI
+BIN
+UNP
+RNPM
+NIT
+CPF
+CNPJ
+NIRE
+UCN
+UIC
+SIN
+BN
+RUT
+IIN
+USCC
+CNOC
+USCN
+ITIN
+CPJ
+OIB
+DIC
+CPR
+CVR
+CN
+RNC
+RUC
+TN
+HETU
+YT
+ALV
+SIREN
+IDNR
+STNR
+VTA
+HKID
+AJ
+EN
+KN
+VSK
+PAN
+GSTN
+NIK
+NPWP
+PPS
+TRN
+CRO
+CHY
+CF
+IVA
+IN
+JCT
+EDRPOU
+EID
+)
+*/
 type TaxIDType string
 
 // SourceOfFunds represents the origin of funds for business operations.

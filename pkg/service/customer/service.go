@@ -210,9 +210,9 @@ type IdentifyingInformation struct {
 	// ImageFront is the front image of the ID document in data-uri format (e.g., "data:image/jpeg;base64,/9j/4AAQ...").
 	// Supported formats: jpeg, jpg, png, heic, tif.
 	ImageFront string `json:"image_front"`
-	// ImageBack is the back image of the ID document in data-uri format (optional for some ID types).
+	// ImageBack is the back image of the ID document in data-uri format.
 	// Supported formats: jpeg, jpg, png, heic, tif.
-	ImageBack string `json:"image_back,omitempty"`
+	ImageBack string `json:"image_back"`
 }
 
 // AssociatedPerson represents a person associated with the business entity.
@@ -233,8 +233,6 @@ type AssociatedPerson struct {
 	BirthDate string `json:"birth_date"`
 	// CountryOfBirth is the country where the person was born.
 	CountryOfBirth string `json:"country_of_birth"`
-	// Gender is the person's gender (e.g., "M", "F").
-	Gender Gender `json:"gender"`
 	// PrimaryNationality is the person's primary nationality or citizenship.
 	PrimaryNationality string `json:"primary_nationality"`
 	// HasOwnership indicates whether the person has ownership stake in the business.
@@ -342,8 +340,6 @@ type CreateCustomerRequest struct {
 	HighRiskActivities []HighRiskActivity `json:"high_risk_activities,omitempty"`
 	// HighRiskActivitiesExplanation provides additional context for high-risk activities (optional).
 	HighRiskActivitiesExplanation string `json:"high_risk_activities_explanation,omitempty"`
-	// ConductsMoneyServices indicates whether the business conducts money service business activities.
-	ConductsMoneyServices bool `json:"conducts_money_services"`
 	// TaxID is the business tax identification number.
 	TaxID string `json:"tax_id"`
 	// TaxType is the type of tax ID (e.g., "EIN", "TIN").
@@ -462,8 +458,6 @@ type UpdateCustomerRequest struct {
 	HighRiskActivities []HighRiskActivity `json:"high_risk_activities,omitempty"`
 	// HighRiskActivitiesExplanation provides additional context for high-risk activities.
 	HighRiskActivitiesExplanation *string `json:"high_risk_activities_explanation,omitempty"`
-	// ConductsMoneyServices indicates whether the business conducts money service business activities.
-	ConductsMoneyServices *bool `json:"conducts_money_services,omitempty"`
 	// TaxID is the business tax identification number.
 	TaxID *string `json:"tax_id,omitempty"`
 	// TaxType is the type of tax ID (e.g., "EIN", "TIN").
@@ -582,8 +576,6 @@ type UpdateAssociatedPersonRequest struct {
 	BirthDate *string `json:"birth_date,omitempty"`
 	// CountryOfBirth is the country where the person was born.
 	CountryOfBirth *string `json:"country_of_birth,omitempty"`
-	// Gender is the person's gender.
-	Gender *Gender `json:"gender,omitempty"`
 	// PrimaryNationality is the person's primary nationality or citizenship.
 	PrimaryNationality *string `json:"primary_nationality,omitempty"`
 	// HasOwnership indicates whether the person has ownership stake in the business.

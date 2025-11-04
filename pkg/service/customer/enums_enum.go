@@ -656,86 +656,6 @@ func (x *DocumentType) AppendText(b []byte) ([]byte, error) {
 }
 
 const (
-	// GenderM is a Gender of type M.
-	GenderM Gender = "M"
-	// GenderF is a Gender of type F.
-	GenderF Gender = "F"
-	// GenderO is a Gender of type O.
-	GenderO Gender = "O"
-)
-
-var ErrInvalidGender = fmt.Errorf("not a valid Gender, try [%s]", strings.Join(_GenderNames, ", "))
-
-var _GenderNames = []string{
-	string(GenderM),
-	string(GenderF),
-	string(GenderO),
-}
-
-// GenderNames returns a list of possible string values of Gender.
-func GenderNames() []string {
-	tmp := make([]string, len(_GenderNames))
-	copy(tmp, _GenderNames)
-	return tmp
-}
-
-// String implements the Stringer interface.
-func (x Gender) String() string {
-	return string(x)
-}
-
-// IsValid provides a quick way to determine if the typed value is
-// part of the allowed enumerated values
-func (x Gender) IsValid() bool {
-	_, err := ParseGender(string(x))
-	return err == nil
-}
-
-var _GenderValue = map[string]Gender{
-	"M": GenderM,
-	"m": GenderM,
-	"F": GenderF,
-	"f": GenderF,
-	"O": GenderO,
-	"o": GenderO,
-}
-
-// ParseGender attempts to convert a string to a Gender.
-func ParseGender(name string) (Gender, error) {
-	if x, ok := _GenderValue[name]; ok {
-		return x, nil
-	}
-	// Case insensitive parse, do a separate lookup to prevent unnecessary cost of lowercasing a string if we don't need to.
-	if x, ok := _GenderValue[strings.ToLower(name)]; ok {
-		return x, nil
-	}
-	return Gender(""), fmt.Errorf("%s is %w", name, ErrInvalidGender)
-}
-
-// MarshalText implements the text marshaller method.
-func (x Gender) MarshalText() ([]byte, error) {
-	return []byte(string(x)), nil
-}
-
-// UnmarshalText implements the text unmarshaller method.
-func (x *Gender) UnmarshalText(text []byte) error {
-	tmp, err := ParseGender(string(text))
-	if err != nil {
-		return err
-	}
-	*x = tmp
-	return nil
-}
-
-// AppendText appends the textual representation of itself to the end of b
-// (allocating a larger slice if necessary) and returns the updated slice.
-//
-// Implementations must not retain b, nor mutate any bytes within b[:len(b)].
-func (x *Gender) AppendText(b []byte) ([]byte, error) {
-	return append(b, x.String()...), nil
-}
-
-const (
 	// HighRiskActivityAdultEntertainment is a HighRiskActivity of type adult_entertainment.
 	HighRiskActivityAdultEntertainment HighRiskActivity = "adult_entertainment"
 	// HighRiskActivityCannabis is a HighRiskActivity of type cannabis.
@@ -1290,23 +1210,218 @@ func (x *SourceOfWealth) AppendText(b []byte) ([]byte, error) {
 }
 
 const (
-	// TaxIDTypeEIN is a TaxIDType of type EIN.
-	TaxIDTypeEIN TaxIDType = "EIN"
 	// TaxIDTypeSSN is a TaxIDType of type SSN.
 	TaxIDTypeSSN TaxIDType = "SSN"
+	// TaxIDTypeEIN is a TaxIDType of type EIN.
+	TaxIDTypeEIN TaxIDType = "EIN"
+	// TaxIDTypeTFN is a TaxIDType of type TFN.
+	TaxIDTypeTFN TaxIDType = "TFN"
+	// TaxIDTypeABN is a TaxIDType of type ABN.
+	TaxIDTypeABN TaxIDType = "ABN"
+	// TaxIDTypeACN is a TaxIDType of type ACN.
+	TaxIDTypeACN TaxIDType = "ACN"
+	// TaxIDTypeUTR is a TaxIDType of type UTR.
+	TaxIDTypeUTR TaxIDType = "UTR"
+	// TaxIDTypeNINO is a TaxIDType of type NINO.
+	TaxIDTypeNINO TaxIDType = "NINO"
+	// TaxIDTypeNRIC is a TaxIDType of type NRIC.
+	TaxIDTypeNRIC TaxIDType = "NRIC"
+	// TaxIDTypeFIN is a TaxIDType of type FIN.
+	TaxIDTypeFIN TaxIDType = "FIN"
+	// TaxIDTypeASDG is a TaxIDType of type ASDG.
+	TaxIDTypeASDG TaxIDType = "ASDG"
+	// TaxIDTypeITR is a TaxIDType of type ITR.
+	TaxIDTypeITR TaxIDType = "ITR"
+	// TaxIDTypeNIF is a TaxIDType of type NIF.
+	TaxIDTypeNIF TaxIDType = "NIF"
 	// TaxIDTypeTIN is a TaxIDType of type TIN.
 	TaxIDTypeTIN TaxIDType = "TIN"
+	// TaxIDTypeVAT is a TaxIDType of type VAT.
+	TaxIDTypeVAT TaxIDType = "VAT"
+	// TaxIDTypeCUIL is a TaxIDType of type CUIL.
+	TaxIDTypeCUIL TaxIDType = "CUIL"
+	// TaxIDTypeCUIT is a TaxIDType of type CUIT.
+	TaxIDTypeCUIT TaxIDType = "CUIT"
+	// TaxIDTypeDNI is a TaxIDType of type DNI.
+	TaxIDTypeDNI TaxIDType = "DNI"
+	// TaxIDTypeBIN is a TaxIDType of type BIN.
+	TaxIDTypeBIN TaxIDType = "BIN"
+	// TaxIDTypeUNP is a TaxIDType of type UNP.
+	TaxIDTypeUNP TaxIDType = "UNP"
+	// TaxIDTypeRNPM is a TaxIDType of type RNPM.
+	TaxIDTypeRNPM TaxIDType = "RNPM"
+	// TaxIDTypeNIT is a TaxIDType of type NIT.
+	TaxIDTypeNIT TaxIDType = "NIT"
+	// TaxIDTypeCPF is a TaxIDType of type CPF.
+	TaxIDTypeCPF TaxIDType = "CPF"
+	// TaxIDTypeCNPJ is a TaxIDType of type CNPJ.
+	TaxIDTypeCNPJ TaxIDType = "CNPJ"
+	// TaxIDTypeNIRE is a TaxIDType of type NIRE.
+	TaxIDTypeNIRE TaxIDType = "NIRE"
+	// TaxIDTypeUCN is a TaxIDType of type UCN.
+	TaxIDTypeUCN TaxIDType = "UCN"
+	// TaxIDTypeUIC is a TaxIDType of type UIC.
+	TaxIDTypeUIC TaxIDType = "UIC"
+	// TaxIDTypeSIN is a TaxIDType of type SIN.
+	TaxIDTypeSIN TaxIDType = "SIN"
+	// TaxIDTypeBN is a TaxIDType of type BN.
+	TaxIDTypeBN TaxIDType = "BN"
+	// TaxIDTypeRUT is a TaxIDType of type RUT.
+	TaxIDTypeRUT TaxIDType = "RUT"
+	// TaxIDTypeIIN is a TaxIDType of type IIN.
+	TaxIDTypeIIN TaxIDType = "IIN"
+	// TaxIDTypeUSCC is a TaxIDType of type USCC.
+	TaxIDTypeUSCC TaxIDType = "USCC"
+	// TaxIDTypeCNOC is a TaxIDType of type CNOC.
+	TaxIDTypeCNOC TaxIDType = "CNOC"
+	// TaxIDTypeUSCN is a TaxIDType of type USCN.
+	TaxIDTypeUSCN TaxIDType = "USCN"
 	// TaxIDTypeITIN is a TaxIDType of type ITIN.
 	TaxIDTypeITIN TaxIDType = "ITIN"
+	// TaxIDTypeCPJ is a TaxIDType of type CPJ.
+	TaxIDTypeCPJ TaxIDType = "CPJ"
+	// TaxIDTypeOIB is a TaxIDType of type OIB.
+	TaxIDTypeOIB TaxIDType = "OIB"
+	// TaxIDTypeDIC is a TaxIDType of type DIC.
+	TaxIDTypeDIC TaxIDType = "DIC"
+	// TaxIDTypeCPR is a TaxIDType of type CPR.
+	TaxIDTypeCPR TaxIDType = "CPR"
+	// TaxIDTypeCVR is a TaxIDType of type CVR.
+	TaxIDTypeCVR TaxIDType = "CVR"
+	// TaxIDTypeCN is a TaxIDType of type CN.
+	TaxIDTypeCN TaxIDType = "CN"
+	// TaxIDTypeRNC is a TaxIDType of type RNC.
+	TaxIDTypeRNC TaxIDType = "RNC"
+	// TaxIDTypeRUC is a TaxIDType of type RUC.
+	TaxIDTypeRUC TaxIDType = "RUC"
+	// TaxIDTypeTN is a TaxIDType of type TN.
+	TaxIDTypeTN TaxIDType = "TN"
+	// TaxIDTypeHETU is a TaxIDType of type HETU.
+	TaxIDTypeHETU TaxIDType = "HETU"
+	// TaxIDTypeYT is a TaxIDType of type YT.
+	TaxIDTypeYT TaxIDType = "YT"
+	// TaxIDTypeALV is a TaxIDType of type ALV.
+	TaxIDTypeALV TaxIDType = "ALV"
+	// TaxIDTypeSIREN is a TaxIDType of type SIREN.
+	TaxIDTypeSIREN TaxIDType = "SIREN"
+	// TaxIDTypeIDNR is a TaxIDType of type IDNR.
+	TaxIDTypeIDNR TaxIDType = "IDNR"
+	// TaxIDTypeSTNR is a TaxIDType of type STNR.
+	TaxIDTypeSTNR TaxIDType = "STNR"
+	// TaxIDTypeVTA is a TaxIDType of type VTA.
+	TaxIDTypeVTA TaxIDType = "VTA"
+	// TaxIDTypeHKID is a TaxIDType of type HKID.
+	TaxIDTypeHKID TaxIDType = "HKID"
+	// TaxIDTypeAJ is a TaxIDType of type AJ.
+	TaxIDTypeAJ TaxIDType = "AJ"
+	// TaxIDTypeEN is a TaxIDType of type EN.
+	TaxIDTypeEN TaxIDType = "EN"
+	// TaxIDTypeKN is a TaxIDType of type KN.
+	TaxIDTypeKN TaxIDType = "KN"
+	// TaxIDTypeVSK is a TaxIDType of type VSK.
+	TaxIDTypeVSK TaxIDType = "VSK"
+	// TaxIDTypePAN is a TaxIDType of type PAN.
+	TaxIDTypePAN TaxIDType = "PAN"
+	// TaxIDTypeGSTN is a TaxIDType of type GSTN.
+	TaxIDTypeGSTN TaxIDType = "GSTN"
+	// TaxIDTypeNIK is a TaxIDType of type NIK.
+	TaxIDTypeNIK TaxIDType = "NIK"
+	// TaxIDTypeNPWP is a TaxIDType of type NPWP.
+	TaxIDTypeNPWP TaxIDType = "NPWP"
+	// TaxIDTypePPS is a TaxIDType of type PPS.
+	TaxIDTypePPS TaxIDType = "PPS"
+	// TaxIDTypeTRN is a TaxIDType of type TRN.
+	TaxIDTypeTRN TaxIDType = "TRN"
+	// TaxIDTypeCRO is a TaxIDType of type CRO.
+	TaxIDTypeCRO TaxIDType = "CRO"
+	// TaxIDTypeCHY is a TaxIDType of type CHY.
+	TaxIDTypeCHY TaxIDType = "CHY"
+	// TaxIDTypeCF is a TaxIDType of type CF.
+	TaxIDTypeCF TaxIDType = "CF"
+	// TaxIDTypeIVA is a TaxIDType of type IVA.
+	TaxIDTypeIVA TaxIDType = "IVA"
+	// TaxIDTypeIN is a TaxIDType of type IN.
+	TaxIDTypeIN TaxIDType = "IN"
+	// TaxIDTypeJCT is a TaxIDType of type JCT.
+	TaxIDTypeJCT TaxIDType = "JCT"
+	// TaxIDTypeEDRPOU is a TaxIDType of type EDRPOU.
+	TaxIDTypeEDRPOU TaxIDType = "EDRPOU"
+	// TaxIDTypeEID is a TaxIDType of type EID.
+	TaxIDTypeEID TaxIDType = "EID"
 )
 
 var ErrInvalidTaxIDType = fmt.Errorf("not a valid TaxIDType, try [%s]", strings.Join(_TaxIDTypeNames, ", "))
 
 var _TaxIDTypeNames = []string{
-	string(TaxIDTypeEIN),
 	string(TaxIDTypeSSN),
+	string(TaxIDTypeEIN),
+	string(TaxIDTypeTFN),
+	string(TaxIDTypeABN),
+	string(TaxIDTypeACN),
+	string(TaxIDTypeUTR),
+	string(TaxIDTypeNINO),
+	string(TaxIDTypeNRIC),
+	string(TaxIDTypeFIN),
+	string(TaxIDTypeASDG),
+	string(TaxIDTypeITR),
+	string(TaxIDTypeNIF),
 	string(TaxIDTypeTIN),
+	string(TaxIDTypeVAT),
+	string(TaxIDTypeCUIL),
+	string(TaxIDTypeCUIT),
+	string(TaxIDTypeDNI),
+	string(TaxIDTypeBIN),
+	string(TaxIDTypeUNP),
+	string(TaxIDTypeRNPM),
+	string(TaxIDTypeNIT),
+	string(TaxIDTypeCPF),
+	string(TaxIDTypeCNPJ),
+	string(TaxIDTypeNIRE),
+	string(TaxIDTypeUCN),
+	string(TaxIDTypeUIC),
+	string(TaxIDTypeSIN),
+	string(TaxIDTypeBN),
+	string(TaxIDTypeRUT),
+	string(TaxIDTypeIIN),
+	string(TaxIDTypeUSCC),
+	string(TaxIDTypeCNOC),
+	string(TaxIDTypeUSCN),
 	string(TaxIDTypeITIN),
+	string(TaxIDTypeCPJ),
+	string(TaxIDTypeOIB),
+	string(TaxIDTypeDIC),
+	string(TaxIDTypeCPR),
+	string(TaxIDTypeCVR),
+	string(TaxIDTypeCN),
+	string(TaxIDTypeRNC),
+	string(TaxIDTypeRUC),
+	string(TaxIDTypeTN),
+	string(TaxIDTypeHETU),
+	string(TaxIDTypeYT),
+	string(TaxIDTypeALV),
+	string(TaxIDTypeSIREN),
+	string(TaxIDTypeIDNR),
+	string(TaxIDTypeSTNR),
+	string(TaxIDTypeVTA),
+	string(TaxIDTypeHKID),
+	string(TaxIDTypeAJ),
+	string(TaxIDTypeEN),
+	string(TaxIDTypeKN),
+	string(TaxIDTypeVSK),
+	string(TaxIDTypePAN),
+	string(TaxIDTypeGSTN),
+	string(TaxIDTypeNIK),
+	string(TaxIDTypeNPWP),
+	string(TaxIDTypePPS),
+	string(TaxIDTypeTRN),
+	string(TaxIDTypeCRO),
+	string(TaxIDTypeCHY),
+	string(TaxIDTypeCF),
+	string(TaxIDTypeIVA),
+	string(TaxIDTypeIN),
+	string(TaxIDTypeJCT),
+	string(TaxIDTypeEDRPOU),
+	string(TaxIDTypeEID),
 }
 
 // TaxIDTypeNames returns a list of possible string values of TaxIDType.
@@ -1329,14 +1444,144 @@ func (x TaxIDType) IsValid() bool {
 }
 
 var _TaxIDTypeValue = map[string]TaxIDType{
-	"EIN":  TaxIDTypeEIN,
-	"ein":  TaxIDTypeEIN,
-	"SSN":  TaxIDTypeSSN,
-	"ssn":  TaxIDTypeSSN,
-	"TIN":  TaxIDTypeTIN,
-	"tin":  TaxIDTypeTIN,
-	"ITIN": TaxIDTypeITIN,
-	"itin": TaxIDTypeITIN,
+	"SSN":    TaxIDTypeSSN,
+	"ssn":    TaxIDTypeSSN,
+	"EIN":    TaxIDTypeEIN,
+	"ein":    TaxIDTypeEIN,
+	"TFN":    TaxIDTypeTFN,
+	"tfn":    TaxIDTypeTFN,
+	"ABN":    TaxIDTypeABN,
+	"abn":    TaxIDTypeABN,
+	"ACN":    TaxIDTypeACN,
+	"acn":    TaxIDTypeACN,
+	"UTR":    TaxIDTypeUTR,
+	"utr":    TaxIDTypeUTR,
+	"NINO":   TaxIDTypeNINO,
+	"nino":   TaxIDTypeNINO,
+	"NRIC":   TaxIDTypeNRIC,
+	"nric":   TaxIDTypeNRIC,
+	"FIN":    TaxIDTypeFIN,
+	"fin":    TaxIDTypeFIN,
+	"ASDG":   TaxIDTypeASDG,
+	"asdg":   TaxIDTypeASDG,
+	"ITR":    TaxIDTypeITR,
+	"itr":    TaxIDTypeITR,
+	"NIF":    TaxIDTypeNIF,
+	"nif":    TaxIDTypeNIF,
+	"TIN":    TaxIDTypeTIN,
+	"tin":    TaxIDTypeTIN,
+	"VAT":    TaxIDTypeVAT,
+	"vat":    TaxIDTypeVAT,
+	"CUIL":   TaxIDTypeCUIL,
+	"cuil":   TaxIDTypeCUIL,
+	"CUIT":   TaxIDTypeCUIT,
+	"cuit":   TaxIDTypeCUIT,
+	"DNI":    TaxIDTypeDNI,
+	"dni":    TaxIDTypeDNI,
+	"BIN":    TaxIDTypeBIN,
+	"bin":    TaxIDTypeBIN,
+	"UNP":    TaxIDTypeUNP,
+	"unp":    TaxIDTypeUNP,
+	"RNPM":   TaxIDTypeRNPM,
+	"rnpm":   TaxIDTypeRNPM,
+	"NIT":    TaxIDTypeNIT,
+	"nit":    TaxIDTypeNIT,
+	"CPF":    TaxIDTypeCPF,
+	"cpf":    TaxIDTypeCPF,
+	"CNPJ":   TaxIDTypeCNPJ,
+	"cnpj":   TaxIDTypeCNPJ,
+	"NIRE":   TaxIDTypeNIRE,
+	"nire":   TaxIDTypeNIRE,
+	"UCN":    TaxIDTypeUCN,
+	"ucn":    TaxIDTypeUCN,
+	"UIC":    TaxIDTypeUIC,
+	"uic":    TaxIDTypeUIC,
+	"SIN":    TaxIDTypeSIN,
+	"sin":    TaxIDTypeSIN,
+	"BN":     TaxIDTypeBN,
+	"bn":     TaxIDTypeBN,
+	"RUT":    TaxIDTypeRUT,
+	"rut":    TaxIDTypeRUT,
+	"IIN":    TaxIDTypeIIN,
+	"iin":    TaxIDTypeIIN,
+	"USCC":   TaxIDTypeUSCC,
+	"uscc":   TaxIDTypeUSCC,
+	"CNOC":   TaxIDTypeCNOC,
+	"cnoc":   TaxIDTypeCNOC,
+	"USCN":   TaxIDTypeUSCN,
+	"uscn":   TaxIDTypeUSCN,
+	"ITIN":   TaxIDTypeITIN,
+	"itin":   TaxIDTypeITIN,
+	"CPJ":    TaxIDTypeCPJ,
+	"cpj":    TaxIDTypeCPJ,
+	"OIB":    TaxIDTypeOIB,
+	"oib":    TaxIDTypeOIB,
+	"DIC":    TaxIDTypeDIC,
+	"dic":    TaxIDTypeDIC,
+	"CPR":    TaxIDTypeCPR,
+	"cpr":    TaxIDTypeCPR,
+	"CVR":    TaxIDTypeCVR,
+	"cvr":    TaxIDTypeCVR,
+	"CN":     TaxIDTypeCN,
+	"cn":     TaxIDTypeCN,
+	"RNC":    TaxIDTypeRNC,
+	"rnc":    TaxIDTypeRNC,
+	"RUC":    TaxIDTypeRUC,
+	"ruc":    TaxIDTypeRUC,
+	"TN":     TaxIDTypeTN,
+	"tn":     TaxIDTypeTN,
+	"HETU":   TaxIDTypeHETU,
+	"hetu":   TaxIDTypeHETU,
+	"YT":     TaxIDTypeYT,
+	"yt":     TaxIDTypeYT,
+	"ALV":    TaxIDTypeALV,
+	"alv":    TaxIDTypeALV,
+	"SIREN":  TaxIDTypeSIREN,
+	"siren":  TaxIDTypeSIREN,
+	"IDNR":   TaxIDTypeIDNR,
+	"idnr":   TaxIDTypeIDNR,
+	"STNR":   TaxIDTypeSTNR,
+	"stnr":   TaxIDTypeSTNR,
+	"VTA":    TaxIDTypeVTA,
+	"vta":    TaxIDTypeVTA,
+	"HKID":   TaxIDTypeHKID,
+	"hkid":   TaxIDTypeHKID,
+	"AJ":     TaxIDTypeAJ,
+	"aj":     TaxIDTypeAJ,
+	"EN":     TaxIDTypeEN,
+	"en":     TaxIDTypeEN,
+	"KN":     TaxIDTypeKN,
+	"kn":     TaxIDTypeKN,
+	"VSK":    TaxIDTypeVSK,
+	"vsk":    TaxIDTypeVSK,
+	"PAN":    TaxIDTypePAN,
+	"pan":    TaxIDTypePAN,
+	"GSTN":   TaxIDTypeGSTN,
+	"gstn":   TaxIDTypeGSTN,
+	"NIK":    TaxIDTypeNIK,
+	"nik":    TaxIDTypeNIK,
+	"NPWP":   TaxIDTypeNPWP,
+	"npwp":   TaxIDTypeNPWP,
+	"PPS":    TaxIDTypePPS,
+	"pps":    TaxIDTypePPS,
+	"TRN":    TaxIDTypeTRN,
+	"trn":    TaxIDTypeTRN,
+	"CRO":    TaxIDTypeCRO,
+	"cro":    TaxIDTypeCRO,
+	"CHY":    TaxIDTypeCHY,
+	"chy":    TaxIDTypeCHY,
+	"CF":     TaxIDTypeCF,
+	"cf":     TaxIDTypeCF,
+	"IVA":    TaxIDTypeIVA,
+	"iva":    TaxIDTypeIVA,
+	"IN":     TaxIDTypeIN,
+	"in":     TaxIDTypeIN,
+	"JCT":    TaxIDTypeJCT,
+	"jct":    TaxIDTypeJCT,
+	"EDRPOU": TaxIDTypeEDRPOU,
+	"edrpou": TaxIDTypeEDRPOU,
+	"EID":    TaxIDTypeEID,
+	"eid":    TaxIDTypeEID,
 }
 
 // ParseTaxIDType attempts to convert a string to a TaxIDType.
