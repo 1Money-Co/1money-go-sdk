@@ -100,15 +100,15 @@ version-tag VERSION_NUM:
 [group("👆 Code Quality")]
 fmt: hawkeye-fix
     @echo "🔧 Formatting code..."
-    gofmt -w -s .
-    {{ GOIMPORTS }} -w -local {{ MODULE_NAME }} .
+    find . -name "*.go" ! -path "./.history/*" ! -path "./vendor/*" -exec gofmt -w -s {} +
+    find . -name "*.go" ! -path "./.history/*" ! -path "./vendor/*" -exec {{ GOIMPORTS }} -w -local {{ MODULE_NAME }} {} +
     @echo "✅ Code formatted!"
 
 [doc("check code formatting")]
 [group("👆 Code Quality")]
 fmt-check:
     @echo "📝 Checking code formatting..."
-    @test -z "$(gofmt -l .)" || (echo "❌ Code is not formatted. Run 'just fmt'" && exit 1)
+    @test -z "$(find . -name '*.go' ! -path './.history/*' ! -path './vendor/*' -exec gofmt -l {} +)" || (echo "❌ Code is not formatted. Run 'just fmt'" && exit 1)
     @echo "✅ Code formatting is correct!"
 
 [doc("run `golangci-lint`")]
@@ -379,11 +379,11 @@ stats:
     @echo "📊 Project Statistics:"
     @echo "===================="
     @echo "Go files:"
-    @find . -name "*.go" ! -path "./vendor/*" | wc -l
+    @find . -name "*.go" ! -path "./.history/*" ! -path "./vendor/*" | wc -l
     @echo "Lines of code:"
-    @find . -name "*.go" ! -path "./vendor/*" -exec cat {} \; | wc -l
+    @find . -name "*.go" ! -path "./.history/*" ! -path "./vendor/*" -exec cat {} \; | wc -l
     @echo "Test files:"
-    @find . -name "*_test.go" ! -path "./vendor/*" | wc -l
+    @find . -name "*_test.go" ! -path "./.history/*" ! -path "./vendor/*" | wc -l
     @echo "Packages:"
     @{{ GO }} list ./... | wc -l
 

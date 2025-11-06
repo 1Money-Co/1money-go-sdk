@@ -22,6 +22,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/mattn/go-isatty"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -31,6 +32,20 @@ var (
 	loggerValue atomic.Value
 	loggerOnce  sync.Once
 )
+
+// supportsColor checks if the current environment supports color output.
+// It returns false if:
+// - NO_COLOR environment variable is set
+// - stdout is not a terminal (e.g., piped to a file or running in test output)
+func supportsColor() bool {
+	// Check NO_COLOR environment variable (https://no-color.org/)
+	if os.Getenv("NO_COLOR") != "" {
+		return false
+	}
+
+	// Check if stdout is a terminal
+	return isatty.IsTerminal(os.Stdout.Fd())
+}
 
 // initLogger initializes the package-level logger.
 // It uses sync.Once to ensure the logger is only created once.
@@ -79,7 +94,14 @@ func initLogger() {
 		// Create development config for human-readable output
 		config := zap.NewDevelopmentConfig()
 		config.Level = zap.NewAtomicLevelAt(level)
-		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+
+		// Use color encoding only if terminal supports it
+		// This prevents ANSI escape codes in test output or when piped to files
+		if supportsColor() {
+			config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		} else {
+			config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+		}
 		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
 		// Disable stack trace by default

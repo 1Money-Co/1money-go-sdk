@@ -136,7 +136,7 @@ import (
 	svc "github.com/1Money-Co/1money-go-sdk/pkg/service"
 )
 
-const ROUTE_PREFIX = "/openapi/v1/customers"
+const ROUTE_PREFIX = "/v1/customers"
 
 // Service defines the customer service interface for managing customer accounts.
 type Service interface {
