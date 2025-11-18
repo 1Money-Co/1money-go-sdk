@@ -19,5 +19,4 @@ coverage.dat
 .specstory
 .env
 .history/
-.env.joy
-.env.ryan
+.env.*

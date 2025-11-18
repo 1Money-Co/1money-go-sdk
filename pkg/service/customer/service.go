@@ -253,8 +253,8 @@ type AssociatedPerson struct {
 	CountryOfTax string `json:"country_of_tax"`
 	// TaxType is the type of tax identification (e.g., "SSN", "EIN").
 	TaxType TaxIDType `json:"tax_type"`
-	// TaxIDNumber is the person's tax identification number.
-	TaxIDNumber string `json:"tax_id_number"`
+	// TaxID is the person's tax identification number.
+	TaxID string `json:"tax_id"`
 	// POA is the Power of Attorney document in data-uri format (optional).
 	// Format: "data:image/[type];base64,[base64_data]" where type is jpeg, jpg, png, heic, or tif.
 	POA string `json:"poa,omitempty"`
@@ -344,6 +344,8 @@ type CreateCustomerRequest struct {
 	TaxID string `json:"tax_id"`
 	// TaxType is the type of tax ID (e.g., "EIN", "TIN").
 	TaxType TaxIDType `json:"tax_type"`
+	// TaxCountry is the country where the business is subject to taxation (ISO 3166-1 alpha-3).
+	TaxCountry string `json:"tax_country"`
 }
 
 // CustomerResponse represents the standard customer response data.
@@ -462,6 +464,8 @@ type UpdateCustomerRequest struct {
 	TaxID *string `json:"tax_id,omitempty"`
 	// TaxType is the type of tax ID (e.g., "EIN", "TIN").
 	TaxType *TaxIDType `json:"tax_type,omitempty"`
+	// TaxCountry is the country where the business is subject to taxation (ISO 3166-1 alpha-3).
+	TaxCountry *string `json:"tax_country,omitempty"`
 }
 
 // UpdateCustomerResponse is an alias for CustomerResponse.
@@ -596,8 +600,8 @@ type UpdateAssociatedPersonRequest struct {
 	CountryOfTax *string `json:"country_of_tax,omitempty"`
 	// TaxType is the type of tax identification.
 	TaxType *TaxIDType `json:"tax_type,omitempty"`
-	// TaxIDNumber is the person's tax identification number.
-	TaxIDNumber *string `json:"tax_id_number,omitempty"`
+	// TaxID is the person's tax identification number.
+	TaxID *string `json:"tax_id,omitempty"`
 	// POA is the Power of Attorney document in data-uri format.
 	POA *string `json:"poa,omitempty"`
 }

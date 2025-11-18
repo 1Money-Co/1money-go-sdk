@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
-	"github.com/flaticols/countrycodes"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
 
@@ -36,7 +35,7 @@ import (
 
 const (
 	// testCustomerID is a test customer ID used across multiple tests.
-	testCustomerID = "10592382-48e0-4b52-bc40-4d484f09dfad"
+	testCustomerID = "efee06fa-2710-4059-8e69-bfe8f8b8d625"
 )
 
 // ClientTestSuite defines the integration test suite for the OneMoney client.
@@ -139,11 +138,6 @@ func (s *ClientTestSuite) TestCustomerService_SignTOS() {
 	s.T().Logf("Signed agreement with ID:\n%s", prettyJSON(signResp))
 }
 
-func fakeCountryCode(faker *gofakeit.Faker) string {
-	country, _ := countrycodes.Alpha2ToAlpha3(faker.CountryAbr())
-	return country
-}
-
 // TestCustomerService_CreateCustomer tests customer creation.
 func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
 	// Arrange - Generate fake data using gofakeit
@@ -162,12 +156,12 @@ func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
 			StreetLine2: fmt.Sprintf("Suite %d", faker.Number(100, 999)),
 			City:        faker.City(),
 			State:       faker.StateAbr(),
-			Country:     fakeCountryCode(faker),
+			Country:     CountryUSA,
 			PostalCode:  faker.Zip(),
 			Subdivision: faker.StateAbr(),
 		},
 		DateOfIncorporation: faker.Date().Format("2006-01-02"),
-		SignedAgreementID:   967,
+		SignedAgreementID:   950,
 		AssociatedPersons: []customer.AssociatedPerson{
 			fakeAssociatedPerson(faker),
 			fakeAssociatedPerson(faker),
@@ -181,6 +175,16 @@ func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
 				DocType:     customer.DocumentTypeCertificateOfIncorporation,
 				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
 				Description: "Certificate of Incorporation",
+			},
+			{
+				DocType:     customer.DocumentTypeArticlesOfIncorporation,
+				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				Description: "Articles of Incorporation",
+			},
+			{
+				DocType:     customer.DocumentTypeW9Form,
+				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				Description: "W9 Tax Form",
 			},
 			{
 				DocType:     customer.DocumentTypeCertificateOfGoodStanding,
@@ -226,6 +230,7 @@ func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
 		ExpectedMonthlyFiatWithdrawals: customer.MoneyRange099999,
 		TaxID:                          fmt.Sprintf("%d-%d", faker.Number(10, 99), faker.Number(1000000, 9999999)),
 		TaxType:                        customer.TaxIDTypeEIN,
+		TaxCountry:                     CountryUSA,
 	}
 
 	// Act
@@ -278,7 +283,7 @@ func (s *ClientTestSuite) TestCustomerService_ListCustomers() {
 // TestCustomerService_GetCustomer tests getting a specific customer.
 func (s *ClientTestSuite) TestCustomerService_GetCustomer() {
 	// Arrange
-	customerID := testCustomerID
+	customerID := "5127880f-d64f-4d49-a2fe-b3a4a0b8aeac"
 
 	// Act
 	resp, err := s.client.Customer.GetCustomer(s.ctx, customerID)
@@ -299,7 +304,7 @@ func (s *ClientTestSuite) TestCustomerService_GetCustomer() {
 
 // TestCustomerService_UpdateCustomer_MinimalUpdate tests updating a customer with minimal fields.
 func (s *ClientTestSuite) TestCustomerService_UpdateCustomer_MinimalUpdate() {
-	customerID := testCustomerID
+	customerID := "5127880f-d64f-4d49-a2fe-b3a4a0b8aeac"
 	faker := gofakeit.New(0)
 
 	updateReq := &customer.UpdateCustomerRequest{
@@ -325,6 +330,8 @@ func (s *ClientTestSuite) TestCustomerService_UpdateCustomer_MinimalUpdate() {
 	s.T().Logf("Minimal update response:\n%s", prettyJSON(updateResp))
 }
 
+const CountryUSA = "USA"
+
 func fakeAssociatedPerson(faker *gofakeit.Faker) customer.AssociatedPerson {
 	return customer.AssociatedPerson{
 		FirstName: faker.FirstName(),
@@ -334,12 +341,13 @@ func fakeAssociatedPerson(faker *gofakeit.Faker) customer.AssociatedPerson {
 			StreetLine1: faker.Street(),
 			City:        faker.City(),
 			State:       faker.StateAbr(),
-			Country:     fakeCountryCode(faker),
+			Country:     CountryUSA,
 			PostalCode:  faker.Zip(),
+			Subdivision: faker.StateAbr(),
 		},
 		BirthDate:           faker.Date().Format("2006-01-02"),
-		CountryOfBirth:      fakeCountryCode(faker),
-		PrimaryNationality:  fakeCountryCode(faker),
+		CountryOfBirth:      CountryUSA,
+		PrimaryNationality:  CountryUSA,
 		HasOwnership:        true,
 		OwnershipPercentage: 100,
 		HasControl:          true,
@@ -348,28 +356,27 @@ func fakeAssociatedPerson(faker *gofakeit.Faker) customer.AssociatedPerson {
 		IdentifyingInformation: []customer.IdentifyingInformation{
 			{
 				Type:           customer.IDTypeDriversLicense,
-				IssuingCountry: fakeCountryCode(faker),
+				IssuingCountry: CountryUSA,
 				ImageFront:     customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
 				ImageBack:      customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
 			},
 		},
-		CountryOfTax: fakeCountryCode(faker),
-		TaxType:      customer.TaxIDTypeEIN,
-		TaxIDNumber:  fmt.Sprintf("%d-%d", faker.Number(10, 99), faker.Number(1000000, 9999999)),
+		CountryOfTax: CountryUSA,
+		TaxType:      customer.TaxIDTypeSSN,
+		TaxID:        faker.SSN(),
 		POA:          customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg), // POA is required for directors and beneficial owners
 	}
 }
 
 // TestAssociatedPerson_Create tests creating an associated person.
 func (s *ClientTestSuite) TestAssociatedPerson_Create() {
-	customerID := "f6186a5c-64c1-451e-8a37-80a74b846416"
 	faker := gofakeit.New(0)
 
 	req := &customer.CreateAssociatedPersonRequest{
 		AssociatedPerson: fakeAssociatedPerson(faker),
 	}
 
-	resp, err := s.client.Customer.CreateAssociatedPerson(s.ctx, customerID, req)
+	resp, err := s.client.Customer.CreateAssociatedPerson(s.ctx, "5127880f-d64f-4d49-a2fe-b3a4a0b8aeac", req)
 
 	s.Require().NoError(err, "CreateAssociatedPerson should not return error")
 	s.Require().NotNil(resp, "Response should not be nil")
@@ -379,7 +386,7 @@ func (s *ClientTestSuite) TestAssociatedPerson_Create() {
 
 // TestAssociatedPerson_List tests listing associated persons.
 func (s *ClientTestSuite) TestAssociatedPerson_List() {
-	customerID := testCustomerID
+	customerID := "5127880f-d64f-4d49-a2fe-b3a4a0b8aeac"
 
 	resp, err := s.client.Customer.ListAssociatedPersons(s.ctx, customerID)
 
@@ -390,8 +397,8 @@ func (s *ClientTestSuite) TestAssociatedPerson_List() {
 
 // TestAssociatedPerson_Get tests getting a specific associated person.
 func (s *ClientTestSuite) TestAssociatedPerson_Get() {
-	customerID := testCustomerID
-	associatedPersonID := "ae56e5ab-d171-4ac9-8e22-6d67a9216095"
+	customerID := "5127880f-d64f-4d49-a2fe-b3a4a0b8aeac"
+	associatedPersonID := "96d2727d-4373-4b21-a60c-dae81d763902"
 
 	resp, err := s.client.Customer.GetAssociatedPerson(s.ctx, customerID, associatedPersonID)
 	if err != nil {
@@ -406,8 +413,8 @@ func (s *ClientTestSuite) TestAssociatedPerson_Get() {
 
 // TestAssociatedPerson_Update tests updating an associated person.
 func (s *ClientTestSuite) TestAssociatedPerson_Update() {
-	customerID := testCustomerID
-	associatedPersonID := "ae56e5ab-d171-4ac9-8e22-6d67a9216095"
+	customerID := "5127880f-d64f-4d49-a2fe-b3a4a0b8aeac"
+	associatedPersonID := "96d2727d-4373-4b21-a60c-dae81d763902"
 	faker := gofakeit.New(0)
 
 	getResp, err := s.client.Customer.GetAssociatedPerson(s.ctx, customerID, associatedPersonID)
@@ -437,8 +444,8 @@ func (s *ClientTestSuite) TestAssociatedPerson_Update() {
 
 // TestAssociatedPerson_Delete tests deleting an associated person.
 func (s *ClientTestSuite) TestAssociatedPerson_Delete() {
-	customerID := testCustomerID
-	associatedPersonID := "324a052a-ff44-4ae8-9ef9-1a5e50df3c94"
+	customerID := "5127880f-d64f-4d49-a2fe-b3a4a0b8aeac"
+	associatedPersonID := "96d2727d-4373-4b21-a60c-dae81d763902"
 
 	err := s.client.Customer.DeleteAssociatedPerson(s.ctx, customerID, associatedPersonID)
 	if err != nil {
