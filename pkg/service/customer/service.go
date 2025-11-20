@@ -51,7 +51,7 @@
 //	    BusinessRegistrationNumber: "1234567890",
 //	    Email:                      "contact@acme.com",
 //	    BusinessType:               "corporation",
-//	    BusinessIndustry:           "technology",
+//	    BusinessIndustry:           "541519", // NAICS code
 //	    RegisteredAddress: &customer.Address{
 //	        StreetLine1: "123 Main Street",
 //	        City:        "San Francisco",
@@ -289,7 +289,7 @@ type ValidationError struct {
 //
 // All monetary ranges use string enumerations (e.g., "0_99999", "100000_499999").
 // Business types include: "cooperative", "corporation", "llc", "partnership", "sole_proprietorship".
-// Industries follow standard classification codes for financial services, retail, technology, etc.
+// BusinessIndustry accepts NAICS codes (e.g., "541519" for Other Computer Related Services).
 type CreateCustomerRequest struct {
 	// BusinessLegalName is the official registered legal name of the business entity.
 	BusinessLegalName string `json:"business_legal_name"`
@@ -301,8 +301,10 @@ type CreateCustomerRequest struct {
 	Email string `json:"email"`
 	// BusinessType specifies the legal structure (e.g., "cooperative", "corporation", "llc").
 	BusinessType BusinessType `json:"business_type"`
-	// BusinessIndustry specifies the industry classification (e.g., "bank_credit_unions_regulated_financial_institution").
-	BusinessIndustry BusinessIndustry `json:"business_industry"`
+	// BusinessIndustry is a NAICS code representing the business industry (e.g., "541519").
+	// This will be converted to internal answer ID for database storage.
+	// Valid NAICS codes should be 1-10 characters in length.
+	BusinessIndustry string `json:"business_industry"`
 	// RegisteredAddress is the official registered address of the business.
 	RegisteredAddress *Address `json:"registered_address"`
 	// DateOfIncorporation is the date when the business was officially incorporated (ISO format).
@@ -361,8 +363,8 @@ type CustomerResponse struct {
 	BusinessDescription string `json:"business_description,omitempty"`
 	// BusinessType is the type of business entity.
 	BusinessType BusinessType `json:"business_type"`
-	// BusinessIndustry specifies the industry classification.
-	BusinessIndustry BusinessIndustry `json:"business_industry,omitempty"`
+	// BusinessIndustry is a NAICS code representing the business industry.
+	BusinessIndustry string `json:"business_industry,omitempty"`
 	// BusinessRegistrationNumber is the official business registration or incorporation number.
 	BusinessRegistrationNumber string `json:"business_registration_number,omitempty"`
 	// DateOfIncorporation is the date when the business was officially incorporated (ISO format).
@@ -421,8 +423,8 @@ type UpdateCustomerRequest struct {
 	Email *string `json:"email,omitempty"`
 	// BusinessType specifies the legal structure (e.g., "cooperative", "corporation", "llc").
 	BusinessType *BusinessType `json:"business_type,omitempty"`
-	// BusinessIndustry specifies the industry classification.
-	BusinessIndustry *BusinessIndustry `json:"business_industry,omitempty"`
+	// BusinessIndustry is a NAICS code representing the business industry.
+	BusinessIndustry *string `json:"business_industry,omitempty"`
 	// RegisteredAddress is the official registered address of the business.
 	RegisteredAddress *Address `json:"registered_address,omitempty"`
 	// DateOfIncorporation is the date when the business was officially incorporated (ISO format).

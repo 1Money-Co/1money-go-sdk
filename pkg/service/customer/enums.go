@@ -22,25 +22,11 @@ package customer
 // ENUM(cooperative, corporation, llc, partnership, sole_proprietorship)
 type BusinessType string
 
-// BusinessIndustry represents the industry classification of a business.
-/* ENUM(
-bank_credit_unions_regulated_financial_institution
-professional_services
-technology_e_commerce_platforms
-general_manufacturing
-general_wholesalers
-healthcare_and_social_assistance
-educational_services
-scientific_and_technical_services
-non_bank_financial_institution
-investment_fund
-real_estate
-retail_trade
-arts_entertainment_recreation
-accommodation_food_services
-other
-)
-*/
+// BusinessIndustry represents the NAICS (North American Industry Classification System) code
+// representing the business industry. This is a string field that accepts NAICS codes
+// (e.g., "541519" for Other Computer Related Services).
+// The NAICS code will be converted to internal answer ID for database storage.
+// Valid NAICS codes should be 1-10 characters in length.
 type BusinessIndustry string
 
 // IDType represents the type of identification document.
