@@ -65,11 +65,11 @@ constitutional_or_formation_documents
 partnership_agreement
 articles_of_organization
 articles_of_incorporation
+articles_of_incorporation_by_laws_or_equivalent_document
 operating_lp_agreement_if_applicable
 prospectus_offering_memorandum_or_private_placement_memorandum
 aml_attestation_letter
 fund_structure_chart
-articles_of_incorporation_by_laws_or_equivalent_document
 irs_determination_letter
 annual_reports
 business_license
@@ -77,6 +77,7 @@ trade_name_registration_doing_business_as_dba_filing
 tax_filings
 list_manager_or_similar_persons_that_has_have_the_ability_to_legally_bind_the_dao_and_carry_out_the_daos_instructions
 voting_records
+supporting_documents
 trust_agreement
 certificate_of_good_standing
 ownership_and_formation_documents
@@ -95,7 +96,6 @@ aml_policy
 certificate_of_incumbency_or_register_of_directors
 tax_exemption_or_charity_registration_letter
 memorandum_of_association_or_article_of_association_or_equivalent_document
-supporting_documents
 )
 */
 type DocumentType string
@@ -218,17 +218,15 @@ type HighRiskActivity string
 // ENUM(jpeg, jpg, png, heic, tif)
 type ImageFormat string
 
-// CustomerStatus represents the current status of a customer account.
-// This status represents the overall state of the customer account,
-// including KYB verification progress and account operational status.
+// KybStatus represents the KYB (Know Your Business) verification status of a customer account.
+// This status tracks the progress and state of the KYB verification process.
 // ENUM(
-// active,
-// awaiting_questionnaire,
-// awaiting_ubo,
-// incomplete,
-// not_started,
-// offboarded,
-// paused,
+// init,
+// pending_review,
+// under_review,
+// pending_response,
+// escalated,
+// pending_approval,
 // rejected,
-// under_review)
-type CustomerStatus string
+// approved)
+type KybStatus string

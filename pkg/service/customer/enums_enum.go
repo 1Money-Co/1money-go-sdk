@@ -213,107 +213,6 @@ func (x *BusinessType) AppendText(b []byte) ([]byte, error) {
 }
 
 const (
-	// CustomerStatusActive is a CustomerStatus of type active.
-	CustomerStatusActive CustomerStatus = "active"
-	// CustomerStatusAwaitingQuestionnaire is a CustomerStatus of type awaiting_questionnaire.
-	CustomerStatusAwaitingQuestionnaire CustomerStatus = "awaiting_questionnaire"
-	// CustomerStatusAwaitingUbo is a CustomerStatus of type awaiting_ubo.
-	CustomerStatusAwaitingUbo CustomerStatus = "awaiting_ubo"
-	// CustomerStatusIncomplete is a CustomerStatus of type incomplete.
-	CustomerStatusIncomplete CustomerStatus = "incomplete"
-	// CustomerStatusNotStarted is a CustomerStatus of type not_started.
-	CustomerStatusNotStarted CustomerStatus = "not_started"
-	// CustomerStatusOffboarded is a CustomerStatus of type offboarded.
-	CustomerStatusOffboarded CustomerStatus = "offboarded"
-	// CustomerStatusPaused is a CustomerStatus of type paused.
-	CustomerStatusPaused CustomerStatus = "paused"
-	// CustomerStatusRejected is a CustomerStatus of type rejected.
-	CustomerStatusRejected CustomerStatus = "rejected"
-	// CustomerStatusUnderReview is a CustomerStatus of type under_review.
-	CustomerStatusUnderReview CustomerStatus = "under_review"
-)
-
-var ErrInvalidCustomerStatus = fmt.Errorf("not a valid CustomerStatus, try [%s]", strings.Join(_CustomerStatusNames, ", "))
-
-var _CustomerStatusNames = []string{
-	string(CustomerStatusActive),
-	string(CustomerStatusAwaitingQuestionnaire),
-	string(CustomerStatusAwaitingUbo),
-	string(CustomerStatusIncomplete),
-	string(CustomerStatusNotStarted),
-	string(CustomerStatusOffboarded),
-	string(CustomerStatusPaused),
-	string(CustomerStatusRejected),
-	string(CustomerStatusUnderReview),
-}
-
-// CustomerStatusNames returns a list of possible string values of CustomerStatus.
-func CustomerStatusNames() []string {
-	tmp := make([]string, len(_CustomerStatusNames))
-	copy(tmp, _CustomerStatusNames)
-	return tmp
-}
-
-// String implements the Stringer interface.
-func (x CustomerStatus) String() string {
-	return string(x)
-}
-
-// IsValid provides a quick way to determine if the typed value is
-// part of the allowed enumerated values
-func (x CustomerStatus) IsValid() bool {
-	_, err := ParseCustomerStatus(string(x))
-	return err == nil
-}
-
-var _CustomerStatusValue = map[string]CustomerStatus{
-	"active":                 CustomerStatusActive,
-	"awaiting_questionnaire": CustomerStatusAwaitingQuestionnaire,
-	"awaiting_ubo":           CustomerStatusAwaitingUbo,
-	"incomplete":             CustomerStatusIncomplete,
-	"not_started":            CustomerStatusNotStarted,
-	"offboarded":             CustomerStatusOffboarded,
-	"paused":                 CustomerStatusPaused,
-	"rejected":               CustomerStatusRejected,
-	"under_review":           CustomerStatusUnderReview,
-}
-
-// ParseCustomerStatus attempts to convert a string to a CustomerStatus.
-func ParseCustomerStatus(name string) (CustomerStatus, error) {
-	if x, ok := _CustomerStatusValue[name]; ok {
-		return x, nil
-	}
-	// Case insensitive parse, do a separate lookup to prevent unnecessary cost of lowercasing a string if we don't need to.
-	if x, ok := _CustomerStatusValue[strings.ToLower(name)]; ok {
-		return x, nil
-	}
-	return CustomerStatus(""), fmt.Errorf("%s is %w", name, ErrInvalidCustomerStatus)
-}
-
-// MarshalText implements the text marshaller method.
-func (x CustomerStatus) MarshalText() ([]byte, error) {
-	return []byte(string(x)), nil
-}
-
-// UnmarshalText implements the text unmarshaller method.
-func (x *CustomerStatus) UnmarshalText(text []byte) error {
-	tmp, err := ParseCustomerStatus(string(text))
-	if err != nil {
-		return err
-	}
-	*x = tmp
-	return nil
-}
-
-// AppendText appends the textual representation of itself to the end of b
-// (allocating a larger slice if necessary) and returns the updated slice.
-//
-// Implementations must not retain b, nor mutate any bytes within b[:len(b)].
-func (x *CustomerStatus) AppendText(b []byte) ([]byte, error) {
-	return append(b, x.String()...), nil
-}
-
-const (
 	// DocumentTypeCertificateOfIncorporation is a DocumentType of type certificate_of_incorporation.
 	DocumentTypeCertificateOfIncorporation DocumentType = "certificate_of_incorporation"
 	// DocumentTypeCertificateOfFormationRegistration is a DocumentType of type certificate_of_formation_registration.
@@ -328,6 +227,8 @@ const (
 	DocumentTypeArticlesOfOrganization DocumentType = "articles_of_organization"
 	// DocumentTypeArticlesOfIncorporation is a DocumentType of type articles_of_incorporation.
 	DocumentTypeArticlesOfIncorporation DocumentType = "articles_of_incorporation"
+	// DocumentTypeArticlesOfIncorporationByLawsOrEquivalentDocument is a DocumentType of type articles_of_incorporation_by_laws_or_equivalent_document.
+	DocumentTypeArticlesOfIncorporationByLawsOrEquivalentDocument DocumentType = "articles_of_incorporation_by_laws_or_equivalent_document"
 	// DocumentTypeOperatingLpAgreementIfApplicable is a DocumentType of type operating_lp_agreement_if_applicable.
 	DocumentTypeOperatingLpAgreementIfApplicable DocumentType = "operating_lp_agreement_if_applicable"
 	// DocumentTypeProspectusOfferingMemorandumOrPrivatePlacementMemorandum is a DocumentType of type prospectus_offering_memorandum_or_private_placement_memorandum.
@@ -336,8 +237,6 @@ const (
 	DocumentTypeAmlAttestationLetter DocumentType = "aml_attestation_letter"
 	// DocumentTypeFundStructureChart is a DocumentType of type fund_structure_chart.
 	DocumentTypeFundStructureChart DocumentType = "fund_structure_chart"
-	// DocumentTypeArticlesOfIncorporationByLawsOrEquivalentDocument is a DocumentType of type articles_of_incorporation_by_laws_or_equivalent_document.
-	DocumentTypeArticlesOfIncorporationByLawsOrEquivalentDocument DocumentType = "articles_of_incorporation_by_laws_or_equivalent_document"
 	// DocumentTypeIrsDeterminationLetter is a DocumentType of type irs_determination_letter.
 	DocumentTypeIrsDeterminationLetter DocumentType = "irs_determination_letter"
 	// DocumentTypeAnnualReports is a DocumentType of type annual_reports.
@@ -352,6 +251,8 @@ const (
 	DocumentTypeListManagerOrSimilarPersonsThatHasHaveTheAbilityToLegallyBindTheDaoAndCarryOutTheDaosInstructions DocumentType = "list_manager_or_similar_persons_that_has_have_the_ability_to_legally_bind_the_dao_and_carry_out_the_daos_instructions"
 	// DocumentTypeVotingRecords is a DocumentType of type voting_records.
 	DocumentTypeVotingRecords DocumentType = "voting_records"
+	// DocumentTypeSupportingDocuments is a DocumentType of type supporting_documents.
+	DocumentTypeSupportingDocuments DocumentType = "supporting_documents"
 	// DocumentTypeTrustAgreement is a DocumentType of type trust_agreement.
 	DocumentTypeTrustAgreement DocumentType = "trust_agreement"
 	// DocumentTypeCertificateOfGoodStanding is a DocumentType of type certificate_of_good_standing.
@@ -388,8 +289,6 @@ const (
 	DocumentTypeTaxExemptionOrCharityRegistrationLetter DocumentType = "tax_exemption_or_charity_registration_letter"
 	// DocumentTypeMemorandumOfAssociationOrArticleOfAssociationOrEquivalentDocument is a DocumentType of type memorandum_of_association_or_article_of_association_or_equivalent_document.
 	DocumentTypeMemorandumOfAssociationOrArticleOfAssociationOrEquivalentDocument DocumentType = "memorandum_of_association_or_article_of_association_or_equivalent_document"
-	// DocumentTypeSupportingDocuments is a DocumentType of type supporting_documents.
-	DocumentTypeSupportingDocuments DocumentType = "supporting_documents"
 )
 
 var ErrInvalidDocumentType = fmt.Errorf("not a valid DocumentType, try [%s]", strings.Join(_DocumentTypeNames, ", "))
@@ -402,11 +301,11 @@ var _DocumentTypeNames = []string{
 	string(DocumentTypePartnershipAgreement),
 	string(DocumentTypeArticlesOfOrganization),
 	string(DocumentTypeArticlesOfIncorporation),
+	string(DocumentTypeArticlesOfIncorporationByLawsOrEquivalentDocument),
 	string(DocumentTypeOperatingLpAgreementIfApplicable),
 	string(DocumentTypeProspectusOfferingMemorandumOrPrivatePlacementMemorandum),
 	string(DocumentTypeAmlAttestationLetter),
 	string(DocumentTypeFundStructureChart),
-	string(DocumentTypeArticlesOfIncorporationByLawsOrEquivalentDocument),
 	string(DocumentTypeIrsDeterminationLetter),
 	string(DocumentTypeAnnualReports),
 	string(DocumentTypeBusinessLicense),
@@ -414,6 +313,7 @@ var _DocumentTypeNames = []string{
 	string(DocumentTypeTaxFilings),
 	string(DocumentTypeListManagerOrSimilarPersonsThatHasHaveTheAbilityToLegallyBindTheDaoAndCarryOutTheDaosInstructions),
 	string(DocumentTypeVotingRecords),
+	string(DocumentTypeSupportingDocuments),
 	string(DocumentTypeTrustAgreement),
 	string(DocumentTypeCertificateOfGoodStanding),
 	string(DocumentTypeOwnershipAndFormationDocuments),
@@ -432,7 +332,6 @@ var _DocumentTypeNames = []string{
 	string(DocumentTypeCertificateOfIncumbencyOrRegisterOfDirectors),
 	string(DocumentTypeTaxExemptionOrCharityRegistrationLetter),
 	string(DocumentTypeMemorandumOfAssociationOrArticleOfAssociationOrEquivalentDocument),
-	string(DocumentTypeSupportingDocuments),
 }
 
 // DocumentTypeNames returns a list of possible string values of DocumentType.
@@ -462,11 +361,11 @@ var _DocumentTypeValue = map[string]DocumentType{
 	"partnership_agreement":                                          DocumentTypePartnershipAgreement,
 	"articles_of_organization":                                       DocumentTypeArticlesOfOrganization,
 	"articles_of_incorporation":                                      DocumentTypeArticlesOfIncorporation,
+	"articles_of_incorporation_by_laws_or_equivalent_document":       DocumentTypeArticlesOfIncorporationByLawsOrEquivalentDocument,
 	"operating_lp_agreement_if_applicable":                           DocumentTypeOperatingLpAgreementIfApplicable,
 	"prospectus_offering_memorandum_or_private_placement_memorandum": DocumentTypeProspectusOfferingMemorandumOrPrivatePlacementMemorandum,
 	"aml_attestation_letter":                                         DocumentTypeAmlAttestationLetter,
 	"fund_structure_chart":                                           DocumentTypeFundStructureChart,
-	"articles_of_incorporation_by_laws_or_equivalent_document":       DocumentTypeArticlesOfIncorporationByLawsOrEquivalentDocument,
 	"irs_determination_letter":                                       DocumentTypeIrsDeterminationLetter,
 	"annual_reports":                                                 DocumentTypeAnnualReports,
 	"business_license":                                               DocumentTypeBusinessLicense,
@@ -474,6 +373,7 @@ var _DocumentTypeValue = map[string]DocumentType{
 	"tax_filings":                                                    DocumentTypeTaxFilings,
 	"list_manager_or_similar_persons_that_has_have_the_ability_to_legally_bind_the_dao_and_carry_out_the_daos_instructions": DocumentTypeListManagerOrSimilarPersonsThatHasHaveTheAbilityToLegallyBindTheDaoAndCarryOutTheDaosInstructions,
 	"voting_records":                       DocumentTypeVotingRecords,
+	"supporting_documents":                 DocumentTypeSupportingDocuments,
 	"trust_agreement":                      DocumentTypeTrustAgreement,
 	"certificate_of_good_standing":         DocumentTypeCertificateOfGoodStanding,
 	"ownership_and_formation_documents":    DocumentTypeOwnershipAndFormationDocuments,
@@ -492,7 +392,6 @@ var _DocumentTypeValue = map[string]DocumentType{
 	"certificate_of_incumbency_or_register_of_directors":                         DocumentTypeCertificateOfIncumbencyOrRegisterOfDirectors,
 	"tax_exemption_or_charity_registration_letter":                               DocumentTypeTaxExemptionOrCharityRegistrationLetter,
 	"memorandum_of_association_or_article_of_association_or_equivalent_document": DocumentTypeMemorandumOfAssociationOrArticleOfAssociationOrEquivalentDocument,
-	"supporting_documents": DocumentTypeSupportingDocuments,
 }
 
 // ParseDocumentType attempts to convert a string to a DocumentType.
@@ -790,6 +689,103 @@ func (x *ImageFormat) UnmarshalText(text []byte) error {
 //
 // Implementations must not retain b, nor mutate any bytes within b[:len(b)].
 func (x *ImageFormat) AppendText(b []byte) ([]byte, error) {
+	return append(b, x.String()...), nil
+}
+
+const (
+	// KybStatusInit is a KybStatus of type init.
+	KybStatusInit KybStatus = "init"
+	// KybStatusPendingReview is a KybStatus of type pending_review.
+	KybStatusPendingReview KybStatus = "pending_review"
+	// KybStatusUnderReview is a KybStatus of type under_review.
+	KybStatusUnderReview KybStatus = "under_review"
+	// KybStatusPendingResponse is a KybStatus of type pending_response.
+	KybStatusPendingResponse KybStatus = "pending_response"
+	// KybStatusEscalated is a KybStatus of type escalated.
+	KybStatusEscalated KybStatus = "escalated"
+	// KybStatusPendingApproval is a KybStatus of type pending_approval.
+	KybStatusPendingApproval KybStatus = "pending_approval"
+	// KybStatusRejected is a KybStatus of type rejected.
+	KybStatusRejected KybStatus = "rejected"
+	// KybStatusApproved is a KybStatus of type approved.
+	KybStatusApproved KybStatus = "approved"
+)
+
+var ErrInvalidKybStatus = fmt.Errorf("not a valid KybStatus, try [%s]", strings.Join(_KybStatusNames, ", "))
+
+var _KybStatusNames = []string{
+	string(KybStatusInit),
+	string(KybStatusPendingReview),
+	string(KybStatusUnderReview),
+	string(KybStatusPendingResponse),
+	string(KybStatusEscalated),
+	string(KybStatusPendingApproval),
+	string(KybStatusRejected),
+	string(KybStatusApproved),
+}
+
+// KybStatusNames returns a list of possible string values of KybStatus.
+func KybStatusNames() []string {
+	tmp := make([]string, len(_KybStatusNames))
+	copy(tmp, _KybStatusNames)
+	return tmp
+}
+
+// String implements the Stringer interface.
+func (x KybStatus) String() string {
+	return string(x)
+}
+
+// IsValid provides a quick way to determine if the typed value is
+// part of the allowed enumerated values
+func (x KybStatus) IsValid() bool {
+	_, err := ParseKybStatus(string(x))
+	return err == nil
+}
+
+var _KybStatusValue = map[string]KybStatus{
+	"init":             KybStatusInit,
+	"pending_review":   KybStatusPendingReview,
+	"under_review":     KybStatusUnderReview,
+	"pending_response": KybStatusPendingResponse,
+	"escalated":        KybStatusEscalated,
+	"pending_approval": KybStatusPendingApproval,
+	"rejected":         KybStatusRejected,
+	"approved":         KybStatusApproved,
+}
+
+// ParseKybStatus attempts to convert a string to a KybStatus.
+func ParseKybStatus(name string) (KybStatus, error) {
+	if x, ok := _KybStatusValue[name]; ok {
+		return x, nil
+	}
+	// Case insensitive parse, do a separate lookup to prevent unnecessary cost of lowercasing a string if we don't need to.
+	if x, ok := _KybStatusValue[strings.ToLower(name)]; ok {
+		return x, nil
+	}
+	return KybStatus(""), fmt.Errorf("%s is %w", name, ErrInvalidKybStatus)
+}
+
+// MarshalText implements the text marshaller method.
+func (x KybStatus) MarshalText() ([]byte, error) {
+	return []byte(string(x)), nil
+}
+
+// UnmarshalText implements the text unmarshaller method.
+func (x *KybStatus) UnmarshalText(text []byte) error {
+	tmp, err := ParseKybStatus(string(text))
+	if err != nil {
+		return err
+	}
+	*x = tmp
+	return nil
+}
+
+// AppendText appends the textual representation of itself to the end of b
+// (allocating a larger slice if necessary) and returns the updated slice.
+//
+// Implementations must not retain b, nor mutate any bytes within b[:len(b)].
+func (x *KybStatus) AppendText(b []byte) ([]byte, error) {
 	return append(b, x.String()...), nil
 }
 

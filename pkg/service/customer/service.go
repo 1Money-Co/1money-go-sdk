@@ -353,8 +353,8 @@ type CreateCustomerRequest struct {
 // CustomerResponse represents the standard customer response data.
 // This structure is used for customer creation, retrieval, and update operations.
 type CustomerResponse struct {
-	// ID is the unique identifier of the customer.
-	ID string `json:"id"`
+	// CustomerID is the unique identifier of the customer.
+	CustomerID string `json:"customer_id"`
 	// Email is the primary contact email for the customer.
 	Email string `json:"email"`
 	// BusinessLegalName is the legal business name.
@@ -387,10 +387,8 @@ type CustomerResponse struct {
 	TaxType TaxIDType `json:"tax_type,omitempty"`
 	// TaxCountry is the country where the business is subject to taxation.
 	TaxCountry string `json:"tax_country,omitempty"`
-	// Status is the current customer account status.
-	Status CustomerStatus `json:"status"`
-	// RiskScore is the calculated risk score for the customer (0-100).
-	RiskScore float64 `json:"risk_score,omitempty"`
+	// Status is the current KYB verification status.
+	Status KybStatus `json:"status"`
 	// SubmittedAt is the timestamp when the customer application was submitted (ISO 8601 format).
 	SubmittedAt string `json:"submitted_at,omitempty"`
 	// CreatedAt is the timestamp when the customer account was created (ISO 8601 format).
@@ -477,31 +475,27 @@ type UpdateCustomerResponse = CustomerResponse
 // ListCustomersRequest represents the request parameters for listing customers.
 // This supports pagination and filtering of customer accounts.
 type ListCustomersRequest struct {
-	// Page is the page number for pagination (1-indexed).
-	Page int `json:"page,omitempty"`
-	// PageSize is the number of items per page.
+	// PageSize is the number of records per page (1-100, default 10).
 	PageSize int `json:"page_size,omitempty"`
-	// Status filters customers by their account status (e.g., "active", "pending", "suspended").
-	Status string `json:"status,omitempty"`
-	// Email filters customers by email address.
-	Email string `json:"email,omitempty"`
-	// Name filters customers by business name (partial match supported).
-	Name string `json:"name,omitempty"`
+	// PageNum is the page number, 0-indexed (default 0).
+	PageNum int `json:"page_num,omitempty"`
+	// KybStatus filters customers by their KYB verification status.
+	KybStatus string `json:"kyb_status,omitempty"`
 }
 
 // CustomerSummary represents a summary of a customer account in list responses.
 // This contains a subset of customer information for efficient listing.
 type CustomerSummary struct {
-	// ID is the unique identifier of the customer.
-	ID string `json:"id"`
+	// CustomerID is the unique identifier of the customer.
+	CustomerID string `json:"customer_id"`
 	// Email is the primary contact email.
 	Email string `json:"email"`
 	// BusinessLegalName is the legal business name.
 	BusinessLegalName string `json:"business_legal_name"`
 	// BusinessType is the type of business entity.
 	BusinessType BusinessType `json:"business_type"`
-	// Status is the current account status.
-	Status CustomerStatus `json:"status"`
+	// Status is the current KYB verification status.
+	Status KybStatus `json:"status"`
 	// CreatedAt is the timestamp when the customer was created (ISO 8601 format).
 	CreatedAt string `json:"created_at"`
 	// UpdatedAt is the timestamp when the customer was last updated (ISO 8601 format).
@@ -513,8 +507,8 @@ type CustomerSummary struct {
 // Note: The API returns only the customer array. Pagination fields (Total, Page, PageSize, TotalPages)
 // are computed on the client side based on the returned data and request parameters.
 type ListCustomersResponse struct {
-	// Data is the list of customer summaries returned by the API.
-	Data []CustomerSummary `json:"data"`
+	// Customers is the list of customer summaries returned by the API.
+	Customers []CustomerSummary `json:"customers"`
 	// Total is the number of customers in the current response (computed as len(Data)).
 	Total int `json:"total"`
 }
@@ -528,8 +522,8 @@ type CreateAssociatedPersonRequest struct {
 // AssociatedPersonResponse represents the response data for an associated person.
 // This is returned after creating or retrieving associated persons (beneficial owners, controllers, signers).
 type AssociatedPersonResponse struct {
-	// ID is the unique identifier for this associated person.
-	ID string `json:"id"`
+	// AssociatedPersonID is the unique identifier for this associated person.
+	AssociatedPersonID string `json:"associated_person_id"`
 	// Email is the person's contact email address.
 	Email string `json:"email"`
 	// FirstName is the person's legal first name.
@@ -615,6 +609,7 @@ type ListAssociatedPersonsResponse []AssociatedPersonResponse
 // TOSLinkResponse represents the response data for creating a TOS signing link.
 // This contains the session token that can be used to sign the Terms of Service agreement.
 type TOSLinkResponse struct {
+	Url string `json:"url"`
 	// SessionToken is the unique token for the TOS signing session.
 	// This token expires in 1 hour and should be used in the signing flow.
 	SessionToken string `json:"sessionToken"`
@@ -645,17 +640,12 @@ func NewService(base *svc.BaseService) Service {
 // This is the first step in the customer onboarding flow. The session expires in 1 hour.
 func (s *serviceImpl) CreateTOSLink(ctx context.Context) (*TOSLinkResponse, error) {
 	path := fmt.Sprintf("%s/tos_links", ROUTE_PREFIX)
-	resp, err := svc.PostJSON[any, TOSLinkResponse](
+	return svc.PostJSON[any, TOSLinkResponse](
 		ctx,
 		s.BaseService,
 		path,
 		nil,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &resp.Data, nil
 }
 
 // SignTOSAgreement signs the Terms of Service agreement using the session token.
@@ -663,32 +653,22 @@ func (s *serviceImpl) CreateTOSLink(ctx context.Context) (*TOSLinkResponse, erro
 // Returns a signed_agreement_id to be used in customer creation.
 func (s *serviceImpl) SignTOSAgreement(ctx context.Context, sessionToken string) (*SignAgreementResponse, error) {
 	path := fmt.Sprintf("%s/tos_links/%s/sign", ROUTE_PREFIX, sessionToken)
-	resp, err := svc.PostJSON[any, SignAgreementResponse](
+	return svc.PostJSON[any, SignAgreementResponse](
 		ctx,
 		s.BaseService,
 		path,
 		nil,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &resp.Data, nil
 }
 
 // CreateCustomer creates a new customer using the generic PostJSON function.
 func (s *serviceImpl) CreateCustomer(ctx context.Context, req *CreateCustomerRequest) (*CreateCustomerResponse, error) {
-	resp, err := svc.PostJSON[*CreateCustomerRequest, CreateCustomerResponse](
+	return svc.PostJSON[*CreateCustomerRequest, CreateCustomerResponse](
 		ctx,
 		s.BaseService,
 		ROUTE_PREFIX,
 		req,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &resp.Data, nil
 }
 
 // ListCustomers retrieves a list of customers with optional filtering and pagination.
@@ -696,60 +676,41 @@ func (s *serviceImpl) ListCustomers(ctx context.Context, req *ListCustomersReque
 	params := make(map[string]string)
 
 	if req != nil {
-		if req.Page > 0 {
-			params["page"] = fmt.Sprintf("%d", req.Page)
-		}
 		if req.PageSize > 0 {
 			params["page_size"] = fmt.Sprintf("%d", req.PageSize)
 		}
-		if req.Status != "" {
-			params["status"] = req.Status
+		if req.PageNum > 0 {
+			params["page_num"] = fmt.Sprintf("%d", req.PageNum)
 		}
-		if req.Email != "" {
-			params["email"] = req.Email
-		}
-		if req.Name != "" {
-			params["name"] = req.Name
+		if req.KybStatus != "" {
+			params["kyb_status"] = req.KybStatus
 		}
 	}
 
-	resp, err := svc.GetJSONWithParams[ListCustomersResponse](
+	return svc.GetJSONWithParams[ListCustomersResponse](
 		ctx,
 		s.BaseService,
 		ROUTE_PREFIX,
 		params,
 	)
-	if err != nil {
-		return nil, err
-	}
-	return &resp.Data, nil
 }
 
 // GetCustomer retrieves a specific customer by ID.
 func (s *serviceImpl) GetCustomer(ctx context.Context, customerID string) (*CustomerResponse, error) {
 	path := fmt.Sprintf("%s/%s", ROUTE_PREFIX, customerID)
-	resp, err := svc.GetJSON[CustomerResponse](ctx, s.BaseService, path)
-	if err != nil {
-		return nil, err
-	}
-	return &resp.Data, nil
+	return svc.GetJSON[CustomerResponse](ctx, s.BaseService, path)
 }
 
 // UpdateCustomer updates an existing customer with partial KYB information.
 // Only the fields provided in the request will be updated; nil/omitted fields remain unchanged.
 func (s *serviceImpl) UpdateCustomer(ctx context.Context, customerID string, req *UpdateCustomerRequest) (*UpdateCustomerResponse, error) {
 	path := fmt.Sprintf("%s/%s", ROUTE_PREFIX, customerID)
-	resp, err := svc.PatchJSON[*UpdateCustomerRequest, UpdateCustomerResponse](
+	return svc.PutJSON[*UpdateCustomerRequest, UpdateCustomerResponse](
 		ctx,
 		s.BaseService,
 		path,
 		req,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &resp.Data, nil
 }
 
 // CreateAssociatedPerson creates a new associated person for a customer.
@@ -759,28 +720,18 @@ func (s *serviceImpl) CreateAssociatedPerson(
 	req *CreateAssociatedPersonRequest,
 ) (*AssociatedPersonResponse, error) {
 	path := fmt.Sprintf("%s/%s/associated_persons", ROUTE_PREFIX, customerID)
-	resp, err := svc.PostJSON[*CreateAssociatedPersonRequest, AssociatedPersonResponse](
+	return svc.PostJSON[*CreateAssociatedPersonRequest, AssociatedPersonResponse](
 		ctx,
 		s.BaseService,
 		path,
 		req,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &resp.Data, nil
 }
 
 // ListAssociatedPersons retrieves all associated persons for a specific customer.
 func (s *serviceImpl) ListAssociatedPersons(ctx context.Context, customerID string) (*ListAssociatedPersonsResponse, error) {
 	path := fmt.Sprintf("%s/%s/associated_persons", ROUTE_PREFIX, customerID)
-	resp, err := svc.GetJSON[ListAssociatedPersonsResponse](ctx, s.BaseService, path)
-	if err != nil {
-		return nil, err
-	}
-
-	return &resp.Data, nil
+	return svc.GetJSON[ListAssociatedPersonsResponse](ctx, s.BaseService, path)
 }
 
 // GetAssociatedPerson retrieves a specific associated person by ID.
@@ -790,12 +741,7 @@ func (s *serviceImpl) GetAssociatedPerson(
 	associatedPersonID string,
 ) (*AssociatedPersonResponse, error) {
 	path := fmt.Sprintf("%s/%s/associated_persons/%s", ROUTE_PREFIX, customerID, associatedPersonID)
-	resp, err := svc.GetJSON[AssociatedPersonResponse](ctx, s.BaseService, path)
-	if err != nil {
-		return nil, err
-	}
-
-	return &resp.Data, nil
+	return svc.GetJSON[AssociatedPersonResponse](ctx, s.BaseService, path)
 }
 
 // UpdateAssociatedPerson updates an existing associated person with partial data.
@@ -807,17 +753,12 @@ func (s *serviceImpl) UpdateAssociatedPerson(
 	req *UpdateAssociatedPersonRequest,
 ) (*AssociatedPersonResponse, error) {
 	path := fmt.Sprintf("%s/%s/associated_persons/%s", ROUTE_PREFIX, customerID, associatedPersonID)
-	resp, err := svc.PatchJSON[*UpdateAssociatedPersonRequest, AssociatedPersonResponse](
+	return svc.PutJSON[*UpdateAssociatedPersonRequest, AssociatedPersonResponse](
 		ctx,
 		s.BaseService,
 		path,
 		req,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &resp.Data, nil
 }
 
 // DeleteAssociatedPerson soft-deletes a specific associated person.

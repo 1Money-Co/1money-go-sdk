@@ -194,14 +194,14 @@ func (s *BaseService) Do(ctx context.Context, req *transport.Request) (*transpor
 	return s.transport.Do(ctx, req)
 }
 
-// GetJSON performs a GET request and unmarshals the response into GenericResponse[T].
-func GetJSON[T any](ctx context.Context, s *BaseService, path string) (*transport.GenericResponse[T], error) {
+// GetJSON performs a GET request and unmarshals the response directly into T.
+func GetJSON[T any](ctx context.Context, s *BaseService, path string) (*T, error) {
 	resp, err := s.Get(ctx, path)
 	if err != nil {
 		return nil, err
 	}
 
-	var result transport.GenericResponse[T]
+	var result T
 	if err := json.Unmarshal(resp.Body, &result); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
@@ -209,12 +209,12 @@ func GetJSON[T any](ctx context.Context, s *BaseService, path string) (*transpor
 	return &result, nil
 }
 
-// GetJSONWithParams performs a GET request with query parameters and unmarshals the response into GenericResponse[T].
+// GetJSONWithParams performs a GET request with query parameters and unmarshals the response directly into T.
 func GetJSONWithParams[T any](ctx context.Context,
 	s *BaseService,
 	path string,
 	params map[string]string,
-) (*transport.GenericResponse[T], error) {
+) (*T, error) {
 	req := &transport.Request{
 		Method:      "GET",
 		Path:        path,
@@ -225,7 +225,7 @@ func GetJSONWithParams[T any](ctx context.Context,
 		return nil, err
 	}
 
-	var result transport.GenericResponse[T]
+	var result T
 	if err := json.Unmarshal(resp.Body, &result); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
@@ -234,12 +234,12 @@ func GetJSONWithParams[T any](ctx context.Context,
 }
 
 // sendJSONRequest is a helper function that handles JSON marshaling/unmarshaling for HTTP requests.
-// It marshals the request body, sends it using the provided method, and unmarshals the response.
+// It marshals the request body, sends it using the provided method, and unmarshals the response directly.
 func sendJSONRequest[Req, Resp any](ctx context.Context,
 	path string,
 	req Req,
 	method func(context.Context, string, []byte) (*transport.Response, error),
-) (*transport.GenericResponse[Resp], error) {
+) (*Resp, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
@@ -250,7 +250,7 @@ func sendJSONRequest[Req, Resp any](ctx context.Context,
 		return nil, err
 	}
 
-	var result transport.GenericResponse[Resp]
+	var result Resp
 	if err := json.Unmarshal(resp.Body, &result); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
@@ -259,25 +259,25 @@ func sendJSONRequest[Req, Resp any](ctx context.Context,
 }
 
 // PostJSON performs a POST request with automatic JSON marshaling/unmarshaling.
-// It marshals the request body and unmarshals the response into GenericResponse[Resp].
-func PostJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, req Req) (*transport.GenericResponse[Resp], error) {
+// It marshals the request body and unmarshals the response directly into Resp.
+func PostJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, req Req) (*Resp, error) {
 	return sendJSONRequest[Req, Resp](ctx, path, req, s.Post)
 }
 
 // PutJSON performs a PUT request with automatic JSON marshaling/unmarshaling.
-// It marshals the request body and unmarshals the response into GenericResponse[Resp].
-func PutJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, req Req) (*transport.GenericResponse[Resp], error) {
+// It marshals the request body and unmarshals the response directly into Resp.
+func PutJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, req Req) (*Resp, error) {
 	return sendJSONRequest[Req, Resp](ctx, path, req, s.Put)
 }
 
 // PatchJSON performs a PATCH request with automatic JSON marshaling/unmarshaling.
-// It marshals the request body and unmarshals the response into GenericResponse[Resp].
-func PatchJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, req Req) (*transport.GenericResponse[Resp], error) {
+// It marshals the request body and unmarshals the response directly into Resp.
+func PatchJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, req Req) (*Resp, error) {
 	return sendJSONRequest[Req, Resp](ctx, path, req, s.Patch)
 }
 
-// DeleteJSON performs a DELETE request and unmarshals the response into GenericResponse[T].
-func DeleteJSON[T any](ctx context.Context, s *BaseService, path string) (*transport.GenericResponse[T], error) {
+// DeleteJSON performs a DELETE request and unmarshals the response directly into T.
+func DeleteJSON[T any](ctx context.Context, s *BaseService, path string) (*T, error) {
 	resp, err := s.Do(ctx, &transport.Request{
 		Method:  "DELETE",
 		Path:    path,
@@ -288,13 +288,12 @@ func DeleteJSON[T any](ctx context.Context, s *BaseService, path string) (*trans
 	}
 
 	if resp.StatusCode == 204 || len(resp.Body) == 0 {
-		var zero transport.GenericResponse[T]
-		return &zero, nil
+		return nil, nil
 	}
 
 	fmt.Println(string(resp.Body))
 
-	var result transport.GenericResponse[T]
+	var result T
 	if err := json.Unmarshal(resp.Body, &result); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
