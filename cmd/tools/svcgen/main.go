@@ -32,6 +32,14 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
+)
+
+const (
+	// dirPerm defines the permission bits for created directories.
+	dirPerm = 0o755
 )
 
 const serviceTemplate = `/*
@@ -187,15 +195,16 @@ func main() {
 
 	// Create service directory
 	serviceDir := filepath.Join("pkg", "service", packageName)
-	if err := os.MkdirAll(serviceDir, 0o755); err != nil {
+	if err := os.MkdirAll(serviceDir, dirPerm); err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating directory %s: %v\n", serviceDir, err)
 		os.Exit(1)
 	}
 
 	// Prepare template data
+	caser := cases.Title(language.English)
 	data := templateData{
 		PackageName: packageName,
-		ServiceName: strings.Title(serviceName),
+		ServiceName: caser.String(serviceName),
 	}
 
 	// Generate service file
@@ -221,7 +230,7 @@ func main() {
 	fmt.Printf("  3. Register the service in pkg/onemoney/client.go\n")
 }
 
-func generateFile(path string, tmpl string, data templateData) error {
+func generateFile(path, tmpl string, data templateData) error {
 	t, err := template.New("service").Parse(tmpl)
 	if err != nil {
 		return fmt.Errorf("failed to parse template: %w", err)

@@ -18,3 +18,5 @@ test_coverage
 coverage.dat
 .specstory
 .env
+.history/
+.env.*

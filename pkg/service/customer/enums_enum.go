@@ -128,131 +128,6 @@ func (x *AccountPurpose) AppendText(b []byte) ([]byte, error) {
 }
 
 const (
-	// BusinessIndustryBankCreditUnionsRegulatedFinancialInstitution is a BusinessIndustry of type bank_credit_unions_regulated_financial_institution.
-	BusinessIndustryBankCreditUnionsRegulatedFinancialInstitution BusinessIndustry = "bank_credit_unions_regulated_financial_institution"
-	// BusinessIndustryProfessionalServices is a BusinessIndustry of type professional_services.
-	BusinessIndustryProfessionalServices BusinessIndustry = "professional_services"
-	// BusinessIndustryTechnologyECommercePlatforms is a BusinessIndustry of type technology_e_commerce_platforms.
-	BusinessIndustryTechnologyECommercePlatforms BusinessIndustry = "technology_e_commerce_platforms"
-	// BusinessIndustryGeneralManufacturing is a BusinessIndustry of type general_manufacturing.
-	BusinessIndustryGeneralManufacturing BusinessIndustry = "general_manufacturing"
-	// BusinessIndustryGeneralWholesalers is a BusinessIndustry of type general_wholesalers.
-	BusinessIndustryGeneralWholesalers BusinessIndustry = "general_wholesalers"
-	// BusinessIndustryHealthcareAndSocialAssistance is a BusinessIndustry of type healthcare_and_social_assistance.
-	BusinessIndustryHealthcareAndSocialAssistance BusinessIndustry = "healthcare_and_social_assistance"
-	// BusinessIndustryEducationalServices is a BusinessIndustry of type educational_services.
-	BusinessIndustryEducationalServices BusinessIndustry = "educational_services"
-	// BusinessIndustryScientificAndTechnicalServices is a BusinessIndustry of type scientific_and_technical_services.
-	BusinessIndustryScientificAndTechnicalServices BusinessIndustry = "scientific_and_technical_services"
-	// BusinessIndustryNonBankFinancialInstitution is a BusinessIndustry of type non_bank_financial_institution.
-	BusinessIndustryNonBankFinancialInstitution BusinessIndustry = "non_bank_financial_institution"
-	// BusinessIndustryInvestmentFund is a BusinessIndustry of type investment_fund.
-	BusinessIndustryInvestmentFund BusinessIndustry = "investment_fund"
-	// BusinessIndustryRealEstate is a BusinessIndustry of type real_estate.
-	BusinessIndustryRealEstate BusinessIndustry = "real_estate"
-	// BusinessIndustryRetailTrade is a BusinessIndustry of type retail_trade.
-	BusinessIndustryRetailTrade BusinessIndustry = "retail_trade"
-	// BusinessIndustryArtsEntertainmentRecreation is a BusinessIndustry of type arts_entertainment_recreation.
-	BusinessIndustryArtsEntertainmentRecreation BusinessIndustry = "arts_entertainment_recreation"
-	// BusinessIndustryAccommodationFoodServices is a BusinessIndustry of type accommodation_food_services.
-	BusinessIndustryAccommodationFoodServices BusinessIndustry = "accommodation_food_services"
-	// BusinessIndustryOther is a BusinessIndustry of type other.
-	BusinessIndustryOther BusinessIndustry = "other"
-)
-
-var ErrInvalidBusinessIndustry = fmt.Errorf("not a valid BusinessIndustry, try [%s]", strings.Join(_BusinessIndustryNames, ", "))
-
-var _BusinessIndustryNames = []string{
-	string(BusinessIndustryBankCreditUnionsRegulatedFinancialInstitution),
-	string(BusinessIndustryProfessionalServices),
-	string(BusinessIndustryTechnologyECommercePlatforms),
-	string(BusinessIndustryGeneralManufacturing),
-	string(BusinessIndustryGeneralWholesalers),
-	string(BusinessIndustryHealthcareAndSocialAssistance),
-	string(BusinessIndustryEducationalServices),
-	string(BusinessIndustryScientificAndTechnicalServices),
-	string(BusinessIndustryNonBankFinancialInstitution),
-	string(BusinessIndustryInvestmentFund),
-	string(BusinessIndustryRealEstate),
-	string(BusinessIndustryRetailTrade),
-	string(BusinessIndustryArtsEntertainmentRecreation),
-	string(BusinessIndustryAccommodationFoodServices),
-	string(BusinessIndustryOther),
-}
-
-// BusinessIndustryNames returns a list of possible string values of BusinessIndustry.
-func BusinessIndustryNames() []string {
-	tmp := make([]string, len(_BusinessIndustryNames))
-	copy(tmp, _BusinessIndustryNames)
-	return tmp
-}
-
-// String implements the Stringer interface.
-func (x BusinessIndustry) String() string {
-	return string(x)
-}
-
-// IsValid provides a quick way to determine if the typed value is
-// part of the allowed enumerated values
-func (x BusinessIndustry) IsValid() bool {
-	_, err := ParseBusinessIndustry(string(x))
-	return err == nil
-}
-
-var _BusinessIndustryValue = map[string]BusinessIndustry{
-	"bank_credit_unions_regulated_financial_institution": BusinessIndustryBankCreditUnionsRegulatedFinancialInstitution,
-	"professional_services":                              BusinessIndustryProfessionalServices,
-	"technology_e_commerce_platforms":                    BusinessIndustryTechnologyECommercePlatforms,
-	"general_manufacturing":                              BusinessIndustryGeneralManufacturing,
-	"general_wholesalers":                                BusinessIndustryGeneralWholesalers,
-	"healthcare_and_social_assistance":                   BusinessIndustryHealthcareAndSocialAssistance,
-	"educational_services":                               BusinessIndustryEducationalServices,
-	"scientific_and_technical_services":                  BusinessIndustryScientificAndTechnicalServices,
-	"non_bank_financial_institution":                     BusinessIndustryNonBankFinancialInstitution,
-	"investment_fund":                                    BusinessIndustryInvestmentFund,
-	"real_estate":                                        BusinessIndustryRealEstate,
-	"retail_trade":                                       BusinessIndustryRetailTrade,
-	"arts_entertainment_recreation":                      BusinessIndustryArtsEntertainmentRecreation,
-	"accommodation_food_services":                        BusinessIndustryAccommodationFoodServices,
-	"other":                                              BusinessIndustryOther,
-}
-
-// ParseBusinessIndustry attempts to convert a string to a BusinessIndustry.
-func ParseBusinessIndustry(name string) (BusinessIndustry, error) {
-	if x, ok := _BusinessIndustryValue[name]; ok {
-		return x, nil
-	}
-	// Case insensitive parse, do a separate lookup to prevent unnecessary cost of lowercasing a string if we don't need to.
-	if x, ok := _BusinessIndustryValue[strings.ToLower(name)]; ok {
-		return x, nil
-	}
-	return BusinessIndustry(""), fmt.Errorf("%s is %w", name, ErrInvalidBusinessIndustry)
-}
-
-// MarshalText implements the text marshaller method.
-func (x BusinessIndustry) MarshalText() ([]byte, error) {
-	return []byte(string(x)), nil
-}
-
-// UnmarshalText implements the text unmarshaller method.
-func (x *BusinessIndustry) UnmarshalText(text []byte) error {
-	tmp, err := ParseBusinessIndustry(string(text))
-	if err != nil {
-		return err
-	}
-	*x = tmp
-	return nil
-}
-
-// AppendText appends the textual representation of itself to the end of b
-// (allocating a larger slice if necessary) and returns the updated slice.
-//
-// Implementations must not retain b, nor mutate any bytes within b[:len(b)].
-func (x *BusinessIndustry) AppendText(b []byte) ([]byte, error) {
-	return append(b, x.String()...), nil
-}
-
-const (
 	// BusinessTypeCooperative is a BusinessType of type cooperative.
 	BusinessTypeCooperative BusinessType = "cooperative"
 	// BusinessTypeCorporation is a BusinessType of type corporation.
@@ -338,38 +213,125 @@ func (x *BusinessType) AppendText(b []byte) ([]byte, error) {
 }
 
 const (
-	// DocumentTypeCERTOFINC is a DocumentType of type CERT_OF_INC.
-	DocumentTypeCERTOFINC DocumentType = "CERT_OF_INC"
-	// DocumentTypeOPERATINGAGREEMENT is a DocumentType of type OPERATING_AGREEMENT.
-	DocumentTypeOPERATINGAGREEMENT DocumentType = "OPERATING_AGREEMENT"
-	// DocumentTypeBYLAWS is a DocumentType of type BYLAWS.
-	DocumentTypeBYLAWS DocumentType = "BYLAWS"
-	// DocumentTypePARTNERSHIPAGREEMENT is a DocumentType of type PARTNERSHIP_AGREEMENT.
-	DocumentTypePARTNERSHIPAGREEMENT DocumentType = "PARTNERSHIP_AGREEMENT"
-	// DocumentTypeBUSINESSLICENSE is a DocumentType of type BUSINESS_LICENSE.
-	DocumentTypeBUSINESSLICENSE DocumentType = "BUSINESS_LICENSE"
-	// DocumentTypeTAXDOCUMENT is a DocumentType of type TAX_DOCUMENT.
-	DocumentTypeTAXDOCUMENT DocumentType = "TAX_DOCUMENT"
-	// DocumentTypeBANKSTATEMENT is a DocumentType of type BANK_STATEMENT.
-	DocumentTypeBANKSTATEMENT DocumentType = "BANK_STATEMENT"
-	// DocumentTypeUTILITYBILL is a DocumentType of type UTILITY_BILL.
-	DocumentTypeUTILITYBILL DocumentType = "UTILITY_BILL"
-	// DocumentTypeOTHER is a DocumentType of type OTHER.
-	DocumentTypeOTHER DocumentType = "OTHER"
+	// DocumentTypeCertificateOfIncorporation is a DocumentType of type certificate_of_incorporation.
+	DocumentTypeCertificateOfIncorporation DocumentType = "certificate_of_incorporation"
+	// DocumentTypeCertificateOfFormationRegistration is a DocumentType of type certificate_of_formation_registration.
+	DocumentTypeCertificateOfFormationRegistration DocumentType = "certificate_of_formation_registration"
+	// DocumentTypeCertificateOfIncorporationAndArticlesOfOrganization is a DocumentType of type certificate_of_incorporation_and_articles_of_organization.
+	DocumentTypeCertificateOfIncorporationAndArticlesOfOrganization DocumentType = "certificate_of_incorporation_and_articles_of_organization"
+	// DocumentTypeConstitutionalOrFormationDocuments is a DocumentType of type constitutional_or_formation_documents.
+	DocumentTypeConstitutionalOrFormationDocuments DocumentType = "constitutional_or_formation_documents"
+	// DocumentTypePartnershipAgreement is a DocumentType of type partnership_agreement.
+	DocumentTypePartnershipAgreement DocumentType = "partnership_agreement"
+	// DocumentTypeArticlesOfOrganization is a DocumentType of type articles_of_organization.
+	DocumentTypeArticlesOfOrganization DocumentType = "articles_of_organization"
+	// DocumentTypeArticlesOfIncorporation is a DocumentType of type articles_of_incorporation.
+	DocumentTypeArticlesOfIncorporation DocumentType = "articles_of_incorporation"
+	// DocumentTypeArticlesOfIncorporationByLawsOrEquivalentDocument is a DocumentType of type articles_of_incorporation_by_laws_or_equivalent_document.
+	DocumentTypeArticlesOfIncorporationByLawsOrEquivalentDocument DocumentType = "articles_of_incorporation_by_laws_or_equivalent_document"
+	// DocumentTypeOperatingLpAgreementIfApplicable is a DocumentType of type operating_lp_agreement_if_applicable.
+	DocumentTypeOperatingLpAgreementIfApplicable DocumentType = "operating_lp_agreement_if_applicable"
+	// DocumentTypeProspectusOfferingMemorandumOrPrivatePlacementMemorandum is a DocumentType of type prospectus_offering_memorandum_or_private_placement_memorandum.
+	DocumentTypeProspectusOfferingMemorandumOrPrivatePlacementMemorandum DocumentType = "prospectus_offering_memorandum_or_private_placement_memorandum"
+	// DocumentTypeAmlAttestationLetter is a DocumentType of type aml_attestation_letter.
+	DocumentTypeAmlAttestationLetter DocumentType = "aml_attestation_letter"
+	// DocumentTypeFundStructureChart is a DocumentType of type fund_structure_chart.
+	DocumentTypeFundStructureChart DocumentType = "fund_structure_chart"
+	// DocumentTypeIrsDeterminationLetter is a DocumentType of type irs_determination_letter.
+	DocumentTypeIrsDeterminationLetter DocumentType = "irs_determination_letter"
+	// DocumentTypeAnnualReports is a DocumentType of type annual_reports.
+	DocumentTypeAnnualReports DocumentType = "annual_reports"
+	// DocumentTypeBusinessLicense is a DocumentType of type business_license.
+	DocumentTypeBusinessLicense DocumentType = "business_license"
+	// DocumentTypeTradeNameRegistrationDoingBusinessAsDbaFiling is a DocumentType of type trade_name_registration_doing_business_as_dba_filing.
+	DocumentTypeTradeNameRegistrationDoingBusinessAsDbaFiling DocumentType = "trade_name_registration_doing_business_as_dba_filing"
+	// DocumentTypeTaxFilings is a DocumentType of type tax_filings.
+	DocumentTypeTaxFilings DocumentType = "tax_filings"
+	// DocumentTypeListManagerOrSimilarPersonsThatHasHaveTheAbilityToLegallyBindTheDaoAndCarryOutTheDaosInstructions is a DocumentType of type list_manager_or_similar_persons_that_has_have_the_ability_to_legally_bind_the_dao_and_carry_out_the_daos_instructions.
+	DocumentTypeListManagerOrSimilarPersonsThatHasHaveTheAbilityToLegallyBindTheDaoAndCarryOutTheDaosInstructions DocumentType = "list_manager_or_similar_persons_that_has_have_the_ability_to_legally_bind_the_dao_and_carry_out_the_daos_instructions"
+	// DocumentTypeVotingRecords is a DocumentType of type voting_records.
+	DocumentTypeVotingRecords DocumentType = "voting_records"
+	// DocumentTypeSupportingDocuments is a DocumentType of type supporting_documents.
+	DocumentTypeSupportingDocuments DocumentType = "supporting_documents"
+	// DocumentTypeTrustAgreement is a DocumentType of type trust_agreement.
+	DocumentTypeTrustAgreement DocumentType = "trust_agreement"
+	// DocumentTypeCertificateOfGoodStanding is a DocumentType of type certificate_of_good_standing.
+	DocumentTypeCertificateOfGoodStanding DocumentType = "certificate_of_good_standing"
+	// DocumentTypeOwnershipAndFormationDocuments is a DocumentType of type ownership_and_formation_documents.
+	DocumentTypeOwnershipAndFormationDocuments DocumentType = "ownership_and_formation_documents"
+	// DocumentTypeOwnershipStructureLlc is a DocumentType of type ownership_structure_llc.
+	DocumentTypeOwnershipStructureLlc DocumentType = "ownership_structure_llc"
+	// DocumentTypeOwnershipStructureCorp is a DocumentType of type ownership_structure_corp.
+	DocumentTypeOwnershipStructureCorp DocumentType = "ownership_structure_corp"
+	// DocumentTypeOwnershipStructurePart is a DocumentType of type ownership_structure_part.
+	DocumentTypeOwnershipStructurePart DocumentType = "ownership_structure_part"
+	// DocumentTypeOwnershipStructureDao is a DocumentType of type ownership_structure_dao.
+	DocumentTypeOwnershipStructureDao DocumentType = "ownership_structure_dao"
+	// DocumentTypeOwnershipStructureGov is a DocumentType of type ownership_structure_gov.
+	DocumentTypeOwnershipStructureGov DocumentType = "ownership_structure_gov"
+	// DocumentTypeAuthorizedRepresentativeList is a DocumentType of type authorized_representative_list.
+	DocumentTypeAuthorizedRepresentativeList DocumentType = "authorized_representative_list"
+	// DocumentTypeProofOfSourceOfFunds is a DocumentType of type proof_of_source_of_funds.
+	DocumentTypeProofOfSourceOfFunds DocumentType = "proof_of_source_of_funds"
+	// DocumentTypeProofOfBusinessEntityAddress is a DocumentType of type proof_of_business_entity_address.
+	DocumentTypeProofOfBusinessEntityAddress DocumentType = "proof_of_business_entity_address"
+	// DocumentTypeProofOfBusinessEntityAddressDao is a DocumentType of type proof_of_business_entity_address_dao.
+	DocumentTypeProofOfBusinessEntityAddressDao DocumentType = "proof_of_business_entity_address_dao"
+	// DocumentTypeW9Form is a DocumentType of type w9_form.
+	DocumentTypeW9Form DocumentType = "w9_form"
+	// DocumentTypeStateLocalMoneyTransmissionLicensingEvidenceOrEquivalentRegulatoryAuthorizationNonUs is a DocumentType of type state_local_money_transmission_licensing_evidence_or_equivalent_regulatory_authorization_non_us.
+	DocumentTypeStateLocalMoneyTransmissionLicensingEvidenceOrEquivalentRegulatoryAuthorizationNonUs DocumentType = "state_local_money_transmission_licensing_evidence_or_equivalent_regulatory_authorization_non_us"
+	// DocumentTypeAmlPolicy is a DocumentType of type aml_policy.
+	DocumentTypeAmlPolicy DocumentType = "aml_policy"
+	// DocumentTypeCertificateOfIncumbencyOrRegisterOfDirectors is a DocumentType of type certificate_of_incumbency_or_register_of_directors.
+	DocumentTypeCertificateOfIncumbencyOrRegisterOfDirectors DocumentType = "certificate_of_incumbency_or_register_of_directors"
+	// DocumentTypeTaxExemptionOrCharityRegistrationLetter is a DocumentType of type tax_exemption_or_charity_registration_letter.
+	DocumentTypeTaxExemptionOrCharityRegistrationLetter DocumentType = "tax_exemption_or_charity_registration_letter"
+	// DocumentTypeMemorandumOfAssociationOrArticleOfAssociationOrEquivalentDocument is a DocumentType of type memorandum_of_association_or_article_of_association_or_equivalent_document.
+	DocumentTypeMemorandumOfAssociationOrArticleOfAssociationOrEquivalentDocument DocumentType = "memorandum_of_association_or_article_of_association_or_equivalent_document"
 )
 
 var ErrInvalidDocumentType = fmt.Errorf("not a valid DocumentType, try [%s]", strings.Join(_DocumentTypeNames, ", "))
 
 var _DocumentTypeNames = []string{
-	string(DocumentTypeCERTOFINC),
-	string(DocumentTypeOPERATINGAGREEMENT),
-	string(DocumentTypeBYLAWS),
-	string(DocumentTypePARTNERSHIPAGREEMENT),
-	string(DocumentTypeBUSINESSLICENSE),
-	string(DocumentTypeTAXDOCUMENT),
-	string(DocumentTypeBANKSTATEMENT),
-	string(DocumentTypeUTILITYBILL),
-	string(DocumentTypeOTHER),
+	string(DocumentTypeCertificateOfIncorporation),
+	string(DocumentTypeCertificateOfFormationRegistration),
+	string(DocumentTypeCertificateOfIncorporationAndArticlesOfOrganization),
+	string(DocumentTypeConstitutionalOrFormationDocuments),
+	string(DocumentTypePartnershipAgreement),
+	string(DocumentTypeArticlesOfOrganization),
+	string(DocumentTypeArticlesOfIncorporation),
+	string(DocumentTypeArticlesOfIncorporationByLawsOrEquivalentDocument),
+	string(DocumentTypeOperatingLpAgreementIfApplicable),
+	string(DocumentTypeProspectusOfferingMemorandumOrPrivatePlacementMemorandum),
+	string(DocumentTypeAmlAttestationLetter),
+	string(DocumentTypeFundStructureChart),
+	string(DocumentTypeIrsDeterminationLetter),
+	string(DocumentTypeAnnualReports),
+	string(DocumentTypeBusinessLicense),
+	string(DocumentTypeTradeNameRegistrationDoingBusinessAsDbaFiling),
+	string(DocumentTypeTaxFilings),
+	string(DocumentTypeListManagerOrSimilarPersonsThatHasHaveTheAbilityToLegallyBindTheDaoAndCarryOutTheDaosInstructions),
+	string(DocumentTypeVotingRecords),
+	string(DocumentTypeSupportingDocuments),
+	string(DocumentTypeTrustAgreement),
+	string(DocumentTypeCertificateOfGoodStanding),
+	string(DocumentTypeOwnershipAndFormationDocuments),
+	string(DocumentTypeOwnershipStructureLlc),
+	string(DocumentTypeOwnershipStructureCorp),
+	string(DocumentTypeOwnershipStructurePart),
+	string(DocumentTypeOwnershipStructureDao),
+	string(DocumentTypeOwnershipStructureGov),
+	string(DocumentTypeAuthorizedRepresentativeList),
+	string(DocumentTypeProofOfSourceOfFunds),
+	string(DocumentTypeProofOfBusinessEntityAddress),
+	string(DocumentTypeProofOfBusinessEntityAddressDao),
+	string(DocumentTypeW9Form),
+	string(DocumentTypeStateLocalMoneyTransmissionLicensingEvidenceOrEquivalentRegulatoryAuthorizationNonUs),
+	string(DocumentTypeAmlPolicy),
+	string(DocumentTypeCertificateOfIncumbencyOrRegisterOfDirectors),
+	string(DocumentTypeTaxExemptionOrCharityRegistrationLetter),
+	string(DocumentTypeMemorandumOfAssociationOrArticleOfAssociationOrEquivalentDocument),
 }
 
 // DocumentTypeNames returns a list of possible string values of DocumentType.
@@ -392,24 +354,44 @@ func (x DocumentType) IsValid() bool {
 }
 
 var _DocumentTypeValue = map[string]DocumentType{
-	"CERT_OF_INC":           DocumentTypeCERTOFINC,
-	"cert_of_inc":           DocumentTypeCERTOFINC,
-	"OPERATING_AGREEMENT":   DocumentTypeOPERATINGAGREEMENT,
-	"operating_agreement":   DocumentTypeOPERATINGAGREEMENT,
-	"BYLAWS":                DocumentTypeBYLAWS,
-	"bylaws":                DocumentTypeBYLAWS,
-	"PARTNERSHIP_AGREEMENT": DocumentTypePARTNERSHIPAGREEMENT,
-	"partnership_agreement": DocumentTypePARTNERSHIPAGREEMENT,
-	"BUSINESS_LICENSE":      DocumentTypeBUSINESSLICENSE,
-	"business_license":      DocumentTypeBUSINESSLICENSE,
-	"TAX_DOCUMENT":          DocumentTypeTAXDOCUMENT,
-	"tax_document":          DocumentTypeTAXDOCUMENT,
-	"BANK_STATEMENT":        DocumentTypeBANKSTATEMENT,
-	"bank_statement":        DocumentTypeBANKSTATEMENT,
-	"UTILITY_BILL":          DocumentTypeUTILITYBILL,
-	"utility_bill":          DocumentTypeUTILITYBILL,
-	"OTHER":                 DocumentTypeOTHER,
-	"other":                 DocumentTypeOTHER,
+	"certificate_of_incorporation":                                   DocumentTypeCertificateOfIncorporation,
+	"certificate_of_formation_registration":                          DocumentTypeCertificateOfFormationRegistration,
+	"certificate_of_incorporation_and_articles_of_organization":      DocumentTypeCertificateOfIncorporationAndArticlesOfOrganization,
+	"constitutional_or_formation_documents":                          DocumentTypeConstitutionalOrFormationDocuments,
+	"partnership_agreement":                                          DocumentTypePartnershipAgreement,
+	"articles_of_organization":                                       DocumentTypeArticlesOfOrganization,
+	"articles_of_incorporation":                                      DocumentTypeArticlesOfIncorporation,
+	"articles_of_incorporation_by_laws_or_equivalent_document":       DocumentTypeArticlesOfIncorporationByLawsOrEquivalentDocument,
+	"operating_lp_agreement_if_applicable":                           DocumentTypeOperatingLpAgreementIfApplicable,
+	"prospectus_offering_memorandum_or_private_placement_memorandum": DocumentTypeProspectusOfferingMemorandumOrPrivatePlacementMemorandum,
+	"aml_attestation_letter":                                         DocumentTypeAmlAttestationLetter,
+	"fund_structure_chart":                                           DocumentTypeFundStructureChart,
+	"irs_determination_letter":                                       DocumentTypeIrsDeterminationLetter,
+	"annual_reports":                                                 DocumentTypeAnnualReports,
+	"business_license":                                               DocumentTypeBusinessLicense,
+	"trade_name_registration_doing_business_as_dba_filing":           DocumentTypeTradeNameRegistrationDoingBusinessAsDbaFiling,
+	"tax_filings":                                                    DocumentTypeTaxFilings,
+	"list_manager_or_similar_persons_that_has_have_the_ability_to_legally_bind_the_dao_and_carry_out_the_daos_instructions": DocumentTypeListManagerOrSimilarPersonsThatHasHaveTheAbilityToLegallyBindTheDaoAndCarryOutTheDaosInstructions,
+	"voting_records":                       DocumentTypeVotingRecords,
+	"supporting_documents":                 DocumentTypeSupportingDocuments,
+	"trust_agreement":                      DocumentTypeTrustAgreement,
+	"certificate_of_good_standing":         DocumentTypeCertificateOfGoodStanding,
+	"ownership_and_formation_documents":    DocumentTypeOwnershipAndFormationDocuments,
+	"ownership_structure_llc":              DocumentTypeOwnershipStructureLlc,
+	"ownership_structure_corp":             DocumentTypeOwnershipStructureCorp,
+	"ownership_structure_part":             DocumentTypeOwnershipStructurePart,
+	"ownership_structure_dao":              DocumentTypeOwnershipStructureDao,
+	"ownership_structure_gov":              DocumentTypeOwnershipStructureGov,
+	"authorized_representative_list":       DocumentTypeAuthorizedRepresentativeList,
+	"proof_of_source_of_funds":             DocumentTypeProofOfSourceOfFunds,
+	"proof_of_business_entity_address":     DocumentTypeProofOfBusinessEntityAddress,
+	"proof_of_business_entity_address_dao": DocumentTypeProofOfBusinessEntityAddressDao,
+	"w9_form":                              DocumentTypeW9Form,
+	"state_local_money_transmission_licensing_evidence_or_equivalent_regulatory_authorization_non_us": DocumentTypeStateLocalMoneyTransmissionLicensingEvidenceOrEquivalentRegulatoryAuthorizationNonUs,
+	"aml_policy": DocumentTypeAmlPolicy,
+	"certificate_of_incumbency_or_register_of_directors":                         DocumentTypeCertificateOfIncumbencyOrRegisterOfDirectors,
+	"tax_exemption_or_charity_registration_letter":                               DocumentTypeTaxExemptionOrCharityRegistrationLetter,
+	"memorandum_of_association_or_article_of_association_or_equivalent_document": DocumentTypeMemorandumOfAssociationOrArticleOfAssociationOrEquivalentDocument,
 }
 
 // ParseDocumentType attempts to convert a string to a DocumentType.
@@ -444,86 +426,6 @@ func (x *DocumentType) UnmarshalText(text []byte) error {
 //
 // Implementations must not retain b, nor mutate any bytes within b[:len(b)].
 func (x *DocumentType) AppendText(b []byte) ([]byte, error) {
-	return append(b, x.String()...), nil
-}
-
-const (
-	// GenderM is a Gender of type M.
-	GenderM Gender = "M"
-	// GenderF is a Gender of type F.
-	GenderF Gender = "F"
-	// GenderO is a Gender of type O.
-	GenderO Gender = "O"
-)
-
-var ErrInvalidGender = fmt.Errorf("not a valid Gender, try [%s]", strings.Join(_GenderNames, ", "))
-
-var _GenderNames = []string{
-	string(GenderM),
-	string(GenderF),
-	string(GenderO),
-}
-
-// GenderNames returns a list of possible string values of Gender.
-func GenderNames() []string {
-	tmp := make([]string, len(_GenderNames))
-	copy(tmp, _GenderNames)
-	return tmp
-}
-
-// String implements the Stringer interface.
-func (x Gender) String() string {
-	return string(x)
-}
-
-// IsValid provides a quick way to determine if the typed value is
-// part of the allowed enumerated values
-func (x Gender) IsValid() bool {
-	_, err := ParseGender(string(x))
-	return err == nil
-}
-
-var _GenderValue = map[string]Gender{
-	"M": GenderM,
-	"m": GenderM,
-	"F": GenderF,
-	"f": GenderF,
-	"O": GenderO,
-	"o": GenderO,
-}
-
-// ParseGender attempts to convert a string to a Gender.
-func ParseGender(name string) (Gender, error) {
-	if x, ok := _GenderValue[name]; ok {
-		return x, nil
-	}
-	// Case insensitive parse, do a separate lookup to prevent unnecessary cost of lowercasing a string if we don't need to.
-	if x, ok := _GenderValue[strings.ToLower(name)]; ok {
-		return x, nil
-	}
-	return Gender(""), fmt.Errorf("%s is %w", name, ErrInvalidGender)
-}
-
-// MarshalText implements the text marshaller method.
-func (x Gender) MarshalText() ([]byte, error) {
-	return []byte(string(x)), nil
-}
-
-// UnmarshalText implements the text unmarshaller method.
-func (x *Gender) UnmarshalText(text []byte) error {
-	tmp, err := ParseGender(string(text))
-	if err != nil {
-		return err
-	}
-	*x = tmp
-	return nil
-}
-
-// AppendText appends the textual representation of itself to the end of b
-// (allocating a larger slice if necessary) and returns the updated slice.
-//
-// Implementations must not retain b, nor mutate any bytes within b[:len(b)].
-func (x *Gender) AppendText(b []byte) ([]byte, error) {
 	return append(b, x.String()...), nil
 }
 
@@ -702,6 +604,188 @@ func (x *IDType) UnmarshalText(text []byte) error {
 //
 // Implementations must not retain b, nor mutate any bytes within b[:len(b)].
 func (x *IDType) AppendText(b []byte) ([]byte, error) {
+	return append(b, x.String()...), nil
+}
+
+const (
+	// ImageFormatJpeg is a ImageFormat of type jpeg.
+	ImageFormatJpeg ImageFormat = "jpeg"
+	// ImageFormatJpg is a ImageFormat of type jpg.
+	ImageFormatJpg ImageFormat = "jpg"
+	// ImageFormatPng is a ImageFormat of type png.
+	ImageFormatPng ImageFormat = "png"
+	// ImageFormatHeic is a ImageFormat of type heic.
+	ImageFormatHeic ImageFormat = "heic"
+	// ImageFormatTif is a ImageFormat of type tif.
+	ImageFormatTif ImageFormat = "tif"
+)
+
+var ErrInvalidImageFormat = fmt.Errorf("not a valid ImageFormat, try [%s]", strings.Join(_ImageFormatNames, ", "))
+
+var _ImageFormatNames = []string{
+	string(ImageFormatJpeg),
+	string(ImageFormatJpg),
+	string(ImageFormatPng),
+	string(ImageFormatHeic),
+	string(ImageFormatTif),
+}
+
+// ImageFormatNames returns a list of possible string values of ImageFormat.
+func ImageFormatNames() []string {
+	tmp := make([]string, len(_ImageFormatNames))
+	copy(tmp, _ImageFormatNames)
+	return tmp
+}
+
+// String implements the Stringer interface.
+func (x ImageFormat) String() string {
+	return string(x)
+}
+
+// IsValid provides a quick way to determine if the typed value is
+// part of the allowed enumerated values
+func (x ImageFormat) IsValid() bool {
+	_, err := ParseImageFormat(string(x))
+	return err == nil
+}
+
+var _ImageFormatValue = map[string]ImageFormat{
+	"jpeg": ImageFormatJpeg,
+	"jpg":  ImageFormatJpg,
+	"png":  ImageFormatPng,
+	"heic": ImageFormatHeic,
+	"tif":  ImageFormatTif,
+}
+
+// ParseImageFormat attempts to convert a string to a ImageFormat.
+func ParseImageFormat(name string) (ImageFormat, error) {
+	if x, ok := _ImageFormatValue[name]; ok {
+		return x, nil
+	}
+	// Case insensitive parse, do a separate lookup to prevent unnecessary cost of lowercasing a string if we don't need to.
+	if x, ok := _ImageFormatValue[strings.ToLower(name)]; ok {
+		return x, nil
+	}
+	return ImageFormat(""), fmt.Errorf("%s is %w", name, ErrInvalidImageFormat)
+}
+
+// MarshalText implements the text marshaller method.
+func (x ImageFormat) MarshalText() ([]byte, error) {
+	return []byte(string(x)), nil
+}
+
+// UnmarshalText implements the text unmarshaller method.
+func (x *ImageFormat) UnmarshalText(text []byte) error {
+	tmp, err := ParseImageFormat(string(text))
+	if err != nil {
+		return err
+	}
+	*x = tmp
+	return nil
+}
+
+// AppendText appends the textual representation of itself to the end of b
+// (allocating a larger slice if necessary) and returns the updated slice.
+//
+// Implementations must not retain b, nor mutate any bytes within b[:len(b)].
+func (x *ImageFormat) AppendText(b []byte) ([]byte, error) {
+	return append(b, x.String()...), nil
+}
+
+const (
+	// KybStatusInit is a KybStatus of type init.
+	KybStatusInit KybStatus = "init"
+	// KybStatusPendingReview is a KybStatus of type pending_review.
+	KybStatusPendingReview KybStatus = "pending_review"
+	// KybStatusUnderReview is a KybStatus of type under_review.
+	KybStatusUnderReview KybStatus = "under_review"
+	// KybStatusPendingResponse is a KybStatus of type pending_response.
+	KybStatusPendingResponse KybStatus = "pending_response"
+	// KybStatusEscalated is a KybStatus of type escalated.
+	KybStatusEscalated KybStatus = "escalated"
+	// KybStatusPendingApproval is a KybStatus of type pending_approval.
+	KybStatusPendingApproval KybStatus = "pending_approval"
+	// KybStatusRejected is a KybStatus of type rejected.
+	KybStatusRejected KybStatus = "rejected"
+	// KybStatusApproved is a KybStatus of type approved.
+	KybStatusApproved KybStatus = "approved"
+)
+
+var ErrInvalidKybStatus = fmt.Errorf("not a valid KybStatus, try [%s]", strings.Join(_KybStatusNames, ", "))
+
+var _KybStatusNames = []string{
+	string(KybStatusInit),
+	string(KybStatusPendingReview),
+	string(KybStatusUnderReview),
+	string(KybStatusPendingResponse),
+	string(KybStatusEscalated),
+	string(KybStatusPendingApproval),
+	string(KybStatusRejected),
+	string(KybStatusApproved),
+}
+
+// KybStatusNames returns a list of possible string values of KybStatus.
+func KybStatusNames() []string {
+	tmp := make([]string, len(_KybStatusNames))
+	copy(tmp, _KybStatusNames)
+	return tmp
+}
+
+// String implements the Stringer interface.
+func (x KybStatus) String() string {
+	return string(x)
+}
+
+// IsValid provides a quick way to determine if the typed value is
+// part of the allowed enumerated values
+func (x KybStatus) IsValid() bool {
+	_, err := ParseKybStatus(string(x))
+	return err == nil
+}
+
+var _KybStatusValue = map[string]KybStatus{
+	"init":             KybStatusInit,
+	"pending_review":   KybStatusPendingReview,
+	"under_review":     KybStatusUnderReview,
+	"pending_response": KybStatusPendingResponse,
+	"escalated":        KybStatusEscalated,
+	"pending_approval": KybStatusPendingApproval,
+	"rejected":         KybStatusRejected,
+	"approved":         KybStatusApproved,
+}
+
+// ParseKybStatus attempts to convert a string to a KybStatus.
+func ParseKybStatus(name string) (KybStatus, error) {
+	if x, ok := _KybStatusValue[name]; ok {
+		return x, nil
+	}
+	// Case insensitive parse, do a separate lookup to prevent unnecessary cost of lowercasing a string if we don't need to.
+	if x, ok := _KybStatusValue[strings.ToLower(name)]; ok {
+		return x, nil
+	}
+	return KybStatus(""), fmt.Errorf("%s is %w", name, ErrInvalidKybStatus)
+}
+
+// MarshalText implements the text marshaller method.
+func (x KybStatus) MarshalText() ([]byte, error) {
+	return []byte(string(x)), nil
+}
+
+// UnmarshalText implements the text unmarshaller method.
+func (x *KybStatus) UnmarshalText(text []byte) error {
+	tmp, err := ParseKybStatus(string(text))
+	if err != nil {
+		return err
+	}
+	*x = tmp
+	return nil
+}
+
+// AppendText appends the textual representation of itself to the end of b
+// (allocating a larger slice if necessary) and returns the updated slice.
+//
+// Implementations must not retain b, nor mutate any bytes within b[:len(b)].
+func (x *KybStatus) AppendText(b []byte) ([]byte, error) {
 	return append(b, x.String()...), nil
 }
 
@@ -997,23 +1081,218 @@ func (x *SourceOfWealth) AppendText(b []byte) ([]byte, error) {
 }
 
 const (
-	// TaxIDTypeEIN is a TaxIDType of type EIN.
-	TaxIDTypeEIN TaxIDType = "EIN"
 	// TaxIDTypeSSN is a TaxIDType of type SSN.
 	TaxIDTypeSSN TaxIDType = "SSN"
+	// TaxIDTypeEIN is a TaxIDType of type EIN.
+	TaxIDTypeEIN TaxIDType = "EIN"
+	// TaxIDTypeTFN is a TaxIDType of type TFN.
+	TaxIDTypeTFN TaxIDType = "TFN"
+	// TaxIDTypeABN is a TaxIDType of type ABN.
+	TaxIDTypeABN TaxIDType = "ABN"
+	// TaxIDTypeACN is a TaxIDType of type ACN.
+	TaxIDTypeACN TaxIDType = "ACN"
+	// TaxIDTypeUTR is a TaxIDType of type UTR.
+	TaxIDTypeUTR TaxIDType = "UTR"
+	// TaxIDTypeNINO is a TaxIDType of type NINO.
+	TaxIDTypeNINO TaxIDType = "NINO"
+	// TaxIDTypeNRIC is a TaxIDType of type NRIC.
+	TaxIDTypeNRIC TaxIDType = "NRIC"
+	// TaxIDTypeFIN is a TaxIDType of type FIN.
+	TaxIDTypeFIN TaxIDType = "FIN"
+	// TaxIDTypeASDG is a TaxIDType of type ASDG.
+	TaxIDTypeASDG TaxIDType = "ASDG"
+	// TaxIDTypeITR is a TaxIDType of type ITR.
+	TaxIDTypeITR TaxIDType = "ITR"
+	// TaxIDTypeNIF is a TaxIDType of type NIF.
+	TaxIDTypeNIF TaxIDType = "NIF"
 	// TaxIDTypeTIN is a TaxIDType of type TIN.
 	TaxIDTypeTIN TaxIDType = "TIN"
+	// TaxIDTypeVAT is a TaxIDType of type VAT.
+	TaxIDTypeVAT TaxIDType = "VAT"
+	// TaxIDTypeCUIL is a TaxIDType of type CUIL.
+	TaxIDTypeCUIL TaxIDType = "CUIL"
+	// TaxIDTypeCUIT is a TaxIDType of type CUIT.
+	TaxIDTypeCUIT TaxIDType = "CUIT"
+	// TaxIDTypeDNI is a TaxIDType of type DNI.
+	TaxIDTypeDNI TaxIDType = "DNI"
+	// TaxIDTypeBIN is a TaxIDType of type BIN.
+	TaxIDTypeBIN TaxIDType = "BIN"
+	// TaxIDTypeUNP is a TaxIDType of type UNP.
+	TaxIDTypeUNP TaxIDType = "UNP"
+	// TaxIDTypeRNPM is a TaxIDType of type RNPM.
+	TaxIDTypeRNPM TaxIDType = "RNPM"
+	// TaxIDTypeNIT is a TaxIDType of type NIT.
+	TaxIDTypeNIT TaxIDType = "NIT"
+	// TaxIDTypeCPF is a TaxIDType of type CPF.
+	TaxIDTypeCPF TaxIDType = "CPF"
+	// TaxIDTypeCNPJ is a TaxIDType of type CNPJ.
+	TaxIDTypeCNPJ TaxIDType = "CNPJ"
+	// TaxIDTypeNIRE is a TaxIDType of type NIRE.
+	TaxIDTypeNIRE TaxIDType = "NIRE"
+	// TaxIDTypeUCN is a TaxIDType of type UCN.
+	TaxIDTypeUCN TaxIDType = "UCN"
+	// TaxIDTypeUIC is a TaxIDType of type UIC.
+	TaxIDTypeUIC TaxIDType = "UIC"
+	// TaxIDTypeSIN is a TaxIDType of type SIN.
+	TaxIDTypeSIN TaxIDType = "SIN"
+	// TaxIDTypeBN is a TaxIDType of type BN.
+	TaxIDTypeBN TaxIDType = "BN"
+	// TaxIDTypeRUT is a TaxIDType of type RUT.
+	TaxIDTypeRUT TaxIDType = "RUT"
+	// TaxIDTypeIIN is a TaxIDType of type IIN.
+	TaxIDTypeIIN TaxIDType = "IIN"
+	// TaxIDTypeUSCC is a TaxIDType of type USCC.
+	TaxIDTypeUSCC TaxIDType = "USCC"
+	// TaxIDTypeCNOC is a TaxIDType of type CNOC.
+	TaxIDTypeCNOC TaxIDType = "CNOC"
+	// TaxIDTypeUSCN is a TaxIDType of type USCN.
+	TaxIDTypeUSCN TaxIDType = "USCN"
 	// TaxIDTypeITIN is a TaxIDType of type ITIN.
 	TaxIDTypeITIN TaxIDType = "ITIN"
+	// TaxIDTypeCPJ is a TaxIDType of type CPJ.
+	TaxIDTypeCPJ TaxIDType = "CPJ"
+	// TaxIDTypeOIB is a TaxIDType of type OIB.
+	TaxIDTypeOIB TaxIDType = "OIB"
+	// TaxIDTypeDIC is a TaxIDType of type DIC.
+	TaxIDTypeDIC TaxIDType = "DIC"
+	// TaxIDTypeCPR is a TaxIDType of type CPR.
+	TaxIDTypeCPR TaxIDType = "CPR"
+	// TaxIDTypeCVR is a TaxIDType of type CVR.
+	TaxIDTypeCVR TaxIDType = "CVR"
+	// TaxIDTypeCN is a TaxIDType of type CN.
+	TaxIDTypeCN TaxIDType = "CN"
+	// TaxIDTypeRNC is a TaxIDType of type RNC.
+	TaxIDTypeRNC TaxIDType = "RNC"
+	// TaxIDTypeRUC is a TaxIDType of type RUC.
+	TaxIDTypeRUC TaxIDType = "RUC"
+	// TaxIDTypeTN is a TaxIDType of type TN.
+	TaxIDTypeTN TaxIDType = "TN"
+	// TaxIDTypeHETU is a TaxIDType of type HETU.
+	TaxIDTypeHETU TaxIDType = "HETU"
+	// TaxIDTypeYT is a TaxIDType of type YT.
+	TaxIDTypeYT TaxIDType = "YT"
+	// TaxIDTypeALV is a TaxIDType of type ALV.
+	TaxIDTypeALV TaxIDType = "ALV"
+	// TaxIDTypeSIREN is a TaxIDType of type SIREN.
+	TaxIDTypeSIREN TaxIDType = "SIREN"
+	// TaxIDTypeIDNR is a TaxIDType of type IDNR.
+	TaxIDTypeIDNR TaxIDType = "IDNR"
+	// TaxIDTypeSTNR is a TaxIDType of type STNR.
+	TaxIDTypeSTNR TaxIDType = "STNR"
+	// TaxIDTypeVTA is a TaxIDType of type VTA.
+	TaxIDTypeVTA TaxIDType = "VTA"
+	// TaxIDTypeHKID is a TaxIDType of type HKID.
+	TaxIDTypeHKID TaxIDType = "HKID"
+	// TaxIDTypeAJ is a TaxIDType of type AJ.
+	TaxIDTypeAJ TaxIDType = "AJ"
+	// TaxIDTypeEN is a TaxIDType of type EN.
+	TaxIDTypeEN TaxIDType = "EN"
+	// TaxIDTypeKN is a TaxIDType of type KN.
+	TaxIDTypeKN TaxIDType = "KN"
+	// TaxIDTypeVSK is a TaxIDType of type VSK.
+	TaxIDTypeVSK TaxIDType = "VSK"
+	// TaxIDTypePAN is a TaxIDType of type PAN.
+	TaxIDTypePAN TaxIDType = "PAN"
+	// TaxIDTypeGSTN is a TaxIDType of type GSTN.
+	TaxIDTypeGSTN TaxIDType = "GSTN"
+	// TaxIDTypeNIK is a TaxIDType of type NIK.
+	TaxIDTypeNIK TaxIDType = "NIK"
+	// TaxIDTypeNPWP is a TaxIDType of type NPWP.
+	TaxIDTypeNPWP TaxIDType = "NPWP"
+	// TaxIDTypePPS is a TaxIDType of type PPS.
+	TaxIDTypePPS TaxIDType = "PPS"
+	// TaxIDTypeTRN is a TaxIDType of type TRN.
+	TaxIDTypeTRN TaxIDType = "TRN"
+	// TaxIDTypeCRO is a TaxIDType of type CRO.
+	TaxIDTypeCRO TaxIDType = "CRO"
+	// TaxIDTypeCHY is a TaxIDType of type CHY.
+	TaxIDTypeCHY TaxIDType = "CHY"
+	// TaxIDTypeCF is a TaxIDType of type CF.
+	TaxIDTypeCF TaxIDType = "CF"
+	// TaxIDTypeIVA is a TaxIDType of type IVA.
+	TaxIDTypeIVA TaxIDType = "IVA"
+	// TaxIDTypeIN is a TaxIDType of type IN.
+	TaxIDTypeIN TaxIDType = "IN"
+	// TaxIDTypeJCT is a TaxIDType of type JCT.
+	TaxIDTypeJCT TaxIDType = "JCT"
+	// TaxIDTypeEDRPOU is a TaxIDType of type EDRPOU.
+	TaxIDTypeEDRPOU TaxIDType = "EDRPOU"
+	// TaxIDTypeEID is a TaxIDType of type EID.
+	TaxIDTypeEID TaxIDType = "EID"
 )
 
 var ErrInvalidTaxIDType = fmt.Errorf("not a valid TaxIDType, try [%s]", strings.Join(_TaxIDTypeNames, ", "))
 
 var _TaxIDTypeNames = []string{
-	string(TaxIDTypeEIN),
 	string(TaxIDTypeSSN),
+	string(TaxIDTypeEIN),
+	string(TaxIDTypeTFN),
+	string(TaxIDTypeABN),
+	string(TaxIDTypeACN),
+	string(TaxIDTypeUTR),
+	string(TaxIDTypeNINO),
+	string(TaxIDTypeNRIC),
+	string(TaxIDTypeFIN),
+	string(TaxIDTypeASDG),
+	string(TaxIDTypeITR),
+	string(TaxIDTypeNIF),
 	string(TaxIDTypeTIN),
+	string(TaxIDTypeVAT),
+	string(TaxIDTypeCUIL),
+	string(TaxIDTypeCUIT),
+	string(TaxIDTypeDNI),
+	string(TaxIDTypeBIN),
+	string(TaxIDTypeUNP),
+	string(TaxIDTypeRNPM),
+	string(TaxIDTypeNIT),
+	string(TaxIDTypeCPF),
+	string(TaxIDTypeCNPJ),
+	string(TaxIDTypeNIRE),
+	string(TaxIDTypeUCN),
+	string(TaxIDTypeUIC),
+	string(TaxIDTypeSIN),
+	string(TaxIDTypeBN),
+	string(TaxIDTypeRUT),
+	string(TaxIDTypeIIN),
+	string(TaxIDTypeUSCC),
+	string(TaxIDTypeCNOC),
+	string(TaxIDTypeUSCN),
 	string(TaxIDTypeITIN),
+	string(TaxIDTypeCPJ),
+	string(TaxIDTypeOIB),
+	string(TaxIDTypeDIC),
+	string(TaxIDTypeCPR),
+	string(TaxIDTypeCVR),
+	string(TaxIDTypeCN),
+	string(TaxIDTypeRNC),
+	string(TaxIDTypeRUC),
+	string(TaxIDTypeTN),
+	string(TaxIDTypeHETU),
+	string(TaxIDTypeYT),
+	string(TaxIDTypeALV),
+	string(TaxIDTypeSIREN),
+	string(TaxIDTypeIDNR),
+	string(TaxIDTypeSTNR),
+	string(TaxIDTypeVTA),
+	string(TaxIDTypeHKID),
+	string(TaxIDTypeAJ),
+	string(TaxIDTypeEN),
+	string(TaxIDTypeKN),
+	string(TaxIDTypeVSK),
+	string(TaxIDTypePAN),
+	string(TaxIDTypeGSTN),
+	string(TaxIDTypeNIK),
+	string(TaxIDTypeNPWP),
+	string(TaxIDTypePPS),
+	string(TaxIDTypeTRN),
+	string(TaxIDTypeCRO),
+	string(TaxIDTypeCHY),
+	string(TaxIDTypeCF),
+	string(TaxIDTypeIVA),
+	string(TaxIDTypeIN),
+	string(TaxIDTypeJCT),
+	string(TaxIDTypeEDRPOU),
+	string(TaxIDTypeEID),
 }
 
 // TaxIDTypeNames returns a list of possible string values of TaxIDType.
@@ -1036,14 +1315,144 @@ func (x TaxIDType) IsValid() bool {
 }
 
 var _TaxIDTypeValue = map[string]TaxIDType{
-	"EIN":  TaxIDTypeEIN,
-	"ein":  TaxIDTypeEIN,
-	"SSN":  TaxIDTypeSSN,
-	"ssn":  TaxIDTypeSSN,
-	"TIN":  TaxIDTypeTIN,
-	"tin":  TaxIDTypeTIN,
-	"ITIN": TaxIDTypeITIN,
-	"itin": TaxIDTypeITIN,
+	"SSN":    TaxIDTypeSSN,
+	"ssn":    TaxIDTypeSSN,
+	"EIN":    TaxIDTypeEIN,
+	"ein":    TaxIDTypeEIN,
+	"TFN":    TaxIDTypeTFN,
+	"tfn":    TaxIDTypeTFN,
+	"ABN":    TaxIDTypeABN,
+	"abn":    TaxIDTypeABN,
+	"ACN":    TaxIDTypeACN,
+	"acn":    TaxIDTypeACN,
+	"UTR":    TaxIDTypeUTR,
+	"utr":    TaxIDTypeUTR,
+	"NINO":   TaxIDTypeNINO,
+	"nino":   TaxIDTypeNINO,
+	"NRIC":   TaxIDTypeNRIC,
+	"nric":   TaxIDTypeNRIC,
+	"FIN":    TaxIDTypeFIN,
+	"fin":    TaxIDTypeFIN,
+	"ASDG":   TaxIDTypeASDG,
+	"asdg":   TaxIDTypeASDG,
+	"ITR":    TaxIDTypeITR,
+	"itr":    TaxIDTypeITR,
+	"NIF":    TaxIDTypeNIF,
+	"nif":    TaxIDTypeNIF,
+	"TIN":    TaxIDTypeTIN,
+	"tin":    TaxIDTypeTIN,
+	"VAT":    TaxIDTypeVAT,
+	"vat":    TaxIDTypeVAT,
+	"CUIL":   TaxIDTypeCUIL,
+	"cuil":   TaxIDTypeCUIL,
+	"CUIT":   TaxIDTypeCUIT,
+	"cuit":   TaxIDTypeCUIT,
+	"DNI":    TaxIDTypeDNI,
+	"dni":    TaxIDTypeDNI,
+	"BIN":    TaxIDTypeBIN,
+	"bin":    TaxIDTypeBIN,
+	"UNP":    TaxIDTypeUNP,
+	"unp":    TaxIDTypeUNP,
+	"RNPM":   TaxIDTypeRNPM,
+	"rnpm":   TaxIDTypeRNPM,
+	"NIT":    TaxIDTypeNIT,
+	"nit":    TaxIDTypeNIT,
+	"CPF":    TaxIDTypeCPF,
+	"cpf":    TaxIDTypeCPF,
+	"CNPJ":   TaxIDTypeCNPJ,
+	"cnpj":   TaxIDTypeCNPJ,
+	"NIRE":   TaxIDTypeNIRE,
+	"nire":   TaxIDTypeNIRE,
+	"UCN":    TaxIDTypeUCN,
+	"ucn":    TaxIDTypeUCN,
+	"UIC":    TaxIDTypeUIC,
+	"uic":    TaxIDTypeUIC,
+	"SIN":    TaxIDTypeSIN,
+	"sin":    TaxIDTypeSIN,
+	"BN":     TaxIDTypeBN,
+	"bn":     TaxIDTypeBN,
+	"RUT":    TaxIDTypeRUT,
+	"rut":    TaxIDTypeRUT,
+	"IIN":    TaxIDTypeIIN,
+	"iin":    TaxIDTypeIIN,
+	"USCC":   TaxIDTypeUSCC,
+	"uscc":   TaxIDTypeUSCC,
+	"CNOC":   TaxIDTypeCNOC,
+	"cnoc":   TaxIDTypeCNOC,
+	"USCN":   TaxIDTypeUSCN,
+	"uscn":   TaxIDTypeUSCN,
+	"ITIN":   TaxIDTypeITIN,
+	"itin":   TaxIDTypeITIN,
+	"CPJ":    TaxIDTypeCPJ,
+	"cpj":    TaxIDTypeCPJ,
+	"OIB":    TaxIDTypeOIB,
+	"oib":    TaxIDTypeOIB,
+	"DIC":    TaxIDTypeDIC,
+	"dic":    TaxIDTypeDIC,
+	"CPR":    TaxIDTypeCPR,
+	"cpr":    TaxIDTypeCPR,
+	"CVR":    TaxIDTypeCVR,
+	"cvr":    TaxIDTypeCVR,
+	"CN":     TaxIDTypeCN,
+	"cn":     TaxIDTypeCN,
+	"RNC":    TaxIDTypeRNC,
+	"rnc":    TaxIDTypeRNC,
+	"RUC":    TaxIDTypeRUC,
+	"ruc":    TaxIDTypeRUC,
+	"TN":     TaxIDTypeTN,
+	"tn":     TaxIDTypeTN,
+	"HETU":   TaxIDTypeHETU,
+	"hetu":   TaxIDTypeHETU,
+	"YT":     TaxIDTypeYT,
+	"yt":     TaxIDTypeYT,
+	"ALV":    TaxIDTypeALV,
+	"alv":    TaxIDTypeALV,
+	"SIREN":  TaxIDTypeSIREN,
+	"siren":  TaxIDTypeSIREN,
+	"IDNR":   TaxIDTypeIDNR,
+	"idnr":   TaxIDTypeIDNR,
+	"STNR":   TaxIDTypeSTNR,
+	"stnr":   TaxIDTypeSTNR,
+	"VTA":    TaxIDTypeVTA,
+	"vta":    TaxIDTypeVTA,
+	"HKID":   TaxIDTypeHKID,
+	"hkid":   TaxIDTypeHKID,
+	"AJ":     TaxIDTypeAJ,
+	"aj":     TaxIDTypeAJ,
+	"EN":     TaxIDTypeEN,
+	"en":     TaxIDTypeEN,
+	"KN":     TaxIDTypeKN,
+	"kn":     TaxIDTypeKN,
+	"VSK":    TaxIDTypeVSK,
+	"vsk":    TaxIDTypeVSK,
+	"PAN":    TaxIDTypePAN,
+	"pan":    TaxIDTypePAN,
+	"GSTN":   TaxIDTypeGSTN,
+	"gstn":   TaxIDTypeGSTN,
+	"NIK":    TaxIDTypeNIK,
+	"nik":    TaxIDTypeNIK,
+	"NPWP":   TaxIDTypeNPWP,
+	"npwp":   TaxIDTypeNPWP,
+	"PPS":    TaxIDTypePPS,
+	"pps":    TaxIDTypePPS,
+	"TRN":    TaxIDTypeTRN,
+	"trn":    TaxIDTypeTRN,
+	"CRO":    TaxIDTypeCRO,
+	"cro":    TaxIDTypeCRO,
+	"CHY":    TaxIDTypeCHY,
+	"chy":    TaxIDTypeCHY,
+	"CF":     TaxIDTypeCF,
+	"cf":     TaxIDTypeCF,
+	"IVA":    TaxIDTypeIVA,
+	"iva":    TaxIDTypeIVA,
+	"IN":     TaxIDTypeIN,
+	"in":     TaxIDTypeIN,
+	"JCT":    TaxIDTypeJCT,
+	"jct":    TaxIDTypeJCT,
+	"EDRPOU": TaxIDTypeEDRPOU,
+	"edrpou": TaxIDTypeEDRPOU,
+	"EID":    TaxIDTypeEID,
+	"eid":    TaxIDTypeEID,
 }
 
 // ParseTaxIDType attempts to convert a string to a TaxIDType.

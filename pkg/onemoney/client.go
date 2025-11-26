@@ -184,6 +184,6 @@ func NewClient(cfg *Config, opts ...Option) (*Client, error) {
 
 // Version returns the SDK version.
 // This can be used for logging, debugging, or telemetry purposes.
-func (c *Client) Version() string {
+func (*Client) Version() string {
 	return onemoney.Version
 }

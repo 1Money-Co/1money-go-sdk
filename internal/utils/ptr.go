@@ -1,6 +1,3 @@
-//go:build tools
-// +build tools
-
 /*
  * Copyright 2025 1Money Co.
  *
@@ -17,11 +14,8 @@
  * limitations under the License.
  */
 
-// Package tools tracks tool dependencies for go generate commands.
-// This file ensures tool dependencies are included in go.mod.
-package tools
+package utils
 
-// Import tool packages to track dependencies
-import (
-	_ "github.com/abice/go-enum"
-)
+func AsPtr[T any](v T) *T {
+	return &v
+}

@@ -106,12 +106,12 @@ func (s *Signer) SignRequest(method, path string, body []byte) (*SignatureResult
 }
 
 // getTimestamp returns the current UTC timestamp in OneMoney format.
-func (s *Signer) getTimestamp() string {
+func (*Signer) getTimestamp() string {
 	return time.Now().UTC().Format(TimeFormat)
 }
 
 // hashBody calculates the SHA256 hash of the request body.
-func (s *Signer) hashBody(body []byte) string {
+func (*Signer) hashBody(body []byte) string {
 	hasher := sha256.New()
 	hasher.Write(body)
 	return hex.EncodeToString(hasher.Sum(nil))

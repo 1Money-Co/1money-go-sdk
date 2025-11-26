@@ -100,15 +100,15 @@ version-tag VERSION_NUM:
 [group("👆 Code Quality")]
 fmt: hawkeye-fix
     @echo "🔧 Formatting code..."
-    gofmt -w -s .
-    {{ GOIMPORTS }} -w -local {{ MODULE_NAME }} .
+    find . -name "*.go" ! -path "./.history/*" ! -path "./vendor/*" -exec gofmt -w -s {} +
+    find . -name "*.go" ! -path "./.history/*" ! -path "./vendor/*" -exec {{ GOIMPORTS }} -w -local {{ MODULE_NAME }} {} +
     @echo "✅ Code formatted!"
 
 [doc("check code formatting")]
 [group("👆 Code Quality")]
 fmt-check:
     @echo "📝 Checking code formatting..."
-    @test -z "$(gofmt -l .)" || (echo "❌ Code is not formatted. Run 'just fmt'" && exit 1)
+    @test -z "$(find . -name '*.go' ! -path './.history/*' ! -path './vendor/*' -exec gofmt -l {} +)" || (echo "❌ Code is not formatted. Run 'just fmt'" && exit 1)
     @echo "✅ Code formatting is correct!"
 
 [doc("run `golangci-lint`")]
@@ -134,12 +134,11 @@ fix: fmt lint-fix
 
 [doc("run `fmt-check`, `lint`, and `test` at once")]
 [group("👆 Code Quality")]
-check: fmt-check lint test
+check: fmt-check lint
+    {{ GO }} vet ./...
     @echo "✅ All quality checks passed!"
 
-[doc("verify code quality (alias for check)")]
-[group("👆 Code Quality")]
-verify: check
+alias c := check
 
 # ========================================================================================
 # Testing
@@ -149,7 +148,7 @@ verify: check
 [group("🧪 Testing")]
 test:
     @echo "🧪 Running unit tests..."
-    {{ GO }} test -v -race -cover ./...
+    {{ GO }} test -count=1 -v -race -cover ./...
     @echo "✅ Unit tests passed!"
 
 [doc("run integration tests (requires API credentials)")]
@@ -380,11 +379,11 @@ stats:
     @echo "📊 Project Statistics:"
     @echo "===================="
     @echo "Go files:"
-    @find . -name "*.go" ! -path "./vendor/*" | wc -l
+    @find . -name "*.go" ! -path "./.history/*" ! -path "./vendor/*" | wc -l
     @echo "Lines of code:"
-    @find . -name "*.go" ! -path "./vendor/*" -exec cat {} \; | wc -l
+    @find . -name "*.go" ! -path "./.history/*" ! -path "./vendor/*" -exec cat {} \; | wc -l
     @echo "Test files:"
-    @find . -name "*_test.go" ! -path "./vendor/*" | wc -l
+    @find . -name "*_test.go" ! -path "./.history/*" ! -path "./vendor/*" | wc -l
     @echo "Packages:"
     @{{ GO }} list ./... | wc -l
 
