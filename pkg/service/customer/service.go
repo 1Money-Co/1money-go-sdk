@@ -272,17 +272,6 @@ type Document struct {
 	Description string `json:"description,omitempty"`
 }
 
-// ValidationError represents a validation error detail in response.
-// This is returned when the API processes a request but finds validation issues.
-type ValidationError struct {
-	// ErrorType is the type of error (e.g., "missing_field", "invalid_value").
-	ErrorType string `json:"error_type"`
-	// Location is the location of the error (field path or index).
-	Location string `json:"location"`
-	// Message is the detailed error message.
-	Message string `json:"message"`
-}
-
 // CreateCustomerRequest represents the request body for creating a business customer.
 // This request includes comprehensive KYB (Know Your Business) information required for
 // regulatory compliance, including business details, beneficial ownership, and risk assessment.
@@ -395,9 +384,6 @@ type CustomerResponse struct {
 	CreatedAt string `json:"created_at"`
 	// UpdatedAt is the timestamp when the customer account was last updated (ISO 8601 format).
 	UpdatedAt string `json:"updated_at"`
-	// ValidationErrors contains validation errors if any were found during processing.
-	// This field is present when the request was processed but validation issues were found.
-	ValidationErrors []ValidationError `json:"validation_errors,omitempty"`
 }
 
 // CreateCustomerResponse is an alias for CustomerResponse.
