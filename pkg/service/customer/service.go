@@ -312,7 +312,7 @@ type CreateCustomerRequest struct {
 	// PhysicalAddress is the actual operating address if different from registered address (optional).
 	PhysicalAddress *Address `json:"physical_address,omitempty"`
 	// SignedAgreementID is the identifier of the signed service agreement.
-	SignedAgreementID int64 `json:"signed_agreement_id"`
+	SignedAgreementID string `json:"signed_agreement_id"`
 	// IsDAO indicates whether this is a Decentralized Autonomous Organization.
 	IsDAO bool `json:"is_dao"`
 	// AssociatedPersons is a list of all persons associated with the business (owners, directors, signers).
@@ -622,7 +622,7 @@ type TOSLinkResponse struct {
 type SignAgreementResponse struct {
 	// SignedAgreementID is the unique identifier for the signed agreement.
 	// This ID must be provided when creating a customer account.
-	SignedAgreementID int `json:"signedAgreementId"`
+	SignedAgreementID string `json:"signedAgreementId"`
 }
 
 type serviceImpl struct {

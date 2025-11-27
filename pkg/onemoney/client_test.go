@@ -1,5 +1,3 @@
-//go:build integration
-
 /*
  * Copyright 2025 1Money Co.
  *
@@ -135,7 +133,7 @@ func (s *ClientTestSuite) TestCustomerService_TOSFlow() {
 }
 
 func (s *ClientTestSuite) TestCustomerService_SignTOS() {
-	sessionToken := "8d8448b7-0246-4162-bfdd-6b3b50de8bf5" //nolint:gosec // test session token
+	sessionToken := "54dbc3d2-d88e-4ae2-839f-4d2f9906ade2" //nolint:gosec // test session token
 	// Step 2: Sign the agreement using the session token
 	signResp, err := s.client.Customer.SignTOSAgreement(s.ctx, sessionToken)
 	s.Require().NoError(err, "SignTOSAgreement should not return error")
@@ -167,7 +165,7 @@ func (s *ClientTestSuite) TestCustomerService_CreateCustomer() {
 			Subdivision: faker.StateAbr(),
 		},
 		DateOfIncorporation: faker.Date().Format("2006-01-02"),
-		SignedAgreementID:   964,
+		SignedAgreementID:   "ab9f2db5-95e5-45cd-9dfa-0767ded18a5f",
 		AssociatedPersons: []customer.AssociatedPerson{
 			fakeAssociatedPerson(faker),
 			fakeAssociatedPerson(faker),
