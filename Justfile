@@ -144,44 +144,44 @@ alias c := check
 # Testing
 # ========================================================================================
 
-[doc("run unit tests only")]
+[doc("run unit tests only (excludes e2e tests)")]
 [group("🧪 Testing")]
 test:
     @echo "🧪 Running unit tests..."
-    {{ GO }} test -count=1 -v -race -cover ./...
+    {{ GO }} list ./... | grep -v '/tests/' | xargs {{ GO }} test -count=1 -v -race -cover
     @echo "✅ Unit tests passed!"
 
-[doc("run integration tests (requires API credentials)")]
+[doc("run e2e tests (requires API credentials)")]
 [group("🧪 Testing")]
-test-integration:
-    @echo "🌐 Running integration tests..."
+test-e2e:
+    @echo "🌐 Running e2e tests..."
     @echo "📝 Loading credentials from .env file..."
-    INTEGRATION_TEST=true {{ GO }} test -v -race ./pkg/onemoney/...
-    @echo "✅ Integration tests passed!"
+    {{ GO }} test -count=1 -v -race ./tests/e2e/...
+    @echo "✅ E2E tests passed!"
 
-[doc("run all tests (unit + integration)")]
+[doc("run all tests (unit + e2e)")]
 [group("🧪 Testing")]
 test-all:
     @echo "🎯 Running all tests..."
     @just test
-    @just test-integration
+    @just test-e2e
     @echo "✅ All tests passed!"
 
-[doc("run tests with coverage report")]
+[doc("run unit tests with coverage report")]
 [group("🧪 Testing")]
 test-coverage:
     @echo "📊 Running tests with coverage..."
-    {{ GO }} test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+    {{ GO }} list ./... | grep -v '/tests/' | xargs {{ GO }} test -v -race -coverprofile=coverage.out -covermode=atomic
     {{ GO }} tool cover -html=coverage.out -o coverage.html
     @echo "✅ Coverage report generated: coverage.html"
 
-[doc("run integration tests with coverage")]
+[doc("run e2e tests with coverage")]
 [group("🧪 Testing")]
-test-integration-coverage:
-    @echo "📊 Running integration tests with coverage..."
-    INTEGRATION_TEST=true {{ GO }} test -v -race -coverprofile=coverage-integration.out -covermode=atomic ./pkg/onemoney/...
-    {{ GO }} tool cover -html=coverage-integration.out -o coverage-integration.html
-    @echo "✅ Integration coverage report generated: coverage-integration.html"
+test-e2e-coverage:
+    @echo "📊 Running e2e tests with coverage..."
+    {{ GO }} test -v -race -coverprofile=coverage-e2e.out -covermode=atomic ./tests/e2e/...
+    {{ GO }} tool cover -html=coverage-e2e.out -o coverage-e2e.html
+    @echo "✅ E2E coverage report generated: coverage-e2e.html"
 
 [doc("run benchmarks")]
 [group("🧪 Testing")]

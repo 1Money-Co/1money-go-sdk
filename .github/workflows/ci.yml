@@ -56,6 +56,9 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           cache: true
 
+      - name: Install just
+        uses: extractions/setup-just@v2
+
       - name: Download dependencies
         run: go mod download
 
@@ -63,8 +66,7 @@ jobs:
         run: go mod verify
 
       - name: Run tests
-        run: |
-          go list ./... | grep -v '/cmd' | xargs go test -v -race -coverprofile=coverage.out -covermode=atomic
+        run: just test-coverage
 
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest'
