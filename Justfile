@@ -427,6 +427,70 @@ cloc:
     @echo "🚀 Counting lines of code..."
     tokei
 
+# ========================================================================================
+# Release
+# ========================================================================================
+
+[doc("preview changelog for unreleased changes")]
+[group("🚀 Release")]
+changelog:
+    @echo "📋 Generating changelog preview..."
+    @command -v git-cliff >/dev/null 2>&1 || (echo "❌ git-cliff not found. Install: brew install git-cliff" && exit 1)
+    git-cliff --unreleased
+
+[doc("generate full changelog")]
+[group("🚀 Release")]
+changelog-full:
+    @echo "📋 Generating full changelog..."
+    @command -v git-cliff >/dev/null 2>&1 || (echo "❌ git-cliff not found. Install: brew install git-cliff" && exit 1)
+    git-cliff -o CHANGELOG.md
+    @echo "✅ CHANGELOG.md generated!"
+
+[doc("create release tag and push (triggers GitHub release)")]
+[group("🚀 Release")]
+release VERSION_NUM:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ ! "{{ VERSION_NUM }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-.*)?$ ]]; then
+        echo "❌ Invalid version format. Use: x.y.z or x.y.z-suffix"
+        echo "   Examples: 0.1.0, 1.0.0-beta, 2.1.3-rc1"
+        exit 1
+    fi
+
+    echo "🔍 Running pre-release checks..."
+    just check
+    just test
+
+    TAG="v{{ VERSION_NUM }}"
+    echo ""
+    echo "🏷️  Creating release: $TAG"
+
+    # Update version.go
+    sed -i.bak "s/const Version = \".*\"/const Version = \"{{ VERSION_NUM }}\"/" version.go
+    rm version.go.bak
+
+    # Commit version change
+    git add version.go
+    git commit -m "chore(release): bump version to {{ VERSION_NUM }}"
+
+    # Create and push tag
+    git tag -a "$TAG" -m "Release $TAG"
+
+    echo ""
+    echo "✅ Release $TAG created locally!"
+    echo ""
+    echo "📋 Changelog preview:"
+    git-cliff --latest 2>/dev/null || echo "(install git-cliff for changelog preview)"
+    echo ""
+    echo "Next steps:"
+    echo "  1. Push changes: git push origin $(git branch --show-current)"
+    echo "  2. Push tag:     git push origin $TAG"
+    echo "  3. GitHub Actions will create the release automatically"
+
+# ========================================================================================
+# Documentation
+# ========================================================================================
+
 [doc("start documentation server (uses pkgsite or godoc)")]
 [group("📚 Documentation")]
 docs:
