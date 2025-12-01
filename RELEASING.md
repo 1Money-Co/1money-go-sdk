@@ -24,42 +24,47 @@ chore: update dependencies
 
 ## Release Process
 
-### 1. Ensure main branch is ready
+### 1. Create a Pull Request
+
+All changes must go through a PR to merge into `main`:
 
 ```bash
-git checkout main
-git pull origin main
+# Create feature branch
+git checkout -b feat/your-feature
+
+# Make changes and commit
+git add .
+git commit -m "feat: your feature description"
+
+# Push and create PR
+git push origin feat/your-feature
 ```
 
-### 2. Verify all tests pass
+Then create a Pull Request on GitHub and wait for review/approval.
 
-```bash
-just check
-just test
-```
+### 2. Merge PR and verify tests
 
-### 3. Create and push a version tag
+After the PR is merged to `main`, ensure all CI checks pass.
 
-```bash
-# For a new release
-git tag v1.2.3
-git push origin v1.2.3
+### 3. Create a release tag on GitHub
 
-# For pre-release versions
-git tag v1.2.3-beta.1
-git push origin v1.2.3-beta.1
-```
+1. Go to the repository's [Releases page](https://github.com/1Money-Co/1money-go-sdk/releases)
+2. Click **"Draft a new release"**
+3. Click **"Choose a tag"** and create a new tag (e.g., `v1.2.3`)
+4. Set the target branch to `main`
+5. Click **"Publish release"** (release notes will be auto-generated)
 
-### 4. Automated Release
+The release workflow will automatically:
 
-When a tag matching `v*.*.*` is pushed, the release workflow will:
+1. Extract version from tag
+2. Run tests
+3. Update `version.go` with the version number
+4. Commit and update the tag to include the version change
+5. Generate changelog
+6. Update the GitHub Release with changelog
+7. Trigger pkg.go.dev indexing
 
-1. Run tests to verify the release is valid
-2. Generate changelog from commits since the last tag
-3. Create a GitHub Release with the changelog
-4. Trigger pkg.go.dev to index the new version
-
-### 5. Verify the release
+### 4. Verify the release
 
 - Check the [GitHub Releases](https://github.com/1Money-Co/1money-go-sdk/releases) page
 - Verify the package is available on [pkg.go.dev](https://pkg.go.dev/github.com/1Money-Co/1money-go-sdk)

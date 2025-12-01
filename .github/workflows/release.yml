@@ -30,10 +30,20 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     steps:
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Releasing: $TAG (version: $VERSION)"
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -50,6 +60,39 @@ jobs:
       - name: Run tests
         run: go test -v -race ./...
 
+      - name: Update version.go
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          sed -i "s/const Version = \".*\"/const Version = \"$VERSION\"/" version.go
+          echo "Updated version.go:"
+          cat version.go
+
+      - name: Commit and update tag
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Check if version.go was actually changed
+          if git diff --quiet version.go; then
+            echo "version.go already up to date, skipping commit"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+
+            git add version.go
+            git commit -m "chore(release): bump version to $VERSION"
+
+            # Delete the old tag and create new one pointing to updated commit
+            git tag -d "$TAG"
+            git tag -a "$TAG" -m "Release $TAG"
+
+            # Force push the updated tag
+            git push origin HEAD:${{ github.event.repository.default_branch }}
+            git push origin "$TAG" --force
+
+            echo "✅ Tag $TAG updated to include version.go change"
+          fi
+
       - name: Get previous tag
         id: prev_tag
         run: |
@@ -61,16 +104,17 @@ jobs:
         uses: orhun/git-cliff-action@v4
         with:
           config: cliff.toml
-          args: ${{ steps.prev_tag.outputs.tag && format('{0}..{1}', steps.prev_tag.outputs.tag, github.ref_name) || github.ref_name }}
+          args: ${{ steps.prev_tag.outputs.tag && format('{0}..{1}', steps.prev_tag.outputs.tag, steps.version.outputs.tag) || steps.version.outputs.tag }}
         env:
           OUTPUT: CHANGELOG.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.version.outputs.tag }}
           body: ${{ steps.changelog.outputs.content }}
           draft: false
-          prerelease: ${{ contains(github.ref_name, '-alpha') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}
+          prerelease: ${{ contains(steps.version.outputs.tag, '-alpha') || contains(steps.version.outputs.tag, '-beta') || contains(steps.version.outputs.tag, '-rc') }}
           generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -78,4 +122,4 @@ jobs:
       - name: Update pkg.go.dev
         run: |
           # Trigger pkg.go.dev to index the new version
-          curl -s "https://proxy.golang.org/github.com/1Money-Co/1money-go-sdk/@v/${{ github.ref_name }}.info" || true
+          curl -s "https://proxy.golang.org/github.com/1Money-Co/1money-go-sdk/@v/${{ steps.version.outputs.tag }}.info" || true
