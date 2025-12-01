@@ -81,10 +81,9 @@ func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Update() {
 	}
 	updateResp, err := s.Client.Customer.UpdateAssociatedPerson(s.Ctx, testCustomerID, testAssociatedPersonID, updateReq)
 	s.Require().NoError(err, "UpdateAssociatedPerson should succeed")
-	updateResp.Email = newEmail
-	updateResp.HasControl = hasControl
-
 	s.Require().NotNil(updateResp, "Response should not be nil")
+	s.Equal(newEmail, updateResp.Email, "Email should be updated")
+	s.Equal(hasControl, updateResp.HasControl, "HasControl should be updated")
 	s.T().Logf("Updated associated person:\n%s", PrettyJSON(updateResp))
 }
 
