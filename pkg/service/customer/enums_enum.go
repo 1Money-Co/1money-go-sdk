@@ -463,6 +463,79 @@ func (x *FileFormat) AppendText(b []byte) ([]byte, error) {
 }
 
 const (
+	// GenderMale is a Gender of type male.
+	GenderMale Gender = "male"
+	// GenderFemale is a Gender of type female.
+	GenderFemale Gender = "female"
+)
+
+var ErrInvalidGender = fmt.Errorf("not a valid Gender, try [%s]", strings.Join(_GenderNames, ", "))
+
+var _GenderNames = []string{
+	string(GenderMale),
+	string(GenderFemale),
+}
+
+// GenderNames returns a list of possible string values of Gender.
+func GenderNames() []string {
+	tmp := make([]string, len(_GenderNames))
+	copy(tmp, _GenderNames)
+	return tmp
+}
+
+// String implements the Stringer interface.
+func (x Gender) String() string {
+	return string(x)
+}
+
+// IsValid provides a quick way to determine if the typed value is
+// part of the allowed enumerated values
+func (x Gender) IsValid() bool {
+	_, err := ParseGender(string(x))
+	return err == nil
+}
+
+var _GenderValue = map[string]Gender{
+	"male":   GenderMale,
+	"female": GenderFemale,
+}
+
+// ParseGender attempts to convert a string to a Gender.
+func ParseGender(name string) (Gender, error) {
+	if x, ok := _GenderValue[name]; ok {
+		return x, nil
+	}
+	// Case insensitive parse, do a separate lookup to prevent unnecessary cost of lowercasing a string if we don't need to.
+	if x, ok := _GenderValue[strings.ToLower(name)]; ok {
+		return x, nil
+	}
+	return Gender(""), fmt.Errorf("%s is %w", name, ErrInvalidGender)
+}
+
+// MarshalText implements the text marshaller method.
+func (x Gender) MarshalText() ([]byte, error) {
+	return []byte(string(x)), nil
+}
+
+// UnmarshalText implements the text unmarshaller method.
+func (x *Gender) UnmarshalText(text []byte) error {
+	tmp, err := ParseGender(string(text))
+	if err != nil {
+		return err
+	}
+	*x = tmp
+	return nil
+}
+
+// AppendText appends the textual representation of itself to the end of b
+// (allocating a larger slice if necessary) and returns the updated slice.
+//
+// Implementations must not retain b, nor mutate any bytes within b[:len(b)].
+func (x *Gender) AppendText(b []byte) ([]byte, error) {
+	return append(b, x.String()...), nil
+}
+
+const (
 	// HighRiskActivityAdultEntertainment is a HighRiskActivity of type adult_entertainment.
 	HighRiskActivityAdultEntertainment HighRiskActivity = "adult_entertainment"
 	// HighRiskActivityCannabis is a HighRiskActivity of type cannabis.

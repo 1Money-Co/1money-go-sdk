@@ -129,10 +129,17 @@ func FakeXLSXData() []byte {
 
 // FakeAssociatedPerson generates a fake associated person for testing.
 func FakeAssociatedPerson(faker *gofakeit.Faker) customer.AssociatedPerson {
+	// Randomly select gender
+	gender := customer.GenderMale
+	if faker.Bool() {
+		gender = customer.GenderFemale
+	}
+
 	return customer.AssociatedPerson{
 		FirstName: faker.FirstName(),
 		LastName:  faker.LastName(),
 		Email:     faker.Email(),
+		Gender:    gender,
 		ResidentialAddress: &customer.Address{
 			StreetLine1: faker.Street(),
 			City:        faker.City(),
@@ -151,15 +158,17 @@ func FakeAssociatedPerson(faker *gofakeit.Faker) customer.AssociatedPerson {
 		IsDirector:          true,
 		IdentifyingInformation: []customer.IdentifyingInformation{
 			{
-				Type:           customer.IDTypeDriversLicense,
-				IssuingCountry: CountryUSA,
-				ImageFront:     customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				ImageBack:      customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				Type:                   customer.IDTypeDriversLicense,
+				IssuingCountry:         CountryUSA,
+				ImageFront:             customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				ImageBack:              customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				NationalIdentityNumber: faker.LetterN(8) + faker.DigitN(4),
 			},
 		},
 		CountryOfTax: CountryUSA,
 		TaxType:      customer.TaxIDTypeSSN,
 		TaxID:        faker.SSN(),
 		POA:          customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+		POAType:      "utility_bill",
 	}
 }

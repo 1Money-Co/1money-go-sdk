@@ -122,9 +122,9 @@ func fileFormatToMIME(format FileFormat) string {
 	case FileFormatCsv:
 		return "text/csv"
 	case FileFormatXls:
-		return "application/vnd.ms-excel"
+		return "application/xls"
 	case FileFormatXlsx:
-		return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+		return "application/xlsx"
 	default:
 		return "application/octet-stream"
 	}

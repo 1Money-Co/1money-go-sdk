@@ -213,6 +213,9 @@ type IdentifyingInformation struct {
 	// ImageBack is the back image of the ID document in data-uri format.
 	// Supported formats: jpeg, jpg, png, heic, tif.
 	ImageBack string `json:"image_back"`
+	// NationalIdentityNumber is the national identity number from the ID document.
+	// This field is required for KYC verification. Maximum length: 128 characters.
+	NationalIdentityNumber string `json:"national_identity_number"`
 }
 
 // AssociatedPerson represents a person associated with the business entity.
@@ -227,11 +230,13 @@ type AssociatedPerson struct {
 	LastName string `json:"last_name"`
 	// Email is the person's contact email address.
 	Email string `json:"email"`
+	// Gender is the person's gender (required). Valid values: "male", "female".
+	Gender Gender `json:"gender"`
 	// ResidentialAddress is the person's current residential address.
 	ResidentialAddress *Address `json:"residential_address"`
 	// BirthDate is the person's date of birth in ISO format (e.g., "1980-01-15").
 	BirthDate string `json:"birth_date"`
-	// CountryOfBirth is the country where the person was born.
+	// CountryOfBirth is the country where the person was born (required).
 	CountryOfBirth string `json:"country_of_birth"`
 	// PrimaryNationality is the person's primary nationality or citizenship.
 	PrimaryNationality string `json:"primary_nationality"`
@@ -255,9 +260,13 @@ type AssociatedPerson struct {
 	TaxType TaxIDType `json:"tax_type"`
 	// TaxID is the person's tax identification number.
 	TaxID string `json:"tax_id"`
-	// POA is the Power of Attorney document in data-uri format (optional).
-	// Format: "data:image/[type];base64,[base64_data]" where type is jpeg, jpg, png, heic, or tif.
-	POA string `json:"poa,omitempty"`
+	// POA is the Proof of Address document in data-uri format (required).
+	// Format: "data:[mime_type];base64,[base64_data]"
+	// Supported formats: jpeg, jpg, png, pdf, csv, xls, xlsx.
+	POA string `json:"poa"`
+	// POAType is the type of proof of address document (required).
+	// Examples: "utility_bill", "bank_statement", "government_letter". Maximum length: 64 characters.
+	POAType string `json:"poa_type"`
 }
 
 // Document represents a business document attachment for KYB verification.
@@ -556,6 +565,8 @@ type UpdateAssociatedPersonRequest struct {
 	LastName *string `json:"last_name,omitempty"`
 	// Email is the person's contact email address.
 	Email *string `json:"email,omitempty"`
+	// Gender is the person's gender. Valid values: "male", "female".
+	Gender *Gender `json:"gender,omitempty"`
 	// ResidentialAddress is the person's current residential address.
 	ResidentialAddress *Address `json:"residential_address,omitempty"`
 	// BirthDate is the person's date of birth in ISO format (e.g., "1980-01-15").
@@ -584,8 +595,11 @@ type UpdateAssociatedPersonRequest struct {
 	TaxType *TaxIDType `json:"tax_type,omitempty"`
 	// TaxID is the person's tax identification number.
 	TaxID *string `json:"tax_id,omitempty"`
-	// POA is the Power of Attorney document in data-uri format.
+	// POA is the Proof of Address document in data-uri format.
 	POA *string `json:"poa,omitempty"`
+	// POAType is the type of proof of address document.
+	// Examples: "utility_bill", "bank_statement", "government_letter".
+	POAType *string `json:"poa_type,omitempty"`
 }
 
 // ListAssociatedPersonsResponse represents the response data for listing associated persons.

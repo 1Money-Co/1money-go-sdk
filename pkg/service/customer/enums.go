@@ -22,6 +22,10 @@ package customer
 // ENUM(cooperative, corporation, llc, partnership, sole_proprietorship)
 type BusinessType string
 
+// Gender represents the gender of an associated person.
+// ENUM(male, female)
+type Gender string
+
 // BusinessIndustry represents the NAICS (North American Industry Classification System) code
 // representing the business industry. This is a string field that accepts NAICS codes
 // (e.g., "541519" for Other Computer Related Services).

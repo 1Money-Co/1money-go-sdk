@@ -79,7 +79,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer() {
 			Subdivision: faker.StateAbr(),
 		},
 		DateOfIncorporation: faker.Date().Format("2006-01-02"),
-		SignedAgreementID:   "fb60790d-1509-47d4-ae5f-068a916e55bf",
+		SignedAgreementID:   "dc72d98a-e13d-4f1b-9444-c059b40df7d6",
 		AssociatedPersons: []customer.AssociatedPerson{
 			FakeAssociatedPerson(faker),
 			FakeAssociatedPerson(faker),
@@ -106,7 +106,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer() {
 			},
 			{
 				DocType:     customer.DocumentTypeShareholderRegister,
-				File:        customer.EncodeDocumentToDataURI(FakeXLSXData(), customer.FileFormatXlsx),
+				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
 				Description: "Ownership Structure",
 			},
 			{
