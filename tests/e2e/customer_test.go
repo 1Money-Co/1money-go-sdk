@@ -79,7 +79,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer() {
 			Subdivision: faker.StateAbr(),
 		},
 		DateOfIncorporation: faker.Date().Format("2006-01-02"),
-		SignedAgreementID:   "4e77a923-6254-4ed5-8354-eb2dc8f0e1d6",
+		SignedAgreementID:   "fb60790d-1509-47d4-ae5f-068a916e55bf",
 		AssociatedPersons: []customer.AssociatedPerson{
 			FakeAssociatedPerson(faker),
 			FakeAssociatedPerson(faker),
@@ -90,64 +90,39 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer() {
 		SourceOfWealth: []customer.SourceOfWealth{customer.SourceOfWealthBusinessDividendsOrProfits},
 		Documents: []customer.Document{
 			{
-				DocType:     customer.DocumentTypeCertificateOfIncorporation,
+				DocType:     customer.DocumentTypeFlowOfFunds,
+				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				Description: "Proof of Funds",
+			},
+			{
+				DocType:     customer.DocumentTypeRegistrationDocument,
 				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
 				Description: "Certificate of Incorporation",
 			},
 			{
-				DocType:     customer.DocumentTypeArticlesOfIncorporation,
-				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				Description: "Articles of Incorporation",
-			},
-			{
-				DocType:     customer.DocumentTypeW9Form,
+				DocType:     customer.DocumentTypeProofOfTaxIdentification,
 				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
 				Description: "W9 Form",
 			},
 			{
-				DocType:     customer.DocumentTypeCertificateOfGoodStanding,
-				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				Description: "Certificate of Good Standing",
+				DocType:     customer.DocumentTypeShareholderRegister,
+				File:        customer.EncodeDocumentToDataURI(FakeXLSXData(), customer.FileFormatXlsx),
+				Description: "Ownership Structure",
 			},
 			{
-				DocType:     customer.DocumentTypeProofOfSourceOfFunds,
-				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				Description: "Proof of Source of Funds",
-			},
-			{
-				DocType:     customer.DocumentTypeOwnershipAndFormationDocuments,
-				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				Description: "Ownership and Formation Documents",
-			},
-			{
-				DocType:     customer.DocumentTypeOwnershipStructureCorp,
-				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				Description: "Ownership Structure Corporation",
-			},
-			{
-				DocType:     customer.DocumentTypeBusinessLicense,
-				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				Description: "Business License",
-			},
-			{
-				DocType:     customer.DocumentTypeCertificateOfIncumbencyOrRegisterOfDirectors,
-				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				Description: "Certificate of Incumbency or Register of Directors",
-			},
-			{
-				DocType:     customer.DocumentTypeAmlPolicy,
-				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				Description: "AML Policy",
-			},
-			{
-				DocType:     customer.DocumentTypeAuthorizedRepresentativeList,
+				DocType:     customer.DocumentTypeESignatureCertificate,
 				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
 				Description: "Authorized Representative List",
 			},
 			{
-				DocType:     customer.DocumentTypeProofOfBusinessEntityAddress,
+				DocType:     customer.DocumentTypeEvidenceOfGoodStanding,
 				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				Description: "Proof of Business Entity Address",
+				Description: "Evidence of Good Standing",
+			},
+			{
+				DocType:     customer.DocumentTypeProofOfAddress,
+				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				Description: "Proof of Address",
 			},
 		},
 		AccountPurpose:                 customer.AccountPurposeTreasuryManagement,
@@ -172,6 +147,157 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer() {
 	s.NotEmpty(resp.Status, "Status should not be empty")
 	s.NotEmpty(resp.CreatedAt, "CreatedAt should not be empty")
 	s.NotEmpty(resp.UpdatedAt, "UpdatedAt should not be empty")
+}
+
+// TestCustomerService_CreateCustomer_InvalidFileFormat tests that invalid file formats are rejected.
+func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidFileFormat() {
+	faker := gofakeit.New(0)
+
+	// Test 1: Invalid MIME type (using unsupported format like .exe)
+	invalidMIME := "data:application/x-msdownload;base64,TVqQAAMAAAAEAAAA"
+
+	req := &customer.CreateCustomerRequest{
+		BusinessLegalName:          faker.Company(),
+		BusinessDescription:        faker.JobDescriptor(),
+		BusinessRegistrationNumber: fmt.Sprintf("%s-%d", faker.LetterN(3), faker.Number(100000, 999999)),
+		Email:                      faker.Email(),
+		BusinessType:               customer.BusinessTypeCorporation,
+		BusinessIndustry:           "332999",
+		RegisteredAddress: &customer.Address{
+			StreetLine1: faker.Street(),
+			City:        faker.City(),
+			State:       faker.StateAbr(),
+			Country:     CountryUSA,
+			PostalCode:  faker.Zip(),
+			Subdivision: faker.StateAbr(),
+		},
+		DateOfIncorporation: faker.Date().Format("2006-01-02"),
+		SignedAgreementID:   "121961e6-b863-4d1f-8d3b-c7caba257faf",
+		AssociatedPersons: []customer.AssociatedPerson{
+			FakeAssociatedPerson(faker),
+		},
+		SourceOfFunds:  []customer.SourceOfFunds{customer.SourceOfFundsSalesOfGoodsAndServices},
+		SourceOfWealth: []customer.SourceOfWealth{customer.SourceOfWealthBusinessDividendsOrProfits},
+		Documents: []customer.Document{
+			{
+				DocType:     customer.DocumentTypeFlowOfFunds,
+				File:        invalidMIME, // Invalid MIME type
+				Description: "Invalid file format test",
+			},
+		},
+		AccountPurpose:                 customer.AccountPurposeTreasuryManagement,
+		EstimatedAnnualRevenueUSD:      customer.MoneyRange099999,
+		ExpectedMonthlyFiatDeposits:    customer.MoneyRange099999,
+		ExpectedMonthlyFiatWithdrawals: customer.MoneyRange099999,
+		TaxID:                          fmt.Sprintf("%d-%d", faker.Number(10, 99), faker.Number(1000000, 9999999)),
+		TaxType:                        customer.TaxIDTypeEIN,
+		TaxCountry:                     CountryUSA,
+	}
+
+	_, err := s.Client.Customer.CreateCustomer(s.Ctx, req)
+	s.Require().Error(err, "CreateCustomer should return error for invalid MIME type")
+	s.T().Logf("Expected error for invalid MIME type: %v", err)
+}
+
+// TestCustomerService_CreateCustomer_InvalidBase64 tests that invalid base64 data is rejected.
+func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidBase64() {
+	faker := gofakeit.New(0)
+
+	// Invalid base64 data (not properly encoded)
+	invalidBase64 := "data:image/jpeg;base64,this-is-not-valid-base64!!!"
+
+	req := &customer.CreateCustomerRequest{
+		BusinessLegalName:          faker.Company(),
+		BusinessDescription:        faker.JobDescriptor(),
+		BusinessRegistrationNumber: fmt.Sprintf("%s-%d", faker.LetterN(3), faker.Number(100000, 999999)),
+		Email:                      faker.Email(),
+		BusinessType:               customer.BusinessTypeCorporation,
+		BusinessIndustry:           "332999",
+		RegisteredAddress: &customer.Address{
+			StreetLine1: faker.Street(),
+			City:        faker.City(),
+			State:       faker.StateAbr(),
+			Country:     CountryUSA,
+			PostalCode:  faker.Zip(),
+			Subdivision: faker.StateAbr(),
+		},
+		DateOfIncorporation: faker.Date().Format("2006-01-02"),
+		SignedAgreementID:   "121961e6-b863-4d1f-8d3b-c7caba257faf",
+		AssociatedPersons: []customer.AssociatedPerson{
+			FakeAssociatedPerson(faker),
+		},
+		SourceOfFunds:  []customer.SourceOfFunds{customer.SourceOfFundsSalesOfGoodsAndServices},
+		SourceOfWealth: []customer.SourceOfWealth{customer.SourceOfWealthBusinessDividendsOrProfits},
+		Documents: []customer.Document{
+			{
+				DocType:     customer.DocumentTypeFlowOfFunds,
+				File:        invalidBase64, // Invalid base64
+				Description: "Invalid base64 test",
+			},
+		},
+		AccountPurpose:                 customer.AccountPurposeTreasuryManagement,
+		EstimatedAnnualRevenueUSD:      customer.MoneyRange099999,
+		ExpectedMonthlyFiatDeposits:    customer.MoneyRange099999,
+		ExpectedMonthlyFiatWithdrawals: customer.MoneyRange099999,
+		TaxID:                          fmt.Sprintf("%d-%d", faker.Number(10, 99), faker.Number(1000000, 9999999)),
+		TaxType:                        customer.TaxIDTypeEIN,
+		TaxCountry:                     CountryUSA,
+	}
+
+	_, err := s.Client.Customer.CreateCustomer(s.Ctx, req)
+	s.Require().Error(err, "CreateCustomer should return error for invalid base64")
+	s.T().Logf("Expected error for invalid base64: %v", err)
+}
+
+// TestCustomerService_CreateCustomer_CorruptedXLSX tests that corrupted XLSX files are rejected.
+func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_CorruptedXLSX() {
+	faker := gofakeit.New(0)
+
+	// Corrupted XLSX (random bytes that look like XLSX but are invalid)
+	corruptedData := []byte("PK\x03\x04corrupted xlsx content that is not valid")
+	corruptedXLSX := customer.EncodeDocumentToDataURI(corruptedData, customer.FileFormatXlsx)
+
+	req := &customer.CreateCustomerRequest{
+		BusinessLegalName:          faker.Company(),
+		BusinessDescription:        faker.JobDescriptor(),
+		BusinessRegistrationNumber: fmt.Sprintf("%s-%d", faker.LetterN(3), faker.Number(100000, 999999)),
+		Email:                      faker.Email(),
+		BusinessType:               customer.BusinessTypeCorporation,
+		BusinessIndustry:           "332999",
+		RegisteredAddress: &customer.Address{
+			StreetLine1: faker.Street(),
+			City:        faker.City(),
+			State:       faker.StateAbr(),
+			Country:     CountryUSA,
+			PostalCode:  faker.Zip(),
+			Subdivision: faker.StateAbr(),
+		},
+		DateOfIncorporation: faker.Date().Format("2006-01-02"),
+		SignedAgreementID:   "121961e6-b863-4d1f-8d3b-c7caba257faf",
+		AssociatedPersons: []customer.AssociatedPerson{
+			FakeAssociatedPerson(faker),
+		},
+		SourceOfFunds:  []customer.SourceOfFunds{customer.SourceOfFundsSalesOfGoodsAndServices},
+		SourceOfWealth: []customer.SourceOfWealth{customer.SourceOfWealthBusinessDividendsOrProfits},
+		Documents: []customer.Document{
+			{
+				DocType:     customer.DocumentTypeShareholderRegister,
+				File:        corruptedXLSX, // Corrupted XLSX
+				Description: "Corrupted XLSX test",
+			},
+		},
+		AccountPurpose:                 customer.AccountPurposeTreasuryManagement,
+		EstimatedAnnualRevenueUSD:      customer.MoneyRange099999,
+		ExpectedMonthlyFiatDeposits:    customer.MoneyRange099999,
+		ExpectedMonthlyFiatWithdrawals: customer.MoneyRange099999,
+		TaxID:                          fmt.Sprintf("%d-%d", faker.Number(10, 99), faker.Number(1000000, 9999999)),
+		TaxType:                        customer.TaxIDTypeEIN,
+		TaxCountry:                     CountryUSA,
+	}
+
+	_, err := s.Client.Customer.CreateCustomer(s.Ctx, req)
+	s.Require().Error(err, "CreateCustomer should return error for corrupted XLSX")
+	s.T().Logf("Expected error for corrupted XLSX: %v", err)
 }
 
 // TestCustomerService_ListCustomers tests listing customers.

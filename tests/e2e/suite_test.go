@@ -17,6 +17,7 @@
 package e2e
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -26,6 +27,7 @@ import (
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
+	"github.com/xuri/excelize/v2"
 
 	"github.com/1Money-Co/1money-go-sdk/internal/utils"
 	"github.com/1Money-Co/1money-go-sdk/pkg/onemoney"
@@ -34,7 +36,7 @@ import (
 
 const (
 	// testCustomerID is a test customer ID used across multiple tests.
-	testCustomerID = "f415b5d1-20bc-4e43-8ed8-61329d41e00d"
+	testCustomerID = "ee71219c-1baa-4b8c-b860-08822ea53b8e"
 	// testAssociatedPersonID is a test associated person ID used across multiple tests.
 	testAssociatedPersonID = "96d2727d-4373-4b21-a60c-dae81d763902"
 	// CountryUSA is the country code for United States.
@@ -107,6 +109,22 @@ func PrettyJSON(v any) string {
 		return fmt.Sprintf("%+v", v)
 	}
 	return string(b)
+}
+
+// FakeXLSXData generates a simple XLSX file as bytes for testing.
+func FakeXLSXData() []byte {
+	f := excelize.NewFile()
+	defer func() { _ = f.Close() }()
+
+	// Add some test data
+	_ = f.SetCellValue("Sheet1", "A1", "Name")
+	_ = f.SetCellValue("Sheet1", "B1", "Value")
+	_ = f.SetCellValue("Sheet1", "A2", "Test")
+	_ = f.SetCellValue("Sheet1", "B2", "Data")
+
+	var buf bytes.Buffer
+	_ = f.Write(&buf)
+	return buf.Bytes()
 }
 
 // FakeAssociatedPerson generates a fake associated person for testing.
