@@ -14,7 +14,7 @@
 
 module github.com/1Money-Co/1money-go-sdk
 
-go 1.25.4
+go 1.25.5
 
 require (
 	github.com/abice/go-enum v0.9.2
