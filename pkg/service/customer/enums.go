@@ -22,6 +22,10 @@ package customer
 // ENUM(cooperative, corporation, llc, partnership, sole_proprietorship)
 type BusinessType string
 
+// Gender represents the gender of an associated person.
+// ENUM(male, female)
+type Gender string
+
 // BusinessIndustry represents the NAICS (North American Industry Classification System) code
 // representing the business industry. This is a string field that accepts NAICS codes
 // (e.g., "541519" for Other Computer Related Services).
@@ -58,44 +62,27 @@ type MoneyRange string
 
 // DocumentType represents the type of business document.
 /* ENUM(
-certificate_of_incorporation
-certificate_of_formation_registration
-certificate_of_incorporation_and_articles_of_organization
-constitutional_or_formation_documents
-partnership_agreement
-articles_of_organization
-articles_of_incorporation
-articles_of_incorporation_by_laws_or_equivalent_document
-operating_lp_agreement_if_applicable
-prospectus_offering_memorandum_or_private_placement_memorandum
-aml_attestation_letter
-fund_structure_chart
-irs_determination_letter
-annual_reports
-business_license
-trade_name_registration_doing_business_as_dba_filing
-tax_filings
-list_manager_or_similar_persons_that_has_have_the_ability_to_legally_bind_the_dao_and_carry_out_the_daos_instructions
-voting_records
-supporting_documents
-trust_agreement
-certificate_of_good_standing
-ownership_and_formation_documents
-ownership_structure_llc
-ownership_structure_corp
-ownership_structure_part
-ownership_structure_dao
-ownership_structure_gov
-authorized_representative_list
+aml_comfort_letter
+constitutional_document
+directors_registry
+e_signature_certificate
+evidence_of_good_standing
+flow_of_funds
+formation_document
+marketing_materials
+other
+ownership_chart
+ownership_information
+proof_of_account_purpose
+proof_of_address
+proof_of_entity_name_change
+proof_of_nature_of_business
+proof_of_signatory_authority
 proof_of_source_of_funds
-proof_of_business_entity_address
-proof_of_business_entity_address_dao
-w9_form
-state_local_money_transmission_licensing_evidence_or_equivalent_regulatory_authorization_non_us
-aml_policy
-certificate_of_incumbency_or_register_of_directors
-tax_exemption_or_charity_registration_letter
-memorandum_of_association_or_article_of_association_or_equivalent_document
+proof_of_source_of_wealth
+proof_of_tax_identification
+registration_document
+shareholder_register
 )
 */
 type DocumentType string
@@ -217,6 +204,11 @@ type HighRiskActivity string
 // ImageFormat represents supported image formats for document uploads.
 // ENUM(jpeg, jpg, png, heic, tif)
 type ImageFormat string
+
+// FileFormat represents all supported file formats for document uploads.
+// This includes images, PDFs, and spreadsheet formats.
+// ENUM(jpeg, jpg, png, heic, tif, pdf, csv, xls, xlsx)
+type FileFormat string
 
 // KybStatus represents the KYB (Know Your Business) verification status of a customer account.
 // This status tracks the progress and state of the KYB verification process.

@@ -97,12 +97,6 @@ func NewTransport(cfg *Config, signer *auth.Signer) *Transport {
 func (t *Transport) Do(ctx context.Context, req *Request) (*Response, error) {
 	log := getLogger()
 
-	log.Debug("executing HTTP request",
-		zap.String("method", req.Method),
-		zap.String("path", req.Path),
-		zap.Int("body_size", len(req.Body)),
-	)
-
 	// Generate signature
 	sigResult, err := t.signer.SignRequest(req.Method, req.Path, req.Body)
 	if err != nil {
@@ -124,6 +118,17 @@ func (t *Transport) Do(ctx context.Context, req *Request) (*Response, error) {
 		)
 		return nil, fmt.Errorf("failed to build HTTP request: %w", err)
 	}
+
+	// Log request with curl command for easy debugging
+	logFields := []zap.Field{
+		zap.String("method", req.Method),
+		zap.String("url", httpReq.URL.String()),
+		zap.Int("body_size", len(req.Body)),
+	}
+	if os.Getenv("ONEMONEY_DEBUG_CURL") == "1" {
+		logFields = append(logFields, zap.String("curl", "\n"+buildCurlCommand(httpReq, req.Body)))
+	}
+	log.Debug("executing HTTP request", logFields...)
 
 	// Execute request
 	httpResp, err := t.httpClient.Do(httpReq)
@@ -182,6 +187,18 @@ func (t *Transport) Do(ctx context.Context, req *Request) (*Response, error) {
 
 		// Parse and return API error
 		apiErr := parseErrorResponse(httpResp.StatusCode, httpResp.Status, respBody)
+		return nil, apiErr
+	}
+
+	// Check for rate limit response embedded in HTTP 200
+	// Some APIs return HTTP 200 with rate limit info in body:
+	// {"code":"Too_Many_Requests","status":429,"detail":"..."}
+	if apiErr := checkEmbeddedRateLimitError(respBody); apiErr != nil {
+		log.Warn("detected embedded rate limit response",
+			zap.Int("http_status", httpResp.StatusCode),
+			zap.String("code", apiErr.Code),
+			zap.String("detail", apiErr.Detail),
+		)
 		return nil, apiErr
 	}
 
@@ -294,4 +311,32 @@ func joinStrings(strs []string, sep string) string {
 		result += sep + strs[i]
 	}
 	return result
+}
+
+// buildCurlCommand generates a curl command string from an HTTP request for debugging.
+func buildCurlCommand(req *http.Request, body []byte) string {
+	var lines []string
+	lines = append(lines, "curl -v")
+
+	// Add method
+	if req.Method != http.MethodGet {
+		lines = append(lines, fmt.Sprintf("  -X %s", req.Method))
+	}
+
+	// Add headers
+	for key, values := range req.Header {
+		for _, value := range values {
+			lines = append(lines, fmt.Sprintf("  -H '%s: %s'", key, value))
+		}
+	}
+
+	// Add body
+	if len(body) > 0 {
+		lines = append(lines, fmt.Sprintf("  -d '%s'", string(body)))
+	}
+
+	// Add URL
+	lines = append(lines, fmt.Sprintf("  '%s'", req.URL.String()))
+
+	return joinStrings(lines, " \\\n")
 }

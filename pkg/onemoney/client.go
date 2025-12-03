@@ -27,8 +27,15 @@ import (
 	"github.com/1Money-Co/1money-go-sdk/internal/credentials"
 	"github.com/1Money-Co/1money-go-sdk/internal/transport"
 	svc "github.com/1Money-Co/1money-go-sdk/pkg/service"
+	"github.com/1Money-Co/1money-go-sdk/pkg/service/assets"
+	"github.com/1Money-Co/1money-go-sdk/pkg/service/conversions"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/customer"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/echo"
+	"github.com/1Money-Co/1money-go-sdk/pkg/service/external_accounts"
+	"github.com/1Money-Co/1money-go-sdk/pkg/service/instructions"
+	"github.com/1Money-Co/1money-go-sdk/pkg/service/simulations"
+	"github.com/1Money-Co/1money-go-sdk/pkg/service/transactions"
+	"github.com/1Money-Co/1money-go-sdk/pkg/service/withdraws"
 )
 
 // Client is the main OneMoney API client.
@@ -37,8 +44,15 @@ type Client struct {
 	transport *transport.Transport
 
 	// Service modules
-	Echo     echo.Service
-	Customer customer.Service
+	Assets           assets.Service
+	Conversions      conversions.Service
+	Customer         customer.Service
+	Echo             echo.Service
+	ExternalAccounts external_accounts.Service
+	Instructions     instructions.Service
+	Simulations      simulations.Service
+	Transactions     transactions.Service
+	Withdrawals      withdraws.Service
 }
 
 // Config holds the client configuration.
@@ -171,14 +185,19 @@ func NewClient(cfg *Config, opts ...Option) (*Client, error) {
 
 	// Initialize all service modules with base service
 	base := svc.NewBaseService(tr)
-	echoSvc := echo.NewService(base)
-	customerSvc := customer.NewService(base)
 
 	// Create client with pre-initialized services
 	return &Client{
-		transport: tr,
-		Echo:      echoSvc,
-		Customer:  customerSvc,
+		transport:        tr,
+		Assets:           assets.NewService(base),
+		Conversions:      conversions.NewService(base),
+		Customer:         customer.NewService(base),
+		Echo:             echo.NewService(base),
+		ExternalAccounts: external_accounts.NewService(base),
+		Instructions:     instructions.NewService(base),
+		Simulations:      simulations.NewService(base),
+		Transactions:     transactions.NewService(base),
+		Withdrawals:      withdraws.NewService(base),
 	}, nil
 }
 

@@ -213,6 +213,9 @@ type IdentifyingInformation struct {
 	// ImageBack is the back image of the ID document in data-uri format.
 	// Supported formats: jpeg, jpg, png, heic, tif.
 	ImageBack string `json:"image_back"`
+	// NationalIdentityNumber is the national identity number from the ID document.
+	// This field is required for KYC verification. Maximum length: 128 characters.
+	NationalIdentityNumber string `json:"national_identity_number"`
 }
 
 // AssociatedPerson represents a person associated with the business entity.
@@ -227,11 +230,13 @@ type AssociatedPerson struct {
 	LastName string `json:"last_name"`
 	// Email is the person's contact email address.
 	Email string `json:"email"`
+	// Gender is the person's gender (required). Valid values: "male", "female".
+	Gender Gender `json:"gender"`
 	// ResidentialAddress is the person's current residential address.
 	ResidentialAddress *Address `json:"residential_address"`
 	// BirthDate is the person's date of birth in ISO format (e.g., "1980-01-15").
 	BirthDate string `json:"birth_date"`
-	// CountryOfBirth is the country where the person was born.
+	// CountryOfBirth is the country where the person was born (required).
 	CountryOfBirth string `json:"country_of_birth"`
 	// PrimaryNationality is the person's primary nationality or citizenship.
 	PrimaryNationality string `json:"primary_nationality"`
@@ -255,9 +260,13 @@ type AssociatedPerson struct {
 	TaxType TaxIDType `json:"tax_type"`
 	// TaxID is the person's tax identification number.
 	TaxID string `json:"tax_id"`
-	// POA is the Power of Attorney document in data-uri format (optional).
-	// Format: "data:image/[type];base64,[base64_data]" where type is jpeg, jpg, png, heic, or tif.
-	POA string `json:"poa,omitempty"`
+	// POA is the Proof of Address document in data-uri format (required).
+	// Format: "data:[mime_type];base64,[base64_data]"
+	// Supported formats: jpeg, jpg, png, pdf, csv, xls, xlsx.
+	POA string `json:"poa"`
+	// POAType is the type of proof of address document (required).
+	// Examples: "utility_bill", "bank_statement", "government_letter". Maximum length: 64 characters.
+	POAType string `json:"poa_type"`
 }
 
 // Document represents a business document attachment for KYB verification.
@@ -270,17 +279,6 @@ type Document struct {
 	File string `json:"file"`
 	// Description is an optional description of the document.
 	Description string `json:"description,omitempty"`
-}
-
-// ValidationError represents a validation error detail in response.
-// This is returned when the API processes a request but finds validation issues.
-type ValidationError struct {
-	// ErrorType is the type of error (e.g., "missing_field", "invalid_value").
-	ErrorType string `json:"error_type"`
-	// Location is the location of the error (field path or index).
-	Location string `json:"location"`
-	// Message is the detailed error message.
-	Message string `json:"message"`
 }
 
 // CreateCustomerRequest represents the request body for creating a business customer.
@@ -312,7 +310,7 @@ type CreateCustomerRequest struct {
 	// PhysicalAddress is the actual operating address if different from registered address (optional).
 	PhysicalAddress *Address `json:"physical_address,omitempty"`
 	// SignedAgreementID is the identifier of the signed service agreement.
-	SignedAgreementID int64 `json:"signed_agreement_id"`
+	SignedAgreementID string `json:"signed_agreement_id"`
 	// IsDAO indicates whether this is a Decentralized Autonomous Organization.
 	IsDAO bool `json:"is_dao"`
 	// AssociatedPersons is a list of all persons associated with the business (owners, directors, signers).
@@ -395,9 +393,6 @@ type CustomerResponse struct {
 	CreatedAt string `json:"created_at"`
 	// UpdatedAt is the timestamp when the customer account was last updated (ISO 8601 format).
 	UpdatedAt string `json:"updated_at"`
-	// ValidationErrors contains validation errors if any were found during processing.
-	// This field is present when the request was processed but validation issues were found.
-	ValidationErrors []ValidationError `json:"validation_errors,omitempty"`
 }
 
 // CreateCustomerResponse is an alias for CustomerResponse.
@@ -570,6 +565,8 @@ type UpdateAssociatedPersonRequest struct {
 	LastName *string `json:"last_name,omitempty"`
 	// Email is the person's contact email address.
 	Email *string `json:"email,omitempty"`
+	// Gender is the person's gender. Valid values: "male", "female".
+	Gender *Gender `json:"gender,omitempty"`
 	// ResidentialAddress is the person's current residential address.
 	ResidentialAddress *Address `json:"residential_address,omitempty"`
 	// BirthDate is the person's date of birth in ISO format (e.g., "1980-01-15").
@@ -598,8 +595,11 @@ type UpdateAssociatedPersonRequest struct {
 	TaxType *TaxIDType `json:"tax_type,omitempty"`
 	// TaxID is the person's tax identification number.
 	TaxID *string `json:"tax_id,omitempty"`
-	// POA is the Power of Attorney document in data-uri format.
+	// POA is the Proof of Address document in data-uri format.
 	POA *string `json:"poa,omitempty"`
+	// POAType is the type of proof of address document.
+	// Examples: "utility_bill", "bank_statement", "government_letter".
+	POAType *string `json:"poa_type,omitempty"`
 }
 
 // ListAssociatedPersonsResponse represents the response data for listing associated persons.
@@ -622,7 +622,7 @@ type TOSLinkResponse struct {
 type SignAgreementResponse struct {
 	// SignedAgreementID is the unique identifier for the signed agreement.
 	// This ID must be provided when creating a customer account.
-	SignedAgreementID int `json:"signedAgreementId"`
+	SignedAgreementID string `json:"signedAgreementId"`
 }
 
 type serviceImpl struct {

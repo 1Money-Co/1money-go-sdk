@@ -61,7 +61,7 @@ func NewService(base *svc.BaseService) Service {
 
 // Get performs a GET echo request.
 func (s *serviceImpl) Get(ctx context.Context) (*Response, error) {
-	resp, err := s.BaseService.Get(ctx, "/openapi/echo")
+	resp, err := s.BaseService.Get(ctx, "/echo")
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform GET echo: %w", err)
 	}
@@ -81,7 +81,7 @@ func (s *serviceImpl) Post(ctx context.Context, req *Request) (*Response, error)
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	resp, err := s.BaseService.Post(ctx, "/openapi/echo", body)
+	resp, err := s.BaseService.Post(ctx, "/echo", body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform POST echo: %w", err)
 	}

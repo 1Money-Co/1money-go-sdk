@@ -35,17 +35,17 @@ LDFLAGS := "-s -w -X main.version=" + VERSION + " -X main.gitCommit=" + GIT_COMM
 # Help
 # ========================================================================================
 
-[group("📒 Help")]
+[group("Help")]
 [private]
 default:
-    @just --list --list-heading '🚀 OneMoney Go SDK justfile manual page:\n'
+    @just --list --list-heading 'OneMoney Go SDK justfile manual page:\n'
 
 [doc("show help")]
-[group("📒 Help")]
+[group("Help")]
 help: default
 
 [doc("show version information")]
-[group("📒 Help")]
+[group("Help")]
 version:
     @echo "Version:    {{ VERSION }}"
     @echo "Git Tag:    {{ GIT_TAG }}"
@@ -53,39 +53,39 @@ version:
     @echo "Build Time: {{ BUILD_TIME }}"
 
 [doc("update version.go based on latest git tag")]
-[group("📒 Help")]
+[group("Help")]
 version-update:
     #!/usr/bin/env bash
     set -euo pipefail
     LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
     if [ -z "$LATEST_TAG" ]; then
-        echo "❌ No git tags found. Create a tag first with: git tag v0.1.0"
+        echo "Error: No git tags found. Create a tag first with: git tag v0.1.0"
         exit 1
     fi
     VERSION="${LATEST_TAG#v}"
-    echo "📝 Updating version.go to: $VERSION (from tag: $LATEST_TAG)"
+    echo "Updating version.go to: $VERSION (from tag: $LATEST_TAG)"
     sed -i.bak "s/const Version = \".*\"/const Version = \"$VERSION\"/" version.go
     rm version.go.bak
-    echo "✅ version.go updated to version $VERSION"
-    echo "💡 Don't forget to commit this change!"
+    echo "Done: version.go updated to version $VERSION"
+    echo "Tip: Don't forget to commit this change!"
 
 [doc("create a new git tag and update version.go")]
-[group("📒 Help")]
+[group("Help")]
 version-tag VERSION_NUM:
     #!/usr/bin/env bash
     set -euo pipefail
     if [[ ! "{{ VERSION_NUM }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-.*)?$ ]]; then
-        echo "❌ Invalid version format. Use: x.y.z or x.y.z-suffix"
+        echo "Error: Invalid version format. Use: x.y.z or x.y.z-suffix"
         echo "   Examples: 0.1.0, 1.0.0-beta, 2.1.3-rc1"
         exit 1
     fi
     TAG="v{{ VERSION_NUM }}"
-    echo "🏷️  Creating git tag: $TAG"
+    echo "Creating git tag: $TAG"
     git tag -a "$TAG" -m "Release $TAG"
-    echo "📝 Updating version.go..."
+    echo "Updating version.go..."
     sed -i.bak "s/const Version = \".*\"/const Version = \"{{ VERSION_NUM }}\"/" version.go
     rm version.go.bak
-    echo "✅ Tag created and version.go updated!"
+    echo "Done: Tag created and version.go updated!"
     echo ""
     echo "Next steps:"
     echo "  1. Review changes: git diff version.go"
@@ -97,46 +97,46 @@ version-tag VERSION_NUM:
 # ========================================================================================
 
 [doc("run `go fmt` and `goimports` to format code")]
-[group("👆 Code Quality")]
+[group("Code Quality")]
 fmt: hawkeye-fix
-    @echo "🔧 Formatting code..."
+    @echo "Formatting code..."
     find . -name "*.go" ! -path "./.history/*" ! -path "./vendor/*" -exec gofmt -w -s {} +
     find . -name "*.go" ! -path "./.history/*" ! -path "./vendor/*" -exec {{ GOIMPORTS }} -w -local {{ MODULE_NAME }} {} +
-    @echo "✅ Code formatted!"
+    @echo "Done: Code formatted!"
 
 [doc("check code formatting")]
-[group("👆 Code Quality")]
+[group("Code Quality")]
 fmt-check:
-    @echo "📝 Checking code formatting..."
-    @test -z "$(find . -name '*.go' ! -path './.history/*' ! -path './vendor/*' -exec gofmt -l {} +)" || (echo "❌ Code is not formatted. Run 'just fmt'" && exit 1)
-    @echo "✅ Code formatting is correct!"
+    @echo "Checking code formatting..."
+    @test -z "$(find . -name '*.go' ! -path './.history/*' ! -path './vendor/*' -exec gofmt -l {} +)" || (echo "Error: Code is not formatted. Run 'just fmt'" && exit 1)
+    @echo "Done: Code formatting is correct!"
 
 [doc("run `golangci-lint`")]
-[group("👆 Code Quality")]
+[group("Code Quality")]
 lint:
-    @echo "🔍 Running linter..."
+    @echo "Running linter..."
     {{ GOLANGCI_LINT }} run --timeout 5m
-    @echo "✅ Linter checks passed!"
+    @echo "Done: Linter checks passed!"
 
 alias l := lint
 
 [doc("run `golangci-lint` with auto-fix")]
-[group("👆 Code Quality")]
+[group("Code Quality")]
 lint-fix:
-    @echo "🔧 Running linter with auto-fix..."
+    @echo "Running linter with auto-fix..."
     {{ GOLANGCI_LINT }} run --fix --timeout 5m
-    @echo "✅ Auto-fix completed!"
+    @echo "Done: Auto-fix completed!"
 
 [doc("run `fmt` and `lint-fix` at once")]
-[group("👆 Code Quality")]
+[group("Code Quality")]
 fix: fmt lint-fix
-    @echo "✅ All fixes applied!"
+    @echo "Done: All fixes applied!"
 
 [doc("run `fmt-check`, `lint`, and `test` at once")]
-[group("👆 Code Quality")]
+[group("Code Quality")]
 check: fmt-check lint
     {{ GO }} vet ./...
-    @echo "✅ All quality checks passed!"
+    @echo "Done: All quality checks passed!"
 
 alias c := check
 
@@ -144,190 +144,190 @@ alias c := check
 # Testing
 # ========================================================================================
 
-[doc("run unit tests only")]
-[group("🧪 Testing")]
+[doc("run unit tests only (excludes e2e tests)")]
+[group("Testing")]
 test:
-    @echo "🧪 Running unit tests..."
-    {{ GO }} test -count=1 -v -race -cover ./...
-    @echo "✅ Unit tests passed!"
+    @echo "Running unit tests..."
+    {{ GO }} list ./... | grep -v '/tests/' | xargs {{ GO }} test -count=1 -v -race -cover
+    @echo "Done: Unit tests passed!"
 
-[doc("run integration tests (requires API credentials)")]
-[group("🧪 Testing")]
-test-integration:
-    @echo "🌐 Running integration tests..."
-    @echo "📝 Loading credentials from .env file..."
-    INTEGRATION_TEST=true {{ GO }} test -v -race ./pkg/onemoney/...
-    @echo "✅ Integration tests passed!"
+[doc("run e2e tests (requires API credentials)")]
+[group("Testing")]
+test-e2e:
+    @echo "Running e2e tests..."
+    @echo "Loading credentials from .env file..."
+    {{ GO }} test -count=1 -v -race ./tests/e2e/...
+    @echo "Done: E2E tests passed!"
 
-[doc("run all tests (unit + integration)")]
-[group("🧪 Testing")]
+[doc("run all tests (unit + e2e)")]
+[group("Testing")]
 test-all:
-    @echo "🎯 Running all tests..."
+    @echo "Running all tests..."
     @just test
-    @just test-integration
-    @echo "✅ All tests passed!"
+    @just test-e2e
+    @echo "Done: All tests passed!"
 
-[doc("run tests with coverage report")]
-[group("🧪 Testing")]
+[doc("run unit tests with coverage report")]
+[group("Testing")]
 test-coverage:
-    @echo "📊 Running tests with coverage..."
-    {{ GO }} test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+    @echo "Running tests with coverage..."
+    {{ GO }} list ./... | grep -v '/tests/' | xargs {{ GO }} test -v -race -coverprofile=coverage.out -covermode=atomic
     {{ GO }} tool cover -html=coverage.out -o coverage.html
-    @echo "✅ Coverage report generated: coverage.html"
+    @echo "Done: Coverage report generated: coverage.html"
 
-[doc("run integration tests with coverage")]
-[group("🧪 Testing")]
-test-integration-coverage:
-    @echo "📊 Running integration tests with coverage..."
-    INTEGRATION_TEST=true {{ GO }} test -v -race -coverprofile=coverage-integration.out -covermode=atomic ./pkg/onemoney/...
-    {{ GO }} tool cover -html=coverage-integration.out -o coverage-integration.html
-    @echo "✅ Integration coverage report generated: coverage-integration.html"
+[doc("run e2e tests with coverage")]
+[group("Testing")]
+test-e2e-coverage:
+    @echo "Running e2e tests with coverage..."
+    {{ GO }} test -v -race -coverprofile=coverage-e2e.out -covermode=atomic ./tests/e2e/...
+    {{ GO }} tool cover -html=coverage-e2e.out -o coverage-e2e.html
+    @echo "Done: E2E coverage report generated: coverage-e2e.html"
 
 [doc("run benchmarks")]
-[group("🧪 Testing")]
+[group("Testing")]
 bench:
-    @echo "⚡ Running benchmarks..."
+    @echo "Running benchmarks..."
     {{ GO }} test -bench=. -benchmem ./...
-    @echo "✅ Benchmarks completed!"
+    @echo "Done: Benchmarks completed!"
 
 # ========================================================================================
 # Build
 # ========================================================================================
 
 [doc("build the project")]
-[group("🔨 Build")]
+[group("Build")]
 build:
-    @echo "🔨 Building project..."
+    @echo "Building project..."
     {{ GO }} build -v ./...
-    @echo "✅ Build completed!"
+    @echo "Done: Build completed!"
 
 [doc("build CLI tool with version information")]
-[group("🔨 Build")]
+[group("Build")]
 build-cli:
-    @echo "🔨 Building CLI tool (v{{ VERSION }})..."
+    @echo "Building CLI tool (v{{ VERSION }})..."
     mkdir -p {{ BIN_DIR }}
     cd cmd && {{ GO }} build -o ../{{ BIN_DIR }}/{{ CLI_NAME }} -ldflags="{{ LDFLAGS }}" .
-    @echo "✅ Binary created at: {{ BIN_DIR }}/{{ CLI_NAME }}"
-    @echo "📦 Version: {{ VERSION }} ({{ GIT_COMMIT }})"
+    @echo "Done: Binary created at: {{ BIN_DIR }}/{{ CLI_NAME }}"
+    @echo "Version: {{ VERSION }} ({{ GIT_COMMIT }})"
 
-[group("🔨 Build")]
+[group("Build")]
 [private]
 build-platform os arch ext="":
-    @echo "🔨 Building {{ CLI_NAME }} for {{ os }}/{{ arch }}..."
+    @echo "Building {{ CLI_NAME }} for {{ os }}/{{ arch }}..."
     cd cmd && CGO_ENABLED=0 GOOS={{ os }} GOARCH={{ arch }} {{ GO }} build -ldflags="{{ LDFLAGS }}" -o ../{{ BIN_DIR }}/{{ CLI_NAME }}-{{ os }}-{{ arch }}{{ ext }} .
 
 [doc("build release binaries for all platforms")]
-[group("🔨 Build")]
+[group("Build")]
 build-release:
-    @echo "🏗️ Building release binaries (v{{ VERSION }}) for all platforms..."
+    @echo "Building release binaries (v{{ VERSION }}) for all platforms..."
     mkdir -p {{ BIN_DIR }}
     just build-platform linux amd64
     just build-platform darwin amd64
     just build-platform darwin arm64
     just build-platform windows amd64 .exe
-    @echo "✅ Release binaries (v{{ VERSION }}) created in {{ BIN_DIR }}/"
+    @echo "Done: Release binaries (v{{ VERSION }}) created in {{ BIN_DIR }}/"
     @ls -lh {{ BIN_DIR }}/
 
 [doc("install CLI tool globally")]
-[group("🔨 Build")]
+[group("Build")]
 install:
-    @echo "📦 Installing CLI tool..."
+    @echo "Installing CLI tool..."
     cd cmd && {{ GO }} install
-    @echo "✅ CLI tool installed!"
+    @echo "Done: CLI tool installed!"
 
 # ========================================================================================
 # License Management
 # ========================================================================================
 
 [doc("check license headers")]
-[group("📝 License")]
+[group("License")]
 hawkeye: hawkeye-check
 
-[group("📝 License")]
+[group("License")]
 [private]
 hawkeye-check:
-    @echo "📝 Checking license headers with hawkeye..."
-    @command -v {{ HAWKEYE }} >/dev/null 2>&1 || (echo "❌ hawkeye not found. Run 'just init' to install" && exit 1)
+    @echo "Checking license headers with hawkeye..."
+    @command -v {{ HAWKEYE }} >/dev/null 2>&1 || (echo "Error: hawkeye not found. Run 'just init' to install" && exit 1)
     {{ HAWKEYE }} check
-    @echo "✅ License headers are correct!"
+    @echo "Done: License headers are correct!"
 
 [doc("fix license headers")]
-[group("📝 License")]
+[group("License")]
 hawkeye-fix:
-    @echo "🔧 Fixing license headers with hawkeye..."
-    @command -v {{ HAWKEYE }} >/dev/null 2>&1 || (echo "❌ hawkeye not found. Run 'just init' to install" && exit 1)
+    @echo "Fixing license headers with hawkeye..."
+    @command -v {{ HAWKEYE }} >/dev/null 2>&1 || (echo "Error: hawkeye not found. Run 'just init' to install" && exit 1)
     {{ HAWKEYE }} format
-    @echo "✅ License headers fixed!"
+    @echo "Done: License headers fixed!"
 
 # ========================================================================================
 # Security
 # ========================================================================================
 
 [doc("run security audit with gosec")]
-[group("🔒 Security")]
+[group("Security")]
 security:
-    @echo "🔒 Running security audit..."
-    @command -v {{ GOSEC }} >/dev/null 2>&1 || (echo "❌ gosec not found. Run 'just init' to install" && exit 1)
+    @echo "Running security audit..."
+    @command -v {{ GOSEC }} >/dev/null 2>&1 || (echo "Error: gosec not found. Run 'just init' to install" && exit 1)
     {{ GOSEC }} -fmt=json -out=security-report.json ./...
-    @echo "✅ Security report generated: security-report.json"
+    @echo "Done: Security report generated: security-report.json"
 
 [doc("check for vulnerabilities")]
-[group("🔒 Security")]
+[group("Security")]
 vuln:
-    @echo "🛡️ Checking for vulnerabilities..."
-    @command -v {{ GOVULNCHECK }} >/dev/null 2>&1 || (echo "❌ govulncheck not found. Run 'just init' to install" && exit 1)
+    @echo "Checking for vulnerabilities..."
+    @command -v {{ GOVULNCHECK }} >/dev/null 2>&1 || (echo "Error: govulncheck not found. Run 'just init' to install" && exit 1)
     {{ GOVULNCHECK }} ./...
-    @echo "✅ Vulnerability check completed!"
+    @echo "Done: Vulnerability check completed!"
 
 # ========================================================================================
 # Maintenance
 # ========================================================================================
 
 [doc("clean build artifacts and caches")]
-[group("🧹 Maintenance")]
+[group("Maintenance")]
 clean:
-    @echo "🧹 Cleaning build artifacts..."
+    @echo "Cleaning build artifacts..."
     {{ GO }} clean -cache -testcache -modcache
     rm -rf {{ BIN_DIR }}/
     rm -rf coverage*.out coverage*.html
     rm -f {{ CLI_NAME }}
     rm -f security-report.json
-    @echo "✅ Cleaned!"
+    @echo "Done: Cleaned!"
 
 [doc("tidy and verify dependencies")]
-[group("🧹 Maintenance")]
+[group("Maintenance")]
 tidy:
-    @echo "🧹 Tidying dependencies..."
+    @echo "Tidying dependencies..."
     {{ GO }} mod tidy
     {{ GO }} mod verify
-    @echo "✅ Dependencies tidied!"
+    @echo "Done: Dependencies tidied!"
 
 [doc("update all dependencies")]
-[group("🧹 Maintenance")]
+[group("Maintenance")]
 update:
-    @echo "⬆️ Updating dependencies..."
+    @echo "Updating dependencies..."
     {{ GO }} get -u ./...
     {{ GO }} mod tidy
-    @echo "✅ Dependencies updated!"
+    @echo "Done: Dependencies updated!"
 
 # ========================================================================================
 # Code Generation
 # ========================================================================================
 
 [doc("generate code (enums, mocks, etc.)")]
-[group("⚙️ Code Generation")]
+[group("Code Generation")]
 generate:
-    @echo "⚙️ Generating code..."
+    @echo "Generating code..."
     {{ GO }} generate ./...
-    @echo "✅ Code generation completed!"
+    @echo "Done: Code generation completed!"
 
 [doc("generate enums only")]
-[group("⚙️ Code Generation")]
+[group("Code Generation")]
 generate-enums:
-    @echo "⚙️ Generating enums..."
-    @{{ GO }} tool go-enum --version >/dev/null 2>&1 || (echo "❌ go-enum not found. Run 'just init' to install" && exit 1)
+    @echo "Generating enums..."
+    @{{ GO }} tool go-enum --version >/dev/null 2>&1 || (echo "Error: go-enum not found. Run 'just init' to install" && exit 1)
     {{ GO }} generate ./pkg/service/customer/enums.go
-    @echo "✅ Enums generated!"
+    @echo "Done: Enums generated!"
 
 alias gen := generate
 
@@ -336,10 +336,10 @@ alias gen := generate
 # ========================================================================================
 
 [doc("initialize development environment")]
-[group("🚀 Development")]
+[group("Development")]
 init:
-    @echo "🚀 Initializing development environment..."
-    @echo "📦 Installing development tools..."
+    @echo "Initializing development environment..."
+    @echo "Installing development tools..."
     {{ GO }} install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
     {{ GO }} install golang.org/x/tools/cmd/goimports@latest
     {{ GO }} install github.com/securego/gosec/v2/cmd/gosec@latest
@@ -347,26 +347,26 @@ init:
     {{ GO }} install golang.org/x/pkgsite/cmd/pkgsite@latest
     {{ GO }} install github.com/abice/go-enum@latest
     cargo install hawkeye
-    @echo "📥 Downloading dependencies..."
+    @echo "Downloading dependencies..."
     {{ GO }} mod download
-    @echo "✅ Development environment ready!"
+    @echo "Done: Development environment ready!"
 
 [doc("run all pre-commit checks")]
-[group("🚀 Development")]
+[group("Development")]
 pre-commit: fmt lint hawkeye test
-    @echo "✅ All pre-commit checks passed!"
+    @echo "Done: All pre-commit checks passed!"
 
 [doc("simulate CI pipeline")]
-[group("🚀 Development")]
+[group("Development")]
 ci: clean tidy fmt-check lint hawkeye test
-    @echo "✅ CI pipeline simulation passed!"
+    @echo "Done: CI pipeline simulation passed!"
 
 [doc("watch for changes and run tests")]
-[group("🚀 Development")]
+[group("Development")]
 dev:
-    @echo "👀 Starting development mode..."
-    @echo "📡 Watching for changes..."
-    @command -v watchexec >/dev/null 2>&1 || (echo "❌ watchexec not found. Install: brew install watchexec" && exit 1)
+    @echo "Starting development mode..."
+    @echo "Watching for changes..."
+    @command -v watchexec >/dev/null 2>&1 || (echo "Error: watchexec not found. Install: brew install watchexec" && exit 1)
     watchexec -e go -r -- just test
 
 # ========================================================================================
@@ -374,9 +374,9 @@ dev:
 # ========================================================================================
 
 [doc("show project statistics")]
-[group("📊 Info")]
+[group("Info")]
 stats:
-    @echo "📊 Project Statistics:"
+    @echo "Project Statistics:"
     @echo "===================="
     @echo "Go files:"
     @find . -name "*.go" ! -path "./.history/*" ! -path "./vendor/*" | wc -l
@@ -388,16 +388,16 @@ stats:
     @{{ GO }} list ./... | wc -l
 
 [doc("show project dependencies")]
-[group("📊 Info")]
+[group("Info")]
 deps:
-    @echo "📦 Project Dependencies:"
+    @echo "Project Dependencies:"
     @echo "===================="
     {{ GO }} list -m all
 
 [doc("check for outdated dependencies")]
-[group("📊 Info")]
+[group("Info")]
 deps-outdated:
-    @echo "🔍 Checking for outdated dependencies..."
+    @echo "Checking for outdated dependencies..."
     {{ GO }} list -u -m all
 
 # ========================================================================================
@@ -405,47 +405,70 @@ deps-outdated:
 # ========================================================================================
 
 [doc("create a new service from template using go generate")]
-[group("🛠️ Tools")]
+[group("Tools")]
 new-service name:
-    @echo "🔧 Creating new service: {{name}}"
+    @echo "Creating new service: {{name}}"
     {{ GO }} run cmd/tools/svcgen/main.go {{name}}
     @echo ""
-    @echo "📝 Next steps:"
+    @echo "Next steps:"
     @echo "  1. Implement service methods in pkg/service/{{name}}/service.go"
     @echo "  2. Add tests in pkg/service/{{name}}/service_test.go"
     @echo "  3. Register service in pkg/onemoney/client.go"
 
 [doc("run CLI tool with parameters")]
-[group("🛠️ Tools")]
+[group("Tools")]
 run-cli access-key secret-key:
-    @echo "🚀 Running CLI tool..."
+    @echo "Running CLI tool..."
     {{ GO }} run cmd/main.go -access-key {{ access-key }} -secret-key {{ secret-key }} echo
 
 [doc("Count lines of code")]
-[group("🛠️ Tools")]
+[group("Tools")]
 cloc:
-    @echo "🚀 Counting lines of code..."
+    @echo "Counting lines of code..."
     tokei
 
+# ========================================================================================
+# Release
+# ========================================================================================
+
+[doc("preview changelog for unreleased changes")]
+[group("Release")]
+changelog:
+    @echo "Generating changelog preview..."
+    @command -v git-cliff >/dev/null 2>&1 || (echo "Error: git-cliff not found. Install: brew install git-cliff" && exit 1)
+    git-cliff --unreleased
+
+[doc("generate full changelog")]
+[group("Release")]
+changelog-full:
+    @echo "Generating full changelog..."
+    @command -v git-cliff >/dev/null 2>&1 || (echo "Error: git-cliff not found. Install: brew install git-cliff" && exit 1)
+    git-cliff -o CHANGELOG.md
+    @echo "Done: CHANGELOG.md generated!"
+
+# ========================================================================================
+# Documentation
+# ========================================================================================
+
 [doc("start documentation server (uses pkgsite or godoc)")]
-[group("📚 Documentation")]
+[group("Documentation")]
 docs:
     #!/usr/bin/env bash
     set -euo pipefail
     if command -v pkgsite >/dev/null 2>&1; then
-        echo "📚 Starting pkgsite documentation server..."
-        echo "🌐 Open http://localhost:{{ DOCS_PORT }}/{{ MODULE_NAME }} in your browser"
-        echo "🛑 Press Ctrl+C to stop the server"
+        echo "Starting pkgsite documentation server..."
+        echo "Open http://localhost:{{ DOCS_PORT }}/{{ MODULE_NAME }} in your browser"
+        echo "Press Ctrl+C to stop the server"
         pkgsite -http=:{{ DOCS_PORT }}
     elif command -v godoc >/dev/null 2>&1; then
-        echo "📚 Starting godoc documentation server..."
-        echo "🌐 Open http://localhost:{{ DOCS_PORT }}/pkg/{{ MODULE_NAME }} in your browser"
-        echo "🛑 Press Ctrl+C to stop the server"
+        echo "Starting godoc documentation server..."
+        echo "Open http://localhost:{{ DOCS_PORT }}/pkg/{{ MODULE_NAME }} in your browser"
+        echo "Press Ctrl+C to stop the server"
         godoc -http=:{{ DOCS_PORT }}
     else
-        echo "❌ Neither pkgsite nor godoc found."
-        echo "📦 Installing pkgsite..."
+        echo "Error: Neither pkgsite nor godoc found."
+        echo "Installing pkgsite..."
         {{ GO }} install golang.org/x/pkgsite/cmd/pkgsite@latest
-        echo "✅ Installed! Starting server..."
+        echo "Done: Installed! Starting server..."
         pkgsite -http=:{{ DOCS_PORT }}
     fi

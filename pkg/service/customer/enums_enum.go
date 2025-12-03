@@ -213,125 +213,74 @@ func (x *BusinessType) AppendText(b []byte) ([]byte, error) {
 }
 
 const (
-	// DocumentTypeCertificateOfIncorporation is a DocumentType of type certificate_of_incorporation.
-	DocumentTypeCertificateOfIncorporation DocumentType = "certificate_of_incorporation"
-	// DocumentTypeCertificateOfFormationRegistration is a DocumentType of type certificate_of_formation_registration.
-	DocumentTypeCertificateOfFormationRegistration DocumentType = "certificate_of_formation_registration"
-	// DocumentTypeCertificateOfIncorporationAndArticlesOfOrganization is a DocumentType of type certificate_of_incorporation_and_articles_of_organization.
-	DocumentTypeCertificateOfIncorporationAndArticlesOfOrganization DocumentType = "certificate_of_incorporation_and_articles_of_organization"
-	// DocumentTypeConstitutionalOrFormationDocuments is a DocumentType of type constitutional_or_formation_documents.
-	DocumentTypeConstitutionalOrFormationDocuments DocumentType = "constitutional_or_formation_documents"
-	// DocumentTypePartnershipAgreement is a DocumentType of type partnership_agreement.
-	DocumentTypePartnershipAgreement DocumentType = "partnership_agreement"
-	// DocumentTypeArticlesOfOrganization is a DocumentType of type articles_of_organization.
-	DocumentTypeArticlesOfOrganization DocumentType = "articles_of_organization"
-	// DocumentTypeArticlesOfIncorporation is a DocumentType of type articles_of_incorporation.
-	DocumentTypeArticlesOfIncorporation DocumentType = "articles_of_incorporation"
-	// DocumentTypeArticlesOfIncorporationByLawsOrEquivalentDocument is a DocumentType of type articles_of_incorporation_by_laws_or_equivalent_document.
-	DocumentTypeArticlesOfIncorporationByLawsOrEquivalentDocument DocumentType = "articles_of_incorporation_by_laws_or_equivalent_document"
-	// DocumentTypeOperatingLpAgreementIfApplicable is a DocumentType of type operating_lp_agreement_if_applicable.
-	DocumentTypeOperatingLpAgreementIfApplicable DocumentType = "operating_lp_agreement_if_applicable"
-	// DocumentTypeProspectusOfferingMemorandumOrPrivatePlacementMemorandum is a DocumentType of type prospectus_offering_memorandum_or_private_placement_memorandum.
-	DocumentTypeProspectusOfferingMemorandumOrPrivatePlacementMemorandum DocumentType = "prospectus_offering_memorandum_or_private_placement_memorandum"
-	// DocumentTypeAmlAttestationLetter is a DocumentType of type aml_attestation_letter.
-	DocumentTypeAmlAttestationLetter DocumentType = "aml_attestation_letter"
-	// DocumentTypeFundStructureChart is a DocumentType of type fund_structure_chart.
-	DocumentTypeFundStructureChart DocumentType = "fund_structure_chart"
-	// DocumentTypeIrsDeterminationLetter is a DocumentType of type irs_determination_letter.
-	DocumentTypeIrsDeterminationLetter DocumentType = "irs_determination_letter"
-	// DocumentTypeAnnualReports is a DocumentType of type annual_reports.
-	DocumentTypeAnnualReports DocumentType = "annual_reports"
-	// DocumentTypeBusinessLicense is a DocumentType of type business_license.
-	DocumentTypeBusinessLicense DocumentType = "business_license"
-	// DocumentTypeTradeNameRegistrationDoingBusinessAsDbaFiling is a DocumentType of type trade_name_registration_doing_business_as_dba_filing.
-	DocumentTypeTradeNameRegistrationDoingBusinessAsDbaFiling DocumentType = "trade_name_registration_doing_business_as_dba_filing"
-	// DocumentTypeTaxFilings is a DocumentType of type tax_filings.
-	DocumentTypeTaxFilings DocumentType = "tax_filings"
-	// DocumentTypeListManagerOrSimilarPersonsThatHasHaveTheAbilityToLegallyBindTheDaoAndCarryOutTheDaosInstructions is a DocumentType of type list_manager_or_similar_persons_that_has_have_the_ability_to_legally_bind_the_dao_and_carry_out_the_daos_instructions.
-	DocumentTypeListManagerOrSimilarPersonsThatHasHaveTheAbilityToLegallyBindTheDaoAndCarryOutTheDaosInstructions DocumentType = "list_manager_or_similar_persons_that_has_have_the_ability_to_legally_bind_the_dao_and_carry_out_the_daos_instructions"
-	// DocumentTypeVotingRecords is a DocumentType of type voting_records.
-	DocumentTypeVotingRecords DocumentType = "voting_records"
-	// DocumentTypeSupportingDocuments is a DocumentType of type supporting_documents.
-	DocumentTypeSupportingDocuments DocumentType = "supporting_documents"
-	// DocumentTypeTrustAgreement is a DocumentType of type trust_agreement.
-	DocumentTypeTrustAgreement DocumentType = "trust_agreement"
-	// DocumentTypeCertificateOfGoodStanding is a DocumentType of type certificate_of_good_standing.
-	DocumentTypeCertificateOfGoodStanding DocumentType = "certificate_of_good_standing"
-	// DocumentTypeOwnershipAndFormationDocuments is a DocumentType of type ownership_and_formation_documents.
-	DocumentTypeOwnershipAndFormationDocuments DocumentType = "ownership_and_formation_documents"
-	// DocumentTypeOwnershipStructureLlc is a DocumentType of type ownership_structure_llc.
-	DocumentTypeOwnershipStructureLlc DocumentType = "ownership_structure_llc"
-	// DocumentTypeOwnershipStructureCorp is a DocumentType of type ownership_structure_corp.
-	DocumentTypeOwnershipStructureCorp DocumentType = "ownership_structure_corp"
-	// DocumentTypeOwnershipStructurePart is a DocumentType of type ownership_structure_part.
-	DocumentTypeOwnershipStructurePart DocumentType = "ownership_structure_part"
-	// DocumentTypeOwnershipStructureDao is a DocumentType of type ownership_structure_dao.
-	DocumentTypeOwnershipStructureDao DocumentType = "ownership_structure_dao"
-	// DocumentTypeOwnershipStructureGov is a DocumentType of type ownership_structure_gov.
-	DocumentTypeOwnershipStructureGov DocumentType = "ownership_structure_gov"
-	// DocumentTypeAuthorizedRepresentativeList is a DocumentType of type authorized_representative_list.
-	DocumentTypeAuthorizedRepresentativeList DocumentType = "authorized_representative_list"
+	// DocumentTypeAmlComfortLetter is a DocumentType of type aml_comfort_letter.
+	DocumentTypeAmlComfortLetter DocumentType = "aml_comfort_letter"
+	// DocumentTypeConstitutionalDocument is a DocumentType of type constitutional_document.
+	DocumentTypeConstitutionalDocument DocumentType = "constitutional_document"
+	// DocumentTypeDirectorsRegistry is a DocumentType of type directors_registry.
+	DocumentTypeDirectorsRegistry DocumentType = "directors_registry"
+	// DocumentTypeESignatureCertificate is a DocumentType of type e_signature_certificate.
+	DocumentTypeESignatureCertificate DocumentType = "e_signature_certificate"
+	// DocumentTypeEvidenceOfGoodStanding is a DocumentType of type evidence_of_good_standing.
+	DocumentTypeEvidenceOfGoodStanding DocumentType = "evidence_of_good_standing"
+	// DocumentTypeFlowOfFunds is a DocumentType of type flow_of_funds.
+	DocumentTypeFlowOfFunds DocumentType = "flow_of_funds"
+	// DocumentTypeFormationDocument is a DocumentType of type formation_document.
+	DocumentTypeFormationDocument DocumentType = "formation_document"
+	// DocumentTypeMarketingMaterials is a DocumentType of type marketing_materials.
+	DocumentTypeMarketingMaterials DocumentType = "marketing_materials"
+	// DocumentTypeOther is a DocumentType of type other.
+	DocumentTypeOther DocumentType = "other"
+	// DocumentTypeOwnershipChart is a DocumentType of type ownership_chart.
+	DocumentTypeOwnershipChart DocumentType = "ownership_chart"
+	// DocumentTypeOwnershipInformation is a DocumentType of type ownership_information.
+	DocumentTypeOwnershipInformation DocumentType = "ownership_information"
+	// DocumentTypeProofOfAccountPurpose is a DocumentType of type proof_of_account_purpose.
+	DocumentTypeProofOfAccountPurpose DocumentType = "proof_of_account_purpose"
+	// DocumentTypeProofOfAddress is a DocumentType of type proof_of_address.
+	DocumentTypeProofOfAddress DocumentType = "proof_of_address"
+	// DocumentTypeProofOfEntityNameChange is a DocumentType of type proof_of_entity_name_change.
+	DocumentTypeProofOfEntityNameChange DocumentType = "proof_of_entity_name_change"
+	// DocumentTypeProofOfNatureOfBusiness is a DocumentType of type proof_of_nature_of_business.
+	DocumentTypeProofOfNatureOfBusiness DocumentType = "proof_of_nature_of_business"
+	// DocumentTypeProofOfSignatoryAuthority is a DocumentType of type proof_of_signatory_authority.
+	DocumentTypeProofOfSignatoryAuthority DocumentType = "proof_of_signatory_authority"
 	// DocumentTypeProofOfSourceOfFunds is a DocumentType of type proof_of_source_of_funds.
 	DocumentTypeProofOfSourceOfFunds DocumentType = "proof_of_source_of_funds"
-	// DocumentTypeProofOfBusinessEntityAddress is a DocumentType of type proof_of_business_entity_address.
-	DocumentTypeProofOfBusinessEntityAddress DocumentType = "proof_of_business_entity_address"
-	// DocumentTypeProofOfBusinessEntityAddressDao is a DocumentType of type proof_of_business_entity_address_dao.
-	DocumentTypeProofOfBusinessEntityAddressDao DocumentType = "proof_of_business_entity_address_dao"
-	// DocumentTypeW9Form is a DocumentType of type w9_form.
-	DocumentTypeW9Form DocumentType = "w9_form"
-	// DocumentTypeStateLocalMoneyTransmissionLicensingEvidenceOrEquivalentRegulatoryAuthorizationNonUs is a DocumentType of type state_local_money_transmission_licensing_evidence_or_equivalent_regulatory_authorization_non_us.
-	DocumentTypeStateLocalMoneyTransmissionLicensingEvidenceOrEquivalentRegulatoryAuthorizationNonUs DocumentType = "state_local_money_transmission_licensing_evidence_or_equivalent_regulatory_authorization_non_us"
-	// DocumentTypeAmlPolicy is a DocumentType of type aml_policy.
-	DocumentTypeAmlPolicy DocumentType = "aml_policy"
-	// DocumentTypeCertificateOfIncumbencyOrRegisterOfDirectors is a DocumentType of type certificate_of_incumbency_or_register_of_directors.
-	DocumentTypeCertificateOfIncumbencyOrRegisterOfDirectors DocumentType = "certificate_of_incumbency_or_register_of_directors"
-	// DocumentTypeTaxExemptionOrCharityRegistrationLetter is a DocumentType of type tax_exemption_or_charity_registration_letter.
-	DocumentTypeTaxExemptionOrCharityRegistrationLetter DocumentType = "tax_exemption_or_charity_registration_letter"
-	// DocumentTypeMemorandumOfAssociationOrArticleOfAssociationOrEquivalentDocument is a DocumentType of type memorandum_of_association_or_article_of_association_or_equivalent_document.
-	DocumentTypeMemorandumOfAssociationOrArticleOfAssociationOrEquivalentDocument DocumentType = "memorandum_of_association_or_article_of_association_or_equivalent_document"
+	// DocumentTypeProofOfSourceOfWealth is a DocumentType of type proof_of_source_of_wealth.
+	DocumentTypeProofOfSourceOfWealth DocumentType = "proof_of_source_of_wealth"
+	// DocumentTypeProofOfTaxIdentification is a DocumentType of type proof_of_tax_identification.
+	DocumentTypeProofOfTaxIdentification DocumentType = "proof_of_tax_identification"
+	// DocumentTypeRegistrationDocument is a DocumentType of type registration_document.
+	DocumentTypeRegistrationDocument DocumentType = "registration_document"
+	// DocumentTypeShareholderRegister is a DocumentType of type shareholder_register.
+	DocumentTypeShareholderRegister DocumentType = "shareholder_register"
 )
 
 var ErrInvalidDocumentType = fmt.Errorf("not a valid DocumentType, try [%s]", strings.Join(_DocumentTypeNames, ", "))
 
 var _DocumentTypeNames = []string{
-	string(DocumentTypeCertificateOfIncorporation),
-	string(DocumentTypeCertificateOfFormationRegistration),
-	string(DocumentTypeCertificateOfIncorporationAndArticlesOfOrganization),
-	string(DocumentTypeConstitutionalOrFormationDocuments),
-	string(DocumentTypePartnershipAgreement),
-	string(DocumentTypeArticlesOfOrganization),
-	string(DocumentTypeArticlesOfIncorporation),
-	string(DocumentTypeArticlesOfIncorporationByLawsOrEquivalentDocument),
-	string(DocumentTypeOperatingLpAgreementIfApplicable),
-	string(DocumentTypeProspectusOfferingMemorandumOrPrivatePlacementMemorandum),
-	string(DocumentTypeAmlAttestationLetter),
-	string(DocumentTypeFundStructureChart),
-	string(DocumentTypeIrsDeterminationLetter),
-	string(DocumentTypeAnnualReports),
-	string(DocumentTypeBusinessLicense),
-	string(DocumentTypeTradeNameRegistrationDoingBusinessAsDbaFiling),
-	string(DocumentTypeTaxFilings),
-	string(DocumentTypeListManagerOrSimilarPersonsThatHasHaveTheAbilityToLegallyBindTheDaoAndCarryOutTheDaosInstructions),
-	string(DocumentTypeVotingRecords),
-	string(DocumentTypeSupportingDocuments),
-	string(DocumentTypeTrustAgreement),
-	string(DocumentTypeCertificateOfGoodStanding),
-	string(DocumentTypeOwnershipAndFormationDocuments),
-	string(DocumentTypeOwnershipStructureLlc),
-	string(DocumentTypeOwnershipStructureCorp),
-	string(DocumentTypeOwnershipStructurePart),
-	string(DocumentTypeOwnershipStructureDao),
-	string(DocumentTypeOwnershipStructureGov),
-	string(DocumentTypeAuthorizedRepresentativeList),
+	string(DocumentTypeAmlComfortLetter),
+	string(DocumentTypeConstitutionalDocument),
+	string(DocumentTypeDirectorsRegistry),
+	string(DocumentTypeESignatureCertificate),
+	string(DocumentTypeEvidenceOfGoodStanding),
+	string(DocumentTypeFlowOfFunds),
+	string(DocumentTypeFormationDocument),
+	string(DocumentTypeMarketingMaterials),
+	string(DocumentTypeOther),
+	string(DocumentTypeOwnershipChart),
+	string(DocumentTypeOwnershipInformation),
+	string(DocumentTypeProofOfAccountPurpose),
+	string(DocumentTypeProofOfAddress),
+	string(DocumentTypeProofOfEntityNameChange),
+	string(DocumentTypeProofOfNatureOfBusiness),
+	string(DocumentTypeProofOfSignatoryAuthority),
 	string(DocumentTypeProofOfSourceOfFunds),
-	string(DocumentTypeProofOfBusinessEntityAddress),
-	string(DocumentTypeProofOfBusinessEntityAddressDao),
-	string(DocumentTypeW9Form),
-	string(DocumentTypeStateLocalMoneyTransmissionLicensingEvidenceOrEquivalentRegulatoryAuthorizationNonUs),
-	string(DocumentTypeAmlPolicy),
-	string(DocumentTypeCertificateOfIncumbencyOrRegisterOfDirectors),
-	string(DocumentTypeTaxExemptionOrCharityRegistrationLetter),
-	string(DocumentTypeMemorandumOfAssociationOrArticleOfAssociationOrEquivalentDocument),
+	string(DocumentTypeProofOfSourceOfWealth),
+	string(DocumentTypeProofOfTaxIdentification),
+	string(DocumentTypeRegistrationDocument),
+	string(DocumentTypeShareholderRegister),
 }
 
 // DocumentTypeNames returns a list of possible string values of DocumentType.
@@ -354,44 +303,27 @@ func (x DocumentType) IsValid() bool {
 }
 
 var _DocumentTypeValue = map[string]DocumentType{
-	"certificate_of_incorporation":                                   DocumentTypeCertificateOfIncorporation,
-	"certificate_of_formation_registration":                          DocumentTypeCertificateOfFormationRegistration,
-	"certificate_of_incorporation_and_articles_of_organization":      DocumentTypeCertificateOfIncorporationAndArticlesOfOrganization,
-	"constitutional_or_formation_documents":                          DocumentTypeConstitutionalOrFormationDocuments,
-	"partnership_agreement":                                          DocumentTypePartnershipAgreement,
-	"articles_of_organization":                                       DocumentTypeArticlesOfOrganization,
-	"articles_of_incorporation":                                      DocumentTypeArticlesOfIncorporation,
-	"articles_of_incorporation_by_laws_or_equivalent_document":       DocumentTypeArticlesOfIncorporationByLawsOrEquivalentDocument,
-	"operating_lp_agreement_if_applicable":                           DocumentTypeOperatingLpAgreementIfApplicable,
-	"prospectus_offering_memorandum_or_private_placement_memorandum": DocumentTypeProspectusOfferingMemorandumOrPrivatePlacementMemorandum,
-	"aml_attestation_letter":                                         DocumentTypeAmlAttestationLetter,
-	"fund_structure_chart":                                           DocumentTypeFundStructureChart,
-	"irs_determination_letter":                                       DocumentTypeIrsDeterminationLetter,
-	"annual_reports":                                                 DocumentTypeAnnualReports,
-	"business_license":                                               DocumentTypeBusinessLicense,
-	"trade_name_registration_doing_business_as_dba_filing":           DocumentTypeTradeNameRegistrationDoingBusinessAsDbaFiling,
-	"tax_filings":                                                    DocumentTypeTaxFilings,
-	"list_manager_or_similar_persons_that_has_have_the_ability_to_legally_bind_the_dao_and_carry_out_the_daos_instructions": DocumentTypeListManagerOrSimilarPersonsThatHasHaveTheAbilityToLegallyBindTheDaoAndCarryOutTheDaosInstructions,
-	"voting_records":                       DocumentTypeVotingRecords,
-	"supporting_documents":                 DocumentTypeSupportingDocuments,
-	"trust_agreement":                      DocumentTypeTrustAgreement,
-	"certificate_of_good_standing":         DocumentTypeCertificateOfGoodStanding,
-	"ownership_and_formation_documents":    DocumentTypeOwnershipAndFormationDocuments,
-	"ownership_structure_llc":              DocumentTypeOwnershipStructureLlc,
-	"ownership_structure_corp":             DocumentTypeOwnershipStructureCorp,
-	"ownership_structure_part":             DocumentTypeOwnershipStructurePart,
-	"ownership_structure_dao":              DocumentTypeOwnershipStructureDao,
-	"ownership_structure_gov":              DocumentTypeOwnershipStructureGov,
-	"authorized_representative_list":       DocumentTypeAuthorizedRepresentativeList,
-	"proof_of_source_of_funds":             DocumentTypeProofOfSourceOfFunds,
-	"proof_of_business_entity_address":     DocumentTypeProofOfBusinessEntityAddress,
-	"proof_of_business_entity_address_dao": DocumentTypeProofOfBusinessEntityAddressDao,
-	"w9_form":                              DocumentTypeW9Form,
-	"state_local_money_transmission_licensing_evidence_or_equivalent_regulatory_authorization_non_us": DocumentTypeStateLocalMoneyTransmissionLicensingEvidenceOrEquivalentRegulatoryAuthorizationNonUs,
-	"aml_policy": DocumentTypeAmlPolicy,
-	"certificate_of_incumbency_or_register_of_directors":                         DocumentTypeCertificateOfIncumbencyOrRegisterOfDirectors,
-	"tax_exemption_or_charity_registration_letter":                               DocumentTypeTaxExemptionOrCharityRegistrationLetter,
-	"memorandum_of_association_or_article_of_association_or_equivalent_document": DocumentTypeMemorandumOfAssociationOrArticleOfAssociationOrEquivalentDocument,
+	"aml_comfort_letter":           DocumentTypeAmlComfortLetter,
+	"constitutional_document":      DocumentTypeConstitutionalDocument,
+	"directors_registry":           DocumentTypeDirectorsRegistry,
+	"e_signature_certificate":      DocumentTypeESignatureCertificate,
+	"evidence_of_good_standing":    DocumentTypeEvidenceOfGoodStanding,
+	"flow_of_funds":                DocumentTypeFlowOfFunds,
+	"formation_document":           DocumentTypeFormationDocument,
+	"marketing_materials":          DocumentTypeMarketingMaterials,
+	"other":                        DocumentTypeOther,
+	"ownership_chart":              DocumentTypeOwnershipChart,
+	"ownership_information":        DocumentTypeOwnershipInformation,
+	"proof_of_account_purpose":     DocumentTypeProofOfAccountPurpose,
+	"proof_of_address":             DocumentTypeProofOfAddress,
+	"proof_of_entity_name_change":  DocumentTypeProofOfEntityNameChange,
+	"proof_of_nature_of_business":  DocumentTypeProofOfNatureOfBusiness,
+	"proof_of_signatory_authority": DocumentTypeProofOfSignatoryAuthority,
+	"proof_of_source_of_funds":     DocumentTypeProofOfSourceOfFunds,
+	"proof_of_source_of_wealth":    DocumentTypeProofOfSourceOfWealth,
+	"proof_of_tax_identification":  DocumentTypeProofOfTaxIdentification,
+	"registration_document":        DocumentTypeRegistrationDocument,
+	"shareholder_register":         DocumentTypeShareholderRegister,
 }
 
 // ParseDocumentType attempts to convert a string to a DocumentType.
@@ -426,6 +358,180 @@ func (x *DocumentType) UnmarshalText(text []byte) error {
 //
 // Implementations must not retain b, nor mutate any bytes within b[:len(b)].
 func (x *DocumentType) AppendText(b []byte) ([]byte, error) {
+	return append(b, x.String()...), nil
+}
+
+const (
+	// FileFormatJpeg is a FileFormat of type jpeg.
+	FileFormatJpeg FileFormat = "jpeg"
+	// FileFormatJpg is a FileFormat of type jpg.
+	FileFormatJpg FileFormat = "jpg"
+	// FileFormatPng is a FileFormat of type png.
+	FileFormatPng FileFormat = "png"
+	// FileFormatHeic is a FileFormat of type heic.
+	FileFormatHeic FileFormat = "heic"
+	// FileFormatTif is a FileFormat of type tif.
+	FileFormatTif FileFormat = "tif"
+	// FileFormatPdf is a FileFormat of type pdf.
+	FileFormatPdf FileFormat = "pdf"
+	// FileFormatCsv is a FileFormat of type csv.
+	FileFormatCsv FileFormat = "csv"
+	// FileFormatXls is a FileFormat of type xls.
+	FileFormatXls FileFormat = "xls"
+	// FileFormatXlsx is a FileFormat of type xlsx.
+	FileFormatXlsx FileFormat = "xlsx"
+)
+
+var ErrInvalidFileFormat = fmt.Errorf("not a valid FileFormat, try [%s]", strings.Join(_FileFormatNames, ", "))
+
+var _FileFormatNames = []string{
+	string(FileFormatJpeg),
+	string(FileFormatJpg),
+	string(FileFormatPng),
+	string(FileFormatHeic),
+	string(FileFormatTif),
+	string(FileFormatPdf),
+	string(FileFormatCsv),
+	string(FileFormatXls),
+	string(FileFormatXlsx),
+}
+
+// FileFormatNames returns a list of possible string values of FileFormat.
+func FileFormatNames() []string {
+	tmp := make([]string, len(_FileFormatNames))
+	copy(tmp, _FileFormatNames)
+	return tmp
+}
+
+// String implements the Stringer interface.
+func (x FileFormat) String() string {
+	return string(x)
+}
+
+// IsValid provides a quick way to determine if the typed value is
+// part of the allowed enumerated values
+func (x FileFormat) IsValid() bool {
+	_, err := ParseFileFormat(string(x))
+	return err == nil
+}
+
+var _FileFormatValue = map[string]FileFormat{
+	"jpeg": FileFormatJpeg,
+	"jpg":  FileFormatJpg,
+	"png":  FileFormatPng,
+	"heic": FileFormatHeic,
+	"tif":  FileFormatTif,
+	"pdf":  FileFormatPdf,
+	"csv":  FileFormatCsv,
+	"xls":  FileFormatXls,
+	"xlsx": FileFormatXlsx,
+}
+
+// ParseFileFormat attempts to convert a string to a FileFormat.
+func ParseFileFormat(name string) (FileFormat, error) {
+	if x, ok := _FileFormatValue[name]; ok {
+		return x, nil
+	}
+	// Case insensitive parse, do a separate lookup to prevent unnecessary cost of lowercasing a string if we don't need to.
+	if x, ok := _FileFormatValue[strings.ToLower(name)]; ok {
+		return x, nil
+	}
+	return FileFormat(""), fmt.Errorf("%s is %w", name, ErrInvalidFileFormat)
+}
+
+// MarshalText implements the text marshaller method.
+func (x FileFormat) MarshalText() ([]byte, error) {
+	return []byte(string(x)), nil
+}
+
+// UnmarshalText implements the text unmarshaller method.
+func (x *FileFormat) UnmarshalText(text []byte) error {
+	tmp, err := ParseFileFormat(string(text))
+	if err != nil {
+		return err
+	}
+	*x = tmp
+	return nil
+}
+
+// AppendText appends the textual representation of itself to the end of b
+// (allocating a larger slice if necessary) and returns the updated slice.
+//
+// Implementations must not retain b, nor mutate any bytes within b[:len(b)].
+func (x *FileFormat) AppendText(b []byte) ([]byte, error) {
+	return append(b, x.String()...), nil
+}
+
+const (
+	// GenderMale is a Gender of type male.
+	GenderMale Gender = "male"
+	// GenderFemale is a Gender of type female.
+	GenderFemale Gender = "female"
+)
+
+var ErrInvalidGender = fmt.Errorf("not a valid Gender, try [%s]", strings.Join(_GenderNames, ", "))
+
+var _GenderNames = []string{
+	string(GenderMale),
+	string(GenderFemale),
+}
+
+// GenderNames returns a list of possible string values of Gender.
+func GenderNames() []string {
+	tmp := make([]string, len(_GenderNames))
+	copy(tmp, _GenderNames)
+	return tmp
+}
+
+// String implements the Stringer interface.
+func (x Gender) String() string {
+	return string(x)
+}
+
+// IsValid provides a quick way to determine if the typed value is
+// part of the allowed enumerated values
+func (x Gender) IsValid() bool {
+	_, err := ParseGender(string(x))
+	return err == nil
+}
+
+var _GenderValue = map[string]Gender{
+	"male":   GenderMale,
+	"female": GenderFemale,
+}
+
+// ParseGender attempts to convert a string to a Gender.
+func ParseGender(name string) (Gender, error) {
+	if x, ok := _GenderValue[name]; ok {
+		return x, nil
+	}
+	// Case insensitive parse, do a separate lookup to prevent unnecessary cost of lowercasing a string if we don't need to.
+	if x, ok := _GenderValue[strings.ToLower(name)]; ok {
+		return x, nil
+	}
+	return Gender(""), fmt.Errorf("%s is %w", name, ErrInvalidGender)
+}
+
+// MarshalText implements the text marshaller method.
+func (x Gender) MarshalText() ([]byte, error) {
+	return []byte(string(x)), nil
+}
+
+// UnmarshalText implements the text unmarshaller method.
+func (x *Gender) UnmarshalText(text []byte) error {
+	tmp, err := ParseGender(string(text))
+	if err != nil {
+		return err
+	}
+	*x = tmp
+	return nil
+}
+
+// AppendText appends the textual representation of itself to the end of b
+// (allocating a larger slice if necessary) and returns the updated slice.
+//
+// Implementations must not retain b, nor mutate any bytes within b[:len(b)].
+func (x *Gender) AppendText(b []byte) ([]byte, error) {
 	return append(b, x.String()...), nil
 }
 
