@@ -53,6 +53,7 @@ func supportsColor() bool {
 //
 // Environment variables:
 //   - ONEMONEY_DEBUG: Enable debug level logging
+//   - ONEMONEY_DEBUG_CURL: Include curl command in debug output (useful for reproducing requests)
 //   - ONEMONEY_LOG_LEVEL: Set log level (debug, info, warn, error)
 //   - ONEMONEY_ENABLE_STACKTRACE: Enable stack trace output (default: disabled)
 func initLogger() {

@@ -71,7 +71,7 @@ type ListAssetsRequest struct {
 type AssetResponse struct {
 	// CustomerID is the unique identifier of the customer.
 	CustomerID string `json:"customer_id"`
-	// Asset is the asset name/symbol (e.g., "USD", "USDT", "MEXAS").
+	// Asset is the asset name/symbol (e.g., "USD", "USDT").
 	// Uses string to handle any asset type returned by the API.
 	Asset string `json:"asset"`
 	// Network is the network name for the asset (optional, nil for fiat).

@@ -29,64 +29,61 @@ type AssetsTestSuite struct {
 	E2ETestSuite
 }
 
-// TestAssets_ListAll tests listing all assets for a customer.
-func (s *AssetsTestSuite) TestAssets_ListAll() {
-	resp, err := s.Client.Assets.ListAssets(s.Ctx, testCustomerID, nil)
-	s.Require().NoError(err, "ListAssets should succeed")
-
-	s.Require().NotNil(resp, "Response should not be nil")
-	s.T().Logf("Assets list:\n%s", PrettyJSON(resp))
-
-	for _, asset := range resp {
-		s.NotEmpty(asset.CustomerID, "Customer ID should not be empty")
-		s.NotEmpty(asset.Asset, "Asset name should not be empty")
-		s.NotEmpty(asset.AvailableAmount, "Available amount should not be empty")
-		s.NotEmpty(asset.CreatedAt, "CreatedAt should not be empty")
-		s.NotEmpty(asset.ModifiedAt, "ModifiedAt should not be empty")
-	}
-}
-
-// TestAssets_ListByAsset tests listing assets filtered by asset name.
-func (s *AssetsTestSuite) TestAssets_ListByAsset() {
-	req := &assets.ListAssetsRequest{
-		Asset: assets.AssetNameUSD,
-	}
-
-	resp, err := s.Client.Assets.ListAssets(s.Ctx, testCustomerID, req)
-	s.Require().NoError(err, "ListAssets should succeed")
-
-	s.Require().NotNil(resp, "Response should not be nil")
-	s.T().Logf("USD assets:\n%s", PrettyJSON(resp))
-
-	for _, asset := range resp {
-		s.Equal(string(assets.AssetNameUSD), asset.Asset, "Asset should be USD")
-	}
-}
-
-// TestAssets_ListByNetwork tests listing assets filtered by network.
-func (s *AssetsTestSuite) TestAssets_ListByNetwork() {
-	req := &assets.ListAssetsRequest{
-		Network: assets.NetworkNameETHEREUM,
-	}
-
-	resp, err := s.Client.Assets.ListAssets(s.Ctx, testCustomerID, req)
-	s.Require().NoError(err, "ListAssets should succeed")
-
-	s.Require().NotNil(resp, "Response should not be nil")
-	s.T().Logf("Ethereum network assets:\n%s", PrettyJSON(resp))
-}
-
-// TestAssets_ListWithSortOrder tests listing assets with sort order.
-func (s *AssetsTestSuite) TestAssets_ListWithSortOrder() {
-	req := &assets.ListAssetsRequest{
-		SortOrder: assets.SortOrderDESC,
+// TestAssets_ListAssets tests listing assets with various filters.
+func (s *AssetsTestSuite) TestAssets_ListAssets() {
+	tests := []struct {
+		name    string
+		req     *assets.ListAssetsRequest
+		checkFn func(resp []assets.AssetResponse)
+	}{
+		{
+			name: "ListAll",
+			req:  nil,
+			checkFn: func(resp []assets.AssetResponse) {
+				for _, asset := range resp {
+					s.NotEmpty(asset.CustomerID, "Customer ID should not be empty")
+					s.NotEmpty(asset.Asset, "Asset name should not be empty")
+					s.NotEmpty(asset.AvailableAmount, "Available amount should not be empty")
+					s.NotEmpty(asset.CreatedAt, "CreatedAt should not be empty")
+					s.NotEmpty(asset.ModifiedAt, "ModifiedAt should not be empty")
+				}
+			},
+		},
+		{
+			name: "FilterByAsset",
+			req:  &assets.ListAssetsRequest{Asset: assets.AssetNameUSD},
+			checkFn: func(resp []assets.AssetResponse) {
+				for _, asset := range resp {
+					s.Equal(string(assets.AssetNameUSD), asset.Asset, "Asset should be USD")
+				}
+			},
+		},
+		{
+			name: "FilterByNetwork",
+			req:  &assets.ListAssetsRequest{Network: assets.NetworkNameETHEREUM},
+		},
+		{
+			name: "WithSortOrderDesc",
+			req:  &assets.ListAssetsRequest{SortOrder: assets.SortOrderDESC},
+		},
+		{
+			name: "WithSortOrderAsc",
+			req:  &assets.ListAssetsRequest{SortOrder: assets.SortOrderASC},
+		},
 	}
 
-	resp, err := s.Client.Assets.ListAssets(s.Ctx, testCustomerID, req)
-	s.Require().NoError(err, "ListAssets should succeed")
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			resp, err := s.Client.Assets.ListAssets(s.Ctx, testCustomerID, tc.req)
+			s.Require().NoError(err, "ListAssets should succeed")
+			s.Require().NotNil(resp, "Response should not be nil")
+			s.T().Logf("%s response:\n%s", tc.name, PrettyJSON(resp))
 
-	s.Require().NotNil(resp, "Response should not be nil")
-	s.T().Logf("Assets (DESC order):\n%s", PrettyJSON(resp))
+			if tc.checkFn != nil {
+				tc.checkFn(resp)
+			}
+		})
+	}
 }
 
 // TestAssetsTestSuite runs the assets test suite.

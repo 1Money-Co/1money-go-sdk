@@ -36,7 +36,7 @@ import (
 
 const (
 	// testCustomerID is a test customer ID used across multiple tests.
-	testCustomerID = "ee71219c-1baa-4b8c-b860-08822ea53b8e"
+	testCustomerID = "29db13af-7c48-44f6-ad62-bb9438c1e3f8"
 	// testAssociatedPersonID is a test associated person ID used across multiple tests.
 	testAssociatedPersonID = "96d2727d-4373-4b21-a60c-dae81d763902"
 	// CountryUSA is the country code for United States.
