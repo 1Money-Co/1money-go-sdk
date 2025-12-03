@@ -166,7 +166,31 @@ func EncodeStringToDataURI(base64Str string, format ImageFormat) string {
 	return fmt.Sprintf("data:image/%s;base64,%s", format, base64Str)
 }
 
-// IsDataURI checks if a string is already in data-uri format.
+// IsDataURI checks if a string is already in data-uri format with a supported MIME type.
+// Supported MIME types: image/jpeg, image/png, image/heic, image/tiff,
+// application/pdf, text/csv, application/xls, application/xlsx.
 func IsDataURI(s string) bool {
-	return strings.HasPrefix(s, "data:")
+	if !strings.HasPrefix(s, "data:") {
+		return false
+	}
+
+	// Check for supported MIME types
+	supportedPrefixes := []string{
+		"data:image/jpeg;",
+		"data:image/png;",
+		"data:image/heic;",
+		"data:image/tiff;",
+		"data:application/pdf;",
+		"data:text/csv;",
+		"data:application/xls;",
+		"data:application/xlsx;",
+	}
+
+	for _, prefix := range supportedPrefixes {
+		if strings.HasPrefix(s, prefix) {
+			return true
+		}
+	}
+
+	return false
 }
