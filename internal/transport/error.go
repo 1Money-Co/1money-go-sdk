@@ -299,3 +299,32 @@ func IsRetryable(err error) bool {
 	apiErr, ok := IsAPIError(err)
 	return ok && apiErr.IsRetryable()
 }
+
+// checkEmbeddedRateLimitError checks if the response body contains an embedded rate limit error.
+// Some APIs return HTTP 200 with rate limit info in the body:
+// {"code":"Too_Many_Requests","status":429,"detail":"Rate limit exceeded. Retry after 4s."}
+func checkEmbeddedRateLimitError(body []byte) *APIError {
+	if len(body) == 0 || body[0] != '{' {
+		return nil
+	}
+
+	var resp errorResponse
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil
+	}
+
+	// Check if this is a rate limit response
+	if resp.Status == http.StatusTooManyRequests || resp.Code == "Too_Many_Requests" {
+		return &APIError{
+			StatusCode: http.StatusTooManyRequests,
+			Status:     "429 Too Many Requests",
+			Code:       resp.Code,
+			Detail:     resp.Detail,
+			Message:    resp.Detail,
+			Instance:   resp.Instance,
+			RawBody:    string(body),
+		}
+	}
+
+	return nil
+}

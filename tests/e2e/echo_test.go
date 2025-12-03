@@ -17,12 +17,15 @@
 package e2e
 
 import (
-	"fmt"
+	"errors"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/1Money-Co/1money-go-sdk/internal/transport"
+	"github.com/1Money-Co/1money-go-sdk/pkg/onemoney"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/echo"
 )
 
@@ -45,131 +48,116 @@ func (s *EchoTestSuite) TestEchoService_Post() {
 	s.T().Logf("Echo response:\n%s", PrettyJSON(resp))
 }
 
-// TestRateLimiter_IPBasedLimiting tests that the IP-based rate limiter is working correctly.
-func (s *EchoTestSuite) TestRateLimiter_IPBasedLimiting() {
-	const (
-		burstSize    = 10
-		extraRequest = 5
-		totalRequest = burstSize + extraRequest
-	)
+// TestRateLimiter tests that the rate limiter is working correctly for both API key and user limits.
+// Each test case uses a different API key to ensure independent rate limit testing.
+func (s *EchoTestSuite) TestRateLimiter() {
+	// Create secondary client with different API key for independent rate limit testing
+	secondaryClient, err := onemoney.NewClient(&onemoney.Config{
+		BaseURL:   os.Getenv("ONEMONEY_BASE_URL"),
+		AccessKey: "ALWUT3B11PGRKDDU05IR",
+		SecretKey: "ewhWWIO7JuEHNHj3maIM2x-ghN1vCbxlXNcnANqoyL8",
+	})
+	s.Require().NoError(err, "failed to create secondary client")
 
-	s.T().Log("Testing rate limiter with concurrent requests...")
-
-	type result struct {
-		index       int
-		success     bool
-		rateLimited bool
-		err         error
-		responseMsg string
+	testCases := []struct {
+		name         string
+		burstSize    int
+		ratePerSec   int
+		extraRequest int
+		client       *onemoney.Client
+	}{
+		{
+			name:         "APIKey",
+			burstSize:    2,
+			ratePerSec:   1,
+			extraRequest: 1,
+			client:       s.Client,
+		},
+		{
+			name:         "User",
+			burstSize:    4,
+			ratePerSec:   2,
+			extraRequest: 1,
+			client:       secondaryClient,
+		},
 	}
 
-	resultChan := make(chan result, totalRequest)
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			client := tc.client
+			totalRequest := tc.burstSize + tc.extraRequest*2
 
-	for i := range totalRequest {
-		go func(index int) {
-			resp, err := s.Client.Echo.Post(s.Ctx, &echo.Request{
-				Message: fmt.Sprintf("Rate limit test message #%d", index+1),
-			})
+			s.T().Logf("Testing %s rate limiter (burst: %d, rate: %d/sec) with %d concurrent requests...",
+				tc.name, tc.burstSize, tc.ratePerSec, totalRequest)
 
-			res := result{index: index + 1}
-			if err != nil {
-				res.err = err
-				if containsRateLimitError(err.Error()) {
-					res.rateLimited = true
-				}
-			} else {
-				res.success = true
-				res.responseMsg = resp.Message
+			type result struct {
+				index       int
+				success     bool
+				rateLimited bool
+				err         error
+				responseMsg string
 			}
-			resultChan <- res
-		}(i)
+
+			resultChan := make(chan result, totalRequest)
+
+			for i := range totalRequest {
+				go func(index int) {
+					resp, err := client.Echo.Get(s.Ctx)
+					res := result{index: index + 1}
+					if err != nil {
+						res.err = err
+						if errors.Is(err, transport.ErrRateLimited) {
+							res.rateLimited = true
+						}
+					} else {
+						res.success = true
+						res.responseMsg = resp.Message
+					}
+					resultChan <- res
+				}(i)
+			}
+
+			successCount := 0
+			rateLimitedCount := 0
+			unexpectedErrors := 0
+
+			for range totalRequest {
+				res := <-resultChan
+				if res.success {
+					successCount++
+					s.T().Logf("Request #%d: Success - %s", res.index, res.responseMsg)
+				} else if res.rateLimited {
+					rateLimitedCount++
+					s.T().Logf("Request #%d: Rate limited (expected after burst)", res.index)
+				} else {
+					unexpectedErrors++
+					s.T().Logf("Request #%d: Unexpected error: %v", res.index, res.err)
+				}
+			}
+			close(resultChan)
+
+			s.T().Logf("Rate limiter test results for %s:", tc.name)
+			s.T().Logf("  Total requests: %d", totalRequest)
+			s.T().Logf("  Successful: %d", successCount)
+			s.T().Logf("  Rate limited: %d", rateLimitedCount)
+			s.T().Logf("  Unexpected errors: %d", unexpectedErrors)
+
+			s.Positive(successCount, "Should have at least some successful requests")
+			s.Positive(rateLimitedCount, "Should have at least one rate-limited request when exceeding burst size")
+			s.Equal(totalRequest, successCount+rateLimitedCount+unexpectedErrors,
+				"Total requests should equal successful + rate limited + unexpected errors")
+			s.Equal(0, unexpectedErrors, "Should not have unexpected errors")
+
+			s.T().Log("Waiting for rate limiter to reset...")
+			// Wait for rate limiter to fully reset (server typically needs ~10s)
+			time.Sleep(10 * time.Second)
+
+			resp, err := client.Echo.Post(s.Ctx, &echo.Request{Message: "After reset"})
+			s.Require().NoError(err, "Request should succeed after rate limiter reset")
+			s.Require().NotNil(resp, "Response should not be nil")
+			s.T().Logf("After reset: Successfully sent request - %s", resp.Message)
+		})
 	}
-
-	successCount := 0
-	rateLimitedCount := 0
-	unexpectedErrors := 0
-
-	for range totalRequest {
-		res := <-resultChan
-		if res.success {
-			successCount++
-			s.T().Logf("Request #%d: Success - %s", res.index, res.responseMsg)
-		} else if res.rateLimited {
-			rateLimitedCount++
-			s.T().Logf("Request #%d: Rate limited (expected after burst)", res.index)
-		} else {
-			unexpectedErrors++
-			s.T().Logf("Request #%d: Unexpected error: %v", res.index, res.err)
-		}
-	}
-	close(resultChan)
-
-	s.T().Logf("Rate limiter test results:")
-	s.T().Logf("  Total requests: %d", totalRequest)
-	s.T().Logf("  Successful: %d", successCount)
-	s.T().Logf("  Rate limited: %d", rateLimitedCount)
-	s.T().Logf("  Unexpected errors: %d", unexpectedErrors)
-
-	s.Positive(successCount, "Should have at least some successful requests")
-	s.Positive(rateLimitedCount, "Should have at least one rate-limited request when exceeding burst size")
-	s.Equal(totalRequest, successCount+rateLimitedCount+unexpectedErrors,
-		"Total requests should equal successful + rate limited + unexpected errors")
-	s.Equal(0, unexpectedErrors, "Should not have unexpected errors")
-
-	s.T().Log("Waiting for rate limiter to reset...")
-	time.Sleep(1500 * time.Millisecond)
-
-	resp, err := s.Client.Echo.Post(s.Ctx, &echo.Request{Message: "After reset"})
-	s.Require().NoError(err, "Request should succeed after rate limiter reset")
-	s.Require().NotNil(resp, "Response should not be nil")
-	s.T().Logf("After reset: Successfully sent request - %s", resp.Message)
-}
-
-// containsRateLimitError checks if an error message indicates a rate limit error.
-func containsRateLimitError(errMsg string) bool {
-	indicators := []string{
-		"429",
-		"Too Many Requests",
-		"rate limit",
-		"too many requests",
-		"throttle",
-	}
-
-	errMsgLower := toLower(errMsg)
-	for _, indicator := range indicators {
-		if contains(errMsgLower, toLower(indicator)) {
-			return true
-		}
-	}
-	return false
-}
-
-func toLower(s string) string {
-	result := make([]byte, len(s))
-	for i := range len(s) {
-		c := s[i]
-		if c >= 'A' && c <= 'Z' {
-			result[i] = c + 32
-		} else {
-			result[i] = c
-		}
-	}
-	return string(result)
-}
-
-func contains(s, substr string) bool {
-	if substr == "" {
-		return true
-	}
-	if len(s) < len(substr) {
-		return false
-	}
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
 
 // TestEchoTestSuite runs the echo test suite.

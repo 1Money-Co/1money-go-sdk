@@ -185,6 +185,18 @@ func (t *Transport) Do(ctx context.Context, req *Request) (*Response, error) {
 		return nil, apiErr
 	}
 
+	// Check for rate limit response embedded in HTTP 200
+	// Some APIs return HTTP 200 with rate limit info in body:
+	// {"code":"Too_Many_Requests","status":429,"detail":"..."}
+	if apiErr := checkEmbeddedRateLimitError(respBody); apiErr != nil {
+		log.Warn("detected embedded rate limit response",
+			zap.Int("http_status", httpResp.StatusCode),
+			zap.String("code", apiErr.Code),
+			zap.String("detail", apiErr.Detail),
+		)
+		return nil, apiErr
+	}
+
 	log.Debug("request completed successfully",
 		zap.Int("status_code", httpResp.StatusCode),
 		zap.Int("response_size", len(respBody)),
