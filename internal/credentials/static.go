@@ -22,12 +22,13 @@ type StaticProvider struct {
 }
 
 // NewStaticProvider creates a new static credential provider.
-func NewStaticProvider(accessKey, secretKey, baseURL string) *StaticProvider {
+func NewStaticProvider(accessKey, secretKey, baseURL string, sandbox bool) *StaticProvider {
 	return &StaticProvider{
 		creds: Credentials{
 			AccessKey: accessKey,
 			SecretKey: secretKey,
 			BaseURL:   baseURL,
+			Sandbox:   sandbox,
 		},
 	}
 }
@@ -40,7 +41,7 @@ func (p *StaticProvider) Retrieve() (*Credentials, error) {
 		if p.creds.AccessKey == "" {
 			missing = append(missing, "access_key")
 		}
-		if p.creds.SecretKey == "" {
+		if !p.creds.Sandbox && p.creds.SecretKey == "" {
 			missing = append(missing, "secret_key")
 		}
 

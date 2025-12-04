@@ -78,9 +78,9 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: chore(release): bump version to ${{ steps.version.outputs.version }}
+          commit-message: "chore(release): bump version to ${{ steps.version.outputs.version }}"
           branch: release/${{ steps.version.outputs.tag }}
-          title: chore(release): ${{ steps.version.outputs.tag }}
+          title: "chore(release): ${{ steps.version.outputs.tag }}"
           body: |
             Automated release preparation for `${{ steps.version.outputs.tag }}`.
 
@@ -163,7 +163,8 @@ jobs:
         uses: orhun/git-cliff-action@v4
         with:
           config: cliff.toml
-          args: ${{ steps.prev_tag.outputs.tag && format('{0}..{1}', steps.prev_tag.outputs.tag, steps.release.outputs.tag) || steps.release.outputs.tag }}
+          args: >-
+            ${{ steps.prev_tag.outputs.tag && format('{0}..{1}', steps.prev_tag.outputs.tag, steps.release.outputs.tag) || steps.release.outputs.tag }}
         env:
           OUTPUT: /tmp/RELEASE_CHANGELOG.md
 

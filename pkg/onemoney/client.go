@@ -20,6 +20,7 @@ package onemoney
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	onemoney "github.com/1Money-Co/1money-go-sdk"
@@ -75,6 +76,11 @@ type Config struct {
 	// (default: "default")
 	Profile string
 
+	// Sandbox enables sandbox mode which uses simple Bearer token authentication
+	// instead of HMAC signature. In sandbox mode, only AccessKey is required
+	// and requests are sent with "Authorization: Bearer {AccessKey}" header.
+	Sandbox bool
+
 	// HTTPClient is an optional custom HTTP client
 	HTTPClient *http.Client
 
@@ -103,6 +109,13 @@ func WithTimeout(timeout time.Duration) Option {
 func WithBaseURL(baseURL string) Option {
 	return func(c *Config) {
 		c.BaseURL = baseURL
+	}
+}
+
+// WithSandbox enables sandbox mode with simple Bearer token authentication.
+func WithSandbox(sandbox bool) Option {
+	return func(c *Config) {
+		c.Sandbox = sandbox
 	}
 }
 
@@ -137,7 +150,10 @@ func WithBaseURL(baseURL string) Option {
 //	resp, err := c.Echo.Post(ctx, &echo.Request{Message: "hello"})
 func NewClient(cfg *Config, opts ...Option) (*Client, error) {
 	if cfg == nil {
-		cfg = &Config{}
+		cfg = &Config{
+			Sandbox: os.Getenv(credentials.EnvSandbox) == "1",
+			BaseURL: os.Getenv(credentials.EnvBaseURL),
+		}
 	}
 
 	// Apply options
@@ -151,6 +167,7 @@ func NewClient(cfg *Config, opts ...Option) (*Client, error) {
 		cfg.SecretKey,
 		cfg.BaseURL,
 		cfg.Profile,
+		cfg.Sandbox,
 	)
 
 	creds, err := provider.Retrieve()
@@ -165,15 +182,22 @@ func NewClient(cfg *Config, opts ...Option) (*Client, error) {
 
 	// Set defaults
 	if cfg.BaseURL == "" {
-		cfg.BaseURL = "http://localhost:9000"
+		cfg.BaseURL = "http://localhost:9000/openapi"
 	}
 	if cfg.Timeout == 0 {
 		cfg.Timeout = 30 * time.Second
 	}
 
-	// Create auth credentials and signer
-	authCreds := auth.NewCredentials(creds.AccessKey, creds.SecretKey)
-	signer := auth.NewSigner(authCreds)
+	// Create authenticator based on mode (use creds.Sandbox as it may come from env vars)
+	var authenticator auth.Authenticator
+	if creds.Sandbox {
+		// Sandbox mode: use simple Bearer token authentication
+		authenticator = auth.NewBearerAuth(creds.AccessKey)
+	} else {
+		// Production mode: use HMAC signature authentication
+		authCreds := auth.NewCredentials(creds.AccessKey, creds.SecretKey)
+		authenticator = auth.NewSigner(authCreds)
+	}
 
 	// Create transport
 	transportCfg := &transport.Config{
@@ -181,7 +205,7 @@ func NewClient(cfg *Config, opts ...Option) (*Client, error) {
 		HTTPClient: cfg.HTTPClient,
 		Timeout:    cfg.Timeout,
 	}
-	tr := transport.NewTransport(transportCfg, signer)
+	tr := transport.NewTransport(transportCfg, authenticator)
 
 	// Initialize all service modules with base service
 	base := svc.NewBaseService(tr)

@@ -36,10 +36,16 @@ type Credentials struct {
 	AccessKey string
 	SecretKey string
 	BaseURL   string
+	Sandbox   bool
 }
 
-// IsValid returns true if the credentials are valid (non-empty).
+// IsValid returns true if the credentials are valid.
+// In sandbox mode, only AccessKey is required.
+// In production mode, both AccessKey and SecretKey are required.
 func (c *Credentials) IsValid() bool {
+	if c.Sandbox {
+		return c.AccessKey != ""
+	}
 	return c.AccessKey != "" && c.SecretKey != ""
 }
 

@@ -25,6 +25,7 @@ const (
 	EnvAccessKey = "ONEMONEY_ACCESS_KEY"
 	EnvSecretKey = "ONEMONEY_SECRET_KEY"
 	EnvBaseURL   = "ONEMONEY_BASE_URL"
+	EnvSandbox   = "ONEMONEY_SANDBOX"
 )
 
 // EnvProvider retrieves credentials from environment variables.
@@ -37,19 +38,21 @@ func NewEnvProvider() *EnvProvider {
 
 // Retrieve retrieves credentials from environment variables.
 // Returns ErrNoCredentials if required environment variables are not set.
-// Required: ONEMONEY_ACCESS_KEY, ONEMONEY_SECRET_KEY
-// Optional: ONEMONEY_BASE_URL
+// Required: ONEMONEY_ACCESS_KEY (ONEMONEY_SECRET_KEY required unless ONEMONEY_SANDBOX=1)
+// Optional: ONEMONEY_BASE_URL, ONEMONEY_SANDBOX
 func (p *EnvProvider) Retrieve() (*Credentials, error) {
 	accessKey := os.Getenv(EnvAccessKey)
 	secretKey := os.Getenv(EnvSecretKey)
 	baseURL := os.Getenv(EnvBaseURL)
+	sandbox := os.Getenv(EnvSandbox) == "1"
 
 	// Check which required variables are missing
 	var missing []string
 	if accessKey == "" {
 		missing = append(missing, EnvAccessKey)
 	}
-	if secretKey == "" {
+	// SecretKey is only required in non-sandbox mode
+	if !sandbox && secretKey == "" {
 		missing = append(missing, EnvSecretKey)
 	}
 
@@ -65,6 +68,7 @@ func (p *EnvProvider) Retrieve() (*Credentials, error) {
 		AccessKey: accessKey,
 		SecretKey: secretKey,
 		BaseURL:   baseURL,
+		Sandbox:   sandbox,
 	}
 
 	// Validate the retrieved credentials
