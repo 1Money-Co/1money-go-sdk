@@ -24,45 +24,39 @@ chore: update dependencies
 
 ## Release Process
 
-### 1. Create a Pull Request
+### 1. Tag the commit you want to release
 
-All changes must go through a PR to merge into `main`:
+Create and push a semantic version tag that points at `main`:
 
 ```bash
-# Create feature branch
-git checkout -b feat/your-feature
-
-# Make changes and commit
-git add .
-git commit -m "feat: your feature description"
-
-# Push and create PR
-git push origin feat/your-feature
+git checkout main
+git pull origin main
+git tag -a v1.2.3 -m "v1.2.3"
+git push origin v1.2.3
 ```
 
-Then create a Pull Request on GitHub and wait for review/approval.
+> 💡 Pre-release tags such as `v1.2.3-rc.1` are supported.
 
-### 2. Merge PR and verify tests
+### 2. Review the automated release PR
 
-After the PR is merged to `main`, ensure all CI checks pass.
+Pushing the tag triggers the **Prepare release PR** workflow which:
 
-### 3. Create a release tag on GitHub
+1. Updates `version.go` to match the tag.
+2. Regenerates `CHANGELOG.md` via `git-cliff`.
+3. Opens a pull request from `release/v1.2.3` (or similar) back into `main`.
 
-1. Go to the repository's [Releases page](https://github.com/1Money-Co/1money-go-sdk/releases)
-2. Click **"Draft a new release"**
-3. Click **"Choose a tag"** and create a new tag (e.g., `v1.2.3`)
-4. Set the target branch to `main`
-5. Click **"Publish release"** (release notes will be auto-generated)
+Review the generated changes, make any necessary edits, and merge the PR like any other change. This is required because branch protection blocks direct pushes to `main`.
 
-The release workflow will automatically:
+### 3. Automatic GitHub Release
 
-1. Extract version from tag
-2. Run tests
-3. Update `version.go` with the version number
-4. Commit and update the tag to include the version change
-5. Generate changelog
-6. Update the GitHub Release with changelog
-7. Trigger pkg.go.dev indexing
+Once the release PR merges into `main`, the **Publish GitHub release** job will:
+
+1. Re-tag `v1.2.3` so it points at the merged commit.
+2. Generate release notes from the merged history.
+3. Publish the GitHub Release with the changelog body.
+4. Ping `pkg.go.dev` so the new version is indexed.
+
+No additional manual steps are needed—just monitor the workflow run to ensure it succeeds.
 
 ### 4. Verify the release
 
