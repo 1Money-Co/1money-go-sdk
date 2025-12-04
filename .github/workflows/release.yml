@@ -18,6 +18,7 @@ on:
   push:
     branches:
       - main
+      - ryan/fix-release-workflow
     tags:
       - "v*.*.*"
 
