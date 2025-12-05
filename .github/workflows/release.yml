@@ -29,7 +29,7 @@ permissions:
 jobs:
   prepare-release-pr:
     name: Prepare release PR
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/ryan/fix-release-workflow'
     runs-on: ubuntu-latest
     steps:
       - name: Extract version from tag
@@ -94,7 +94,7 @@ jobs:
 
   publish-release:
     name: Publish GitHub release
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ryan/fix-release-workflow'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
