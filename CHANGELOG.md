@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.0.0-test-a709ac2] - 2025-12-05
+## [dev] - 2025-12-05
 
 ### ⚙️ Miscellaneous
 
