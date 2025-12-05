@@ -171,3 +171,41 @@ func (s *Signer) buildAuthorizationHeader(timestamp, signature string) string {
 		signature,
 	)
 }
+
+// Authenticator defines the interface for request authentication.
+type Authenticator interface {
+	// Authenticate generates authentication headers for a request.
+	// Returns the SignatureResult containing Authorization and Timestamp headers.
+	Authenticate(method, path string, body []byte) (*SignatureResult, error)
+}
+
+// Ensure Signer implements Authenticator.
+var _ Authenticator = (*Signer)(nil)
+
+// Authenticate implements Authenticator interface for Signer.
+func (s *Signer) Authenticate(method, path string, body []byte) (*SignatureResult, error) {
+	return s.SignRequest(method, path, body)
+}
+
+// BearerAuth provides simple Bearer token authentication for sandbox mode.
+type BearerAuth struct {
+	apiKey string
+}
+
+// NewBearerAuth creates a new Bearer token authenticator.
+func NewBearerAuth(apiKey string) *BearerAuth {
+	return &BearerAuth{
+		apiKey: apiKey,
+	}
+}
+
+// Ensure BearerAuth implements Authenticator.
+var _ Authenticator = (*BearerAuth)(nil)
+
+// Authenticate implements Authenticator interface for BearerAuth.
+func (b *BearerAuth) Authenticate(_, _ string, _ []byte) (*SignatureResult, error) {
+	return &SignatureResult{
+		Authorization: fmt.Sprintf("Bearer %s", b.apiKey),
+		Timestamp:     time.Now().UTC().Format(TimeFormat),
+	}, nil
+}

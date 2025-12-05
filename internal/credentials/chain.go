@@ -45,12 +45,13 @@ func NewChainProvider(providers ...Provider) *ChainProvider {
 // 1. Static provider (if credentials are provided)
 // 2. Environment variable provider
 // 3. File provider (with optional profile)
-func NewDefaultChainProvider(accessKey, secretKey, baseURL, profile string) *ChainProvider {
+func NewDefaultChainProvider(accessKey, secretKey, baseURL, profile string, sandbox bool) *ChainProvider {
 	var providers []Provider
 
 	// 1. Static credentials (highest priority)
-	if accessKey != "" && secretKey != "" {
-		providers = append(providers, NewStaticProvider(accessKey, secretKey, baseURL))
+	// In sandbox mode, only accessKey is required
+	if accessKey != "" && (sandbox || secretKey != "") {
+		providers = append(providers, NewStaticProvider(accessKey, secretKey, baseURL, sandbox))
 	}
 
 	// 2. Environment variables

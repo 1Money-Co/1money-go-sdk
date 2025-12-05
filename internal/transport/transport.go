@@ -62,9 +62,9 @@ type GenericResponse[T any] struct {
 
 // Transport handles HTTP communication with the API.
 type Transport struct {
-	baseURL    string
-	httpClient *http.Client
-	signer     *auth.Signer
+	baseURL       string
+	httpClient    *http.Client
+	authenticator auth.Authenticator
 }
 
 // Config holds transport configuration.
@@ -75,7 +75,7 @@ type Config struct {
 }
 
 // NewTransport creates a new HTTP transport with the given configuration.
-func NewTransport(cfg *Config, signer *auth.Signer) *Transport {
+func NewTransport(cfg *Config, authenticator auth.Authenticator) *Transport {
 	httpClient := cfg.HTTPClient
 	if httpClient == nil {
 		httpClient = &http.Client{
@@ -87,18 +87,18 @@ func NewTransport(cfg *Config, signer *auth.Signer) *Transport {
 	}
 
 	return &Transport{
-		baseURL:    cfg.BaseURL,
-		httpClient: httpClient,
-		signer:     signer,
+		baseURL:       cfg.BaseURL,
+		httpClient:    httpClient,
+		authenticator: authenticator,
 	}
 }
 
-// Do executes an HTTP request with automatic signature generation.
+// Do executes an HTTP request with automatic authentication.
 func (t *Transport) Do(ctx context.Context, req *Request) (*Response, error) {
 	log := getLogger()
 
-	// Generate signature
-	sigResult, err := t.signer.SignRequest(req.Method, req.Path, req.Body)
+	// Generate authentication headers
+	sigResult, err := t.authenticator.Authenticate(req.Method, req.Path, req.Body)
 	if err != nil {
 		log.Error("failed to sign request",
 			zap.String("method", req.Method),
@@ -119,16 +119,17 @@ func (t *Transport) Do(ctx context.Context, req *Request) (*Response, error) {
 		return nil, fmt.Errorf("failed to build HTTP request: %w", err)
 	}
 
-	// Log request with curl command for easy debugging
-	logFields := []zap.Field{
+	// Log request
+	log.Debug("executing HTTP request",
 		zap.String("method", req.Method),
 		zap.String("url", httpReq.URL.String()),
 		zap.Int("body_size", len(req.Body)),
-	}
+	)
+
+	// Print curl command separately for easy copy-paste
 	if os.Getenv("ONEMONEY_DEBUG_CURL") == "1" {
-		logFields = append(logFields, zap.String("curl", "\n"+buildCurlCommand(httpReq, req.Body)))
+		fmt.Fprintln(os.Stderr, buildCurlCommand(httpReq, req.Body))
 	}
-	log.Debug("executing HTTP request", logFields...)
 
 	// Execute request
 	httpResp, err := t.httpClient.Do(httpReq)
