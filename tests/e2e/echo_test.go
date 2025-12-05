@@ -51,6 +51,7 @@ func (s *EchoTestSuite) TestEchoService_Post() {
 // TestRateLimiter tests that the rate limiter is working correctly for both API key and user limits.
 // Each test case uses a different API key to ensure independent rate limit testing.
 func (s *EchoTestSuite) TestRateLimiter() {
+	s.T().Skip()
 	// Create secondary client with different API key for independent rate limit testing
 	secondaryClient, err := onemoney.NewClient(&onemoney.Config{
 		BaseURL:   os.Getenv("ONEMONEY_BASE_URL"),

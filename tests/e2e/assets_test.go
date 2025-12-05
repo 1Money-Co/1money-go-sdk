@@ -26,7 +26,7 @@ import (
 
 // AssetsTestSuite tests assets service operations.
 type AssetsTestSuite struct {
-	E2ETestSuite
+	CustomerDependentTestSuite
 }
 
 // TestAssets_ListAssets tests listing assets with various filters.
@@ -74,7 +74,7 @@ func (s *AssetsTestSuite) TestAssets_ListAssets() {
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			resp, err := s.Client.Assets.ListAssets(s.Ctx, testCustomerID, tc.req)
+			resp, err := s.Client.Assets.ListAssets(s.Ctx, s.CustomerID, tc.req)
 			s.Require().NoError(err, "ListAssets should succeed")
 			s.Require().NotNil(resp, "Response should not be nil")
 			s.T().Logf("%s response:\n%s", tc.name, PrettyJSON(resp))

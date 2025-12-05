@@ -28,21 +28,15 @@ import (
 
 // WithdrawalsTestSuite tests withdrawals service operations.
 type WithdrawalsTestSuite struct {
-	E2ETestSuite
+	CustomerDependentTestSuite
 }
 
 // TestWithdrawals_CreateFiatWithdrawal tests creating a fiat withdrawal to an external bank account.
 func (s *WithdrawalsTestSuite) TestWithdrawals_CreateFiatWithdrawal() {
-	// First, get an external account to withdraw to
-	accounts, err := s.Client.ExternalAccounts.ListExternalAccounts(s.Ctx, testCustomerID, nil)
-	s.Require().NoError(err, "ListExternalAccounts should succeed")
+	// Ensure we have an external account to withdraw to
+	externalAccountID, err := s.EnsureExternalAccount()
+	s.Require().NoError(err, "EnsureExternalAccount should succeed")
 
-	if len(accounts) == 0 {
-		s.T().Skip("No external accounts available for withdrawal test")
-	}
-
-	// Use the first available external account
-	externalAccountID := accounts[0].ExternalAccountID
 	idempotencyKey := uuid.New().String()
 
 	req := &withdraws.CreateWithdrawalRequest{
@@ -53,7 +47,7 @@ func (s *WithdrawalsTestSuite) TestWithdrawals_CreateFiatWithdrawal() {
 		ExternalAccountID: externalAccountID,
 	}
 
-	resp, err := s.Client.Withdrawals.CreateWithdrawal(s.Ctx, testCustomerID, req)
+	resp, err := s.Client.Withdrawals.CreateWithdrawal(s.Ctx, s.CustomerID, req)
 	s.Require().NoError(err, "CreateWithdrawal should succeed")
 
 	s.Require().NotNil(resp, "Response should not be nil")
@@ -71,10 +65,10 @@ func (s *WithdrawalsTestSuite) TestWithdrawals_CreateCryptoWithdrawal() {
 		Amount:         "10.00",
 		Asset:          assets.AssetNameUSDT,
 		Network:        assets.NetworkNameETHEREUM,
-		WalletAddress:  "0x71a6c6be0be5f28ef4ea7541749d90d9c66fec7d",
+		WalletAddress:  FakeEthereumAddress(),
 	}
 
-	resp, err := s.Client.Withdrawals.CreateWithdrawal(s.Ctx, testCustomerID, req)
+	resp, err := s.Client.Withdrawals.CreateWithdrawal(s.Ctx, s.CustomerID, req)
 	s.Require().NoError(err, "CreateWithdrawal should succeed")
 
 	s.Require().NotNil(resp, "Response should not be nil")
@@ -84,12 +78,9 @@ func (s *WithdrawalsTestSuite) TestWithdrawals_CreateCryptoWithdrawal() {
 
 // TestWithdrawals_GetByIdempotencyKey tests retrieving a withdrawal by idempotency key.
 func (s *WithdrawalsTestSuite) TestWithdrawals_GetByIdempotencyKey() {
-	// First create a withdrawal
-	accounts, err := s.Client.ExternalAccounts.ListExternalAccounts(s.Ctx, testCustomerID, nil)
-	s.Require().NoError(err, "ListExternalAccounts should succeed")
-	if len(accounts) == 0 {
-		s.T().Skip("No external accounts available, skipping test")
-	}
+	// Ensure we have an external account
+	externalAccountID, err := s.EnsureExternalAccount()
+	s.Require().NoError(err, "EnsureExternalAccount should succeed")
 
 	idempotencyKey := uuid.New().String()
 	req := &withdraws.CreateWithdrawalRequest{
@@ -97,14 +88,14 @@ func (s *WithdrawalsTestSuite) TestWithdrawals_GetByIdempotencyKey() {
 		Amount:            "5.00",
 		Asset:             assets.AssetNameUSD,
 		Network:           assets.NetworkNameUSACH,
-		ExternalAccountID: accounts[0].ExternalAccountID,
+		ExternalAccountID: externalAccountID,
 	}
 
-	createResp, err := s.Client.Withdrawals.CreateWithdrawal(s.Ctx, testCustomerID, req)
+	createResp, err := s.Client.Withdrawals.CreateWithdrawal(s.Ctx, s.CustomerID, req)
 	s.Require().NoError(err, "CreateWithdrawal should succeed")
 
 	// Get by idempotency key
-	getResp, err := s.Client.Withdrawals.GetWithdrawalByIdempotencyKey(s.Ctx, testCustomerID, idempotencyKey)
+	getResp, err := s.Client.Withdrawals.GetWithdrawalByIdempotencyKey(s.Ctx, s.CustomerID, idempotencyKey)
 	s.Require().NoError(err, "GetWithdrawalByIdempotencyKey should succeed")
 
 	s.Require().NotNil(getResp, "Response should not be nil")
@@ -114,12 +105,9 @@ func (s *WithdrawalsTestSuite) TestWithdrawals_GetByIdempotencyKey() {
 
 // TestWithdrawals_GetByID tests retrieving a withdrawal by ID.
 func (s *WithdrawalsTestSuite) TestWithdrawals_GetByID() {
-	// First create a withdrawal
-	accounts, err := s.Client.ExternalAccounts.ListExternalAccounts(s.Ctx, testCustomerID, nil)
-	s.Require().NoError(err, "ListExternalAccounts should succeed")
-	if len(accounts) == 0 {
-		s.T().Skip("No external accounts available, skipping test")
-	}
+	// Ensure we have an external account
+	externalAccountID, err := s.EnsureExternalAccount()
+	s.Require().NoError(err, "EnsureExternalAccount should succeed")
 
 	idempotencyKey := uuid.New().String()
 	req := &withdraws.CreateWithdrawalRequest{
@@ -127,14 +115,14 @@ func (s *WithdrawalsTestSuite) TestWithdrawals_GetByID() {
 		Amount:            "5.00",
 		Asset:             assets.AssetNameUSD,
 		Network:           assets.NetworkNameUSACH,
-		ExternalAccountID: accounts[0].ExternalAccountID,
+		ExternalAccountID: externalAccountID,
 	}
 
-	createResp, err := s.Client.Withdrawals.CreateWithdrawal(s.Ctx, testCustomerID, req)
+	createResp, err := s.Client.Withdrawals.CreateWithdrawal(s.Ctx, s.CustomerID, req)
 	s.Require().NoError(err, "CreateWithdrawal should succeed")
 
 	// Get by ID
-	getResp, err := s.Client.Withdrawals.GetWithdrawal(s.Ctx, testCustomerID, createResp.TransactionID)
+	getResp, err := s.Client.Withdrawals.GetWithdrawal(s.Ctx, s.CustomerID, createResp.TransactionID)
 	s.Require().NoError(err, "GetWithdrawal should succeed")
 
 	s.Require().NotNil(getResp, "Response should not be nil")

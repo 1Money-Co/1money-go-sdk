@@ -27,7 +27,7 @@ import (
 
 // ConversionsTestSuite tests conversions service operations.
 type ConversionsTestSuite struct {
-	E2ETestSuite
+	CustomerDependentTestSuite
 }
 
 // TestConversions_CreateQuote_CryptoToFiat tests creating a quote to convert crypto to fiat.
@@ -43,7 +43,7 @@ func (s *ConversionsTestSuite) TestConversions_CreateQuote_CryptoToFiat() {
 		},
 	}
 
-	resp, err := s.Client.Conversions.CreateQuote(s.Ctx, testCustomerID, req)
+	resp, err := s.Client.Conversions.CreateQuote(s.Ctx, s.CustomerID, req)
 	s.Require().NoError(err, "CreateQuote should succeed")
 
 	s.Require().NotNil(resp, "Response should not be nil")
@@ -65,7 +65,7 @@ func (s *ConversionsTestSuite) TestConversions_CreateQuote_FiatToCrypto() {
 		},
 	}
 
-	resp, err := s.Client.Conversions.CreateQuote(s.Ctx, testCustomerID, req)
+	resp, err := s.Client.Conversions.CreateQuote(s.Ctx, s.CustomerID, req)
 	s.Require().NoError(err, "CreateQuote should succeed")
 
 	s.Require().NotNil(resp, "Response should not be nil")
@@ -88,7 +88,7 @@ func (s *ConversionsTestSuite) TestConversions_CreateHedge() {
 		},
 	}
 
-	quoteResp, err := s.Client.Conversions.CreateQuote(s.Ctx, testCustomerID, quoteReq)
+	quoteResp, err := s.Client.Conversions.CreateQuote(s.Ctx, s.CustomerID, quoteReq)
 	s.Require().NoError(err, "CreateQuote should succeed")
 
 	// Execute the hedge
@@ -96,7 +96,7 @@ func (s *ConversionsTestSuite) TestConversions_CreateHedge() {
 		QuoteID: quoteResp.QuoteID,
 	}
 
-	hedgeResp, err := s.Client.Conversions.CreateHedge(s.Ctx, testCustomerID, hedgeReq)
+	hedgeResp, err := s.Client.Conversions.CreateHedge(s.Ctx, s.CustomerID, hedgeReq)
 	s.Require().NoError(err, "CreateHedge should succeed")
 
 	s.Require().NotNil(hedgeResp, "Response should not be nil")
@@ -119,18 +119,18 @@ func (s *ConversionsTestSuite) TestConversions_GetOrder() {
 		},
 	}
 
-	quoteResp, err := s.Client.Conversions.CreateQuote(s.Ctx, testCustomerID, quoteReq)
+	quoteResp, err := s.Client.Conversions.CreateQuote(s.Ctx, s.CustomerID, quoteReq)
 	s.Require().NoError(err, "CreateQuote should succeed")
 
 	hedgeReq := &conversions.CreateHedgeRequest{
 		QuoteID: quoteResp.QuoteID,
 	}
 
-	hedgeResp, err := s.Client.Conversions.CreateHedge(s.Ctx, testCustomerID, hedgeReq)
+	hedgeResp, err := s.Client.Conversions.CreateHedge(s.Ctx, s.CustomerID, hedgeReq)
 	s.Require().NoError(err, "CreateHedge should succeed")
 
 	// Get the order
-	orderResp, err := s.Client.Conversions.GetOrder(s.Ctx, testCustomerID, hedgeResp.OrderID)
+	orderResp, err := s.Client.Conversions.GetOrder(s.Ctx, s.CustomerID, hedgeResp.OrderID)
 	s.Require().NoError(err, "GetOrder should succeed")
 
 	s.Require().NotNil(orderResp, "Response should not be nil")

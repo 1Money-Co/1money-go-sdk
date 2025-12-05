@@ -29,6 +29,7 @@ import (
 	"github.com/1Money-Co/1money-go-sdk/internal/transport"
 	svc "github.com/1Money-Co/1money-go-sdk/pkg/service"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/assets"
+	"github.com/1Money-Co/1money-go-sdk/pkg/service/auto_conversion_rules"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/conversions"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/customer"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/echo"
@@ -45,15 +46,16 @@ type Client struct {
 	transport *transport.Transport
 
 	// Service modules
-	Assets           assets.Service
-	Conversions      conversions.Service
-	Customer         customer.Service
-	Echo             echo.Service
-	ExternalAccounts external_accounts.Service
-	Instructions     instructions.Service
-	Simulations      simulations.Service
-	Transactions     transactions.Service
-	Withdrawals      withdraws.Service
+	Assets              assets.Service
+	AutoConversionRules auto_conversion_rules.Service
+	Conversions         conversions.Service
+	Customer            customer.Service
+	Echo                echo.Service
+	ExternalAccounts    external_accounts.Service
+	Instructions        instructions.Service
+	Simulations         simulations.Service
+	Transactions        transactions.Service
+	Withdrawals         withdraws.Service
 }
 
 // Config holds the client configuration.
@@ -86,6 +88,11 @@ type Config struct {
 
 	// Timeout is the request timeout (default: 30 seconds)
 	Timeout time.Duration
+
+	// Retry configures automatic retry behavior for rate limiting and transient errors.
+	// If nil, default retry configuration is used (3 retries with exponential backoff).
+	// Use NoRetryConfig() to disable retries.
+	Retry *RetryConfig
 }
 
 // Option is a function that configures the client.
@@ -117,6 +124,47 @@ func WithSandbox(sandbox bool) Option {
 	return func(c *Config) {
 		c.Sandbox = sandbox
 	}
+}
+
+// WithRetry configures the retry behavior for rate limiting and transient errors.
+// Pass nil to use default retry configuration, or use NoRetryConfig() to disable retries.
+//
+// Example with custom retry configuration:
+//
+//	client, err := onemoney.NewClient(&onemoney.Config{}, onemoney.WithRetry(&onemoney.RetryConfig{
+//	    MaxRetries:        5,
+//	    InitialBackoff:    500 * time.Millisecond,
+//	    MaxBackoff:        60 * time.Second,
+//	    BackoffMultiplier: 2.0,
+//	    Jitter:            true,
+//	}))
+//
+// Example to disable retries:
+//
+//	client, err := onemoney.NewClient(&onemoney.Config{}, onemoney.WithRetry(onemoney.NoRetryConfig()))
+func WithRetry(retry *RetryConfig) Option {
+	return func(c *Config) {
+		c.Retry = retry
+	}
+}
+
+// RetryConfig is an alias for transport.RetryConfig.
+// It holds configuration for retry behavior.
+type RetryConfig = transport.RetryConfig
+
+// DefaultRetryConfig returns a RetryConfig with sensible defaults:
+//   - MaxRetries: 3
+//   - InitialBackoff: 1 second
+//   - MaxBackoff: 30 seconds
+//   - BackoffMultiplier: 2.0
+//   - Jitter: true (to prevent thundering herd)
+func DefaultRetryConfig() *RetryConfig {
+	return transport.DefaultRetryConfig()
+}
+
+// NoRetryConfig returns a RetryConfig that disables retries.
+func NoRetryConfig() *RetryConfig {
+	return transport.NoRetryConfig()
 }
 
 // NewClient creates a new OneMoney API client with all services pre-initialized.
@@ -204,6 +252,7 @@ func NewClient(cfg *Config, opts ...Option) (*Client, error) {
 		BaseURL:    cfg.BaseURL,
 		HTTPClient: cfg.HTTPClient,
 		Timeout:    cfg.Timeout,
+		Retry:      cfg.Retry,
 	}
 	tr := transport.NewTransport(transportCfg, authenticator)
 
@@ -212,16 +261,17 @@ func NewClient(cfg *Config, opts ...Option) (*Client, error) {
 
 	// Create client with pre-initialized services
 	return &Client{
-		transport:        tr,
-		Assets:           assets.NewService(base),
-		Conversions:      conversions.NewService(base),
-		Customer:         customer.NewService(base),
-		Echo:             echo.NewService(base),
-		ExternalAccounts: external_accounts.NewService(base),
-		Instructions:     instructions.NewService(base),
-		Simulations:      simulations.NewService(base),
-		Transactions:     transactions.NewService(base),
-		Withdrawals:      withdraws.NewService(base),
+		transport:           tr,
+		Assets:              assets.NewService(base),
+		AutoConversionRules: auto_conversion_rules.NewService(base),
+		Conversions:         conversions.NewService(base),
+		Customer:            customer.NewService(base),
+		Echo:                echo.NewService(base),
+		ExternalAccounts:    external_accounts.NewService(base),
+		Instructions:        instructions.NewService(base),
+		Simulations:         simulations.NewService(base),
+		Transactions:        transactions.NewService(base),
+		Withdrawals:         withdraws.NewService(base),
 	}, nil
 }
 

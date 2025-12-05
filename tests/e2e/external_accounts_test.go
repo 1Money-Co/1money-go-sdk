@@ -19,7 +19,6 @@ package e2e
 import (
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/external_accounts"
@@ -27,60 +26,65 @@ import (
 
 // ExternalAccountsTestSuite tests external accounts service operations.
 type ExternalAccountsTestSuite struct {
-	E2ETestSuite
+	CustomerDependentTestSuite
 }
 
-// TestExternalAccounts_ListAll tests listing all external accounts for a customer.
-func (s *ExternalAccountsTestSuite) TestExternalAccounts_ListAll() {
-	resp, err := s.Client.ExternalAccounts.ListExternalAccounts(s.Ctx, testCustomerID, nil)
-	s.Require().NoError(err, "ListExternalAccounts should succeed")
+// TestExternalAccounts_List tests listing external accounts with various scenarios.
+func (s *ExternalAccountsTestSuite) TestExternalAccounts_List() {
+	s.Run("Empty", func() {
+		// For a fresh customer, listing should succeed even with no accounts
+		resp, err := s.Client.ExternalAccounts.ListExternalAccounts(s.Ctx, s.CustomerID, nil)
+		s.Require().NoError(err, "ListExternalAccounts should succeed even with no accounts")
+		s.Require().NotNil(resp, "Response should not be nil")
+		s.T().Logf("External accounts list: %d accounts", len(resp))
+	})
 
-	s.Require().NotNil(resp, "Response should not be nil")
-	s.T().Logf("External accounts list:\n%s", PrettyJSON(resp))
+	s.Run("WithData", func() {
+		// Ensure we have at least one external account
+		_, err := s.EnsureExternalAccount()
+		s.Require().NoError(err, "EnsureExternalAccount should succeed")
 
-	for i := range resp {
-		s.NotEmpty(resp[i].ExternalAccountID, "External account ID should not be empty")
-		s.NotEmpty(resp[i].CustomerID, "Customer ID should not be empty")
-		s.NotEmpty(resp[i].BankNetworkName, "Bank network name should not be empty")
-		s.NotEmpty(resp[i].Currency, "Currency should not be empty")
-		s.NotEmpty(resp[i].BankName, "Bank name should not be empty")
-		s.NotEmpty(resp[i].Status, "Status should not be empty")
-	}
-}
+		resp, err := s.Client.ExternalAccounts.ListExternalAccounts(s.Ctx, s.CustomerID, nil)
+		s.Require().NoError(err, "ListExternalAccounts should succeed")
 
-// TestExternalAccounts_ListByStatus tests listing external accounts filtered by status.
-func (s *ExternalAccountsTestSuite) TestExternalAccounts_ListByStatus() {
-	req := &external_accounts.ListExternalAccountsRequest{
-		Status: external_accounts.BankAccountStatusAPPROVED,
-	}
+		s.Require().NotNil(resp, "Response should not be nil")
+		s.Require().NotEmpty(resp, "Should have at least one external account")
+		s.T().Logf("External accounts list:\n%s", PrettyJSON(resp))
 
-	resp, err := s.Client.ExternalAccounts.ListExternalAccounts(s.Ctx, testCustomerID, req)
-	s.Require().NoError(err, "ListExternalAccounts should succeed")
+		for i := range resp {
+			s.NotEmpty(resp[i].ExternalAccountID, "External account ID should not be empty")
+			s.NotEmpty(resp[i].CustomerID, "Customer ID should not be empty")
+			s.NotEmpty(resp[i].BankNetworkName, "Bank network name should not be empty")
+			s.NotEmpty(resp[i].Currency, "Currency should not be empty")
+			s.NotEmpty(resp[i].BankName, "Bank name should not be empty")
+			s.NotEmpty(resp[i].Status, "Status should not be empty")
+		}
+	})
 
-	s.Require().NotNil(resp, "Response should not be nil")
-	s.T().Logf("Approved external accounts:\n%s", PrettyJSON(resp))
+	s.Run("FilterByStatus", func() {
+		req := &external_accounts.ListExternalAccountsRequest{
+			Status: external_accounts.BankAccountStatusAPPROVED,
+		}
 
-	for i := range resp {
-		s.Equal("APPROVED", resp[i].Status, "Status should be APPROVED")
-	}
+		resp, err := s.Client.ExternalAccounts.ListExternalAccounts(s.Ctx, s.CustomerID, req)
+		s.Require().NoError(err, "ListExternalAccounts should succeed")
+
+		s.Require().NotNil(resp, "Response should not be nil")
+		s.T().Logf("Approved external accounts:\n%s", PrettyJSON(resp))
+
+		// Verify all returned accounts have APPROVED status
+		for i := range resp {
+			s.Equal("APPROVED", resp[i].Status, "Status should be APPROVED")
+		}
+	})
 }
 
 // TestExternalAccounts_CreateAndGet tests creating and retrieving an external account.
 func (s *ExternalAccountsTestSuite) TestExternalAccounts_CreateAndGet() {
-	idempotencyKey := uuid.New().String()
-
-	createReq := &external_accounts.CreateExternalAccountRequest{
-		IdempotencyKey:       idempotencyKey,
-		BankNetworkName:      external_accounts.BankNetworkNameUSACH,
-		Currency:             external_accounts.CurrencyUSD,
-		BankName:             "Test Bank",
-		BankAccountOwnerName: "Test Account Owner",
-		BankAccountNumber:    "123456789",
-		BankRoutingNumber:    "021000021",
-	}
+	createReq := FakeExternalAccountRequest()
 
 	// Create external account
-	createResp, err := s.Client.ExternalAccounts.CreateExternalAccount(s.Ctx, testCustomerID, createReq)
+	createResp, err := s.Client.ExternalAccounts.CreateExternalAccount(s.Ctx, s.CustomerID, createReq)
 	s.Require().NoError(err, "CreateExternalAccount should succeed")
 
 	s.Require().NotNil(createResp, "Create response should not be nil")
@@ -88,7 +92,7 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_CreateAndGet() {
 	s.T().Logf("Created external account:\n%s", PrettyJSON(createResp))
 
 	// Get external account by ID
-	getResp, err := s.Client.ExternalAccounts.GetExternalAccount(s.Ctx, testCustomerID, createResp.ExternalAccountID)
+	getResp, err := s.Client.ExternalAccounts.GetExternalAccount(s.Ctx, s.CustomerID, createResp.ExternalAccountID)
 	s.Require().NoError(err, "GetExternalAccount should succeed")
 
 	s.Require().NotNil(getResp, "Get response should not be nil")
@@ -96,7 +100,7 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_CreateAndGet() {
 	s.T().Logf("Retrieved external account:\n%s", PrettyJSON(getResp))
 
 	// Get external account by idempotency key
-	getByKeyResp, err := s.Client.ExternalAccounts.GetExternalAccountByIdempotencyKey(s.Ctx, testCustomerID, idempotencyKey)
+	getByKeyResp, err := s.Client.ExternalAccounts.GetExternalAccountByIdempotencyKey(s.Ctx, s.CustomerID, createReq.IdempotencyKey)
 	s.Require().NoError(err, "GetExternalAccountByIdempotencyKey should succeed")
 
 	s.Require().NotNil(getByKeyResp, "Get by key response should not be nil")
@@ -107,26 +111,16 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_CreateAndGet() {
 // TestExternalAccounts_Delete tests deleting an external account.
 func (s *ExternalAccountsTestSuite) TestExternalAccounts_Delete() {
 	// First create an account to delete
-	idempotencyKey := uuid.New().String()
+	createReq := FakeExternalAccountRequest()
 
-	createReq := &external_accounts.CreateExternalAccountRequest{
-		IdempotencyKey:       idempotencyKey,
-		BankNetworkName:      external_accounts.BankNetworkNameUSACH,
-		Currency:             external_accounts.CurrencyUSD,
-		BankName:             "Test Bank to Delete",
-		BankAccountOwnerName: "Test Account Owner",
-		BankAccountNumber:    "987654321",
-		BankRoutingNumber:    "021000021",
-	}
-
-	createResp, err := s.Client.ExternalAccounts.CreateExternalAccount(s.Ctx, testCustomerID, createReq)
+	createResp, err := s.Client.ExternalAccounts.CreateExternalAccount(s.Ctx, s.CustomerID, createReq)
 	s.Require().NoError(err, "CreateExternalAccount should succeed")
 
 	s.Require().NotNil(createResp, "Create response should not be nil")
 	s.T().Logf("Created external account for deletion: %s", createResp.ExternalAccountID)
 
 	// Delete the account
-	err = s.Client.ExternalAccounts.DeleteExternalAccount(s.Ctx, testCustomerID, createResp.ExternalAccountID)
+	err = s.Client.ExternalAccounts.DeleteExternalAccount(s.Ctx, s.CustomerID, createResp.ExternalAccountID)
 	s.Require().NoError(err, "DeleteExternalAccount should succeed")
 
 	s.T().Logf("Successfully deleted external account: %s", createResp.ExternalAccountID)

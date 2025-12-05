@@ -153,70 +153,78 @@ type Service interface {
 	// ListCustomers retrieves a list of customer accounts with pagination support.
 	ListCustomers(ctx context.Context, req *ListCustomersRequest) (*ListCustomersResponse, error)
 	// GetCustomer retrieves a specific customer by ID.
-	GetCustomer(ctx context.Context, customerID string) (*CustomerResponse, error)
+	GetCustomer(ctx context.Context, id svc.CustomerID) (*CustomerResponse, error)
 	// UpdateCustomer updates an existing business customer account with partial KYB information.
-	UpdateCustomer(ctx context.Context, customerID string, req *UpdateCustomerRequest) (*UpdateCustomerResponse, error)
+	UpdateCustomer(ctx context.Context, id svc.CustomerID, req *UpdateCustomerRequest) (*UpdateCustomerResponse, error)
 	// CreateAssociatedPerson creates a new associated person (beneficial owner, controller, signer) for a customer.
-	CreateAssociatedPerson(ctx context.Context, customerID string, req *CreateAssociatedPersonRequest) (*AssociatedPersonResponse, error)
+	CreateAssociatedPerson(
+		ctx context.Context, id svc.CustomerID, req *CreateAssociatedPersonRequest,
+	) (*AssociatedPersonResponse, error)
 	// ListAssociatedPersons retrieves all associated persons for a specific customer.
-	ListAssociatedPersons(ctx context.Context, customerID string) (*ListAssociatedPersonsResponse, error)
+	ListAssociatedPersons(ctx context.Context, id svc.CustomerID) (*ListAssociatedPersonsResponse, error)
 	// GetAssociatedPerson retrieves a specific associated person by ID.
 	GetAssociatedPerson(
-		ctx context.Context,
-		customerID string,
-		associatedPersonID string,
+		ctx context.Context, id svc.CustomerID, associatedPersonID string,
 	) (*AssociatedPersonResponse, error)
 	// UpdateAssociatedPerson updates an existing associated person with partial data.
 	UpdateAssociatedPerson(
-		ctx context.Context,
-		customerID string,
-		associatedPersonID string,
-		req *UpdateAssociatedPersonRequest,
+		ctx context.Context, id svc.CustomerID, associatedPersonID string, req *UpdateAssociatedPersonRequest,
 	) (*AssociatedPersonResponse, error)
 	// DeleteAssociatedPerson soft-deletes a specific associated person.
-	DeleteAssociatedPerson(
-		ctx context.Context,
-		customerID string,
-		associatedPersonID string,
-	) error
+	DeleteAssociatedPerson(ctx context.Context, id svc.CustomerID, associatedPersonID string) error
 }
 
-// Address represents a physical or registered address for business or personal use.
-// This structure is used for both registered business addresses and residential addresses.
-type Address struct {
-	// StreetLine1 is the primary street address (e.g., "123 Main Street").
-	StreetLine1 string `json:"street_line_1"`
-	// City is the city name (e.g., "San Francisco").
-	City string `json:"city"`
-	// Country is the country code or name (e.g., "USA").
-	Country string `json:"country"`
-	// State is the state or province (e.g., "CA").
-	State string `json:"state"`
-	// StreetLine2 is the secondary address line, such as suite or apartment number (optional).
-	StreetLine2 string `json:"street_line_2,omitempty"`
-	// Subdivision is the administrative subdivision within the country (optional).
-	Subdivision string `json:"subdivision,omitempty"`
-	// PostalCode is the postal or ZIP code.
-	PostalCode string `json:"postal_code"`
-}
+// Common types for customer and associated person operations.
+type (
+	// Address represents a physical or registered address for business or personal use.
+	// This structure is used for both registered business addresses and residential addresses.
+	Address struct {
+		// StreetLine1 is the primary street address (e.g., "123 Main Street").
+		StreetLine1 string `json:"street_line_1"`
+		// City is the city name (e.g., "San Francisco").
+		City string `json:"city"`
+		// Country is the country code or name (e.g., "USA").
+		Country string `json:"country"`
+		// State is the state or province (e.g., "CA").
+		State string `json:"state"`
+		// StreetLine2 is the secondary address line, such as suite or apartment number (optional).
+		StreetLine2 string `json:"street_line_2,omitempty"`
+		// Subdivision is the administrative subdivision within the country (optional).
+		Subdivision string `json:"subdivision,omitempty"`
+		// PostalCode is the postal or ZIP code.
+		PostalCode string `json:"postal_code"`
+	}
 
-// IdentifyingInformation represents identification documents for associated persons.
-// This includes government-issued IDs such as driver's licenses, passports, or national ID cards.
-type IdentifyingInformation struct {
-	// Type is the type of identification document (e.g., "drivers_license", "passport").
-	Type IDType `json:"type"`
-	// IssuingCountry is the country that issued the identification document.
-	IssuingCountry string `json:"issuing_country"`
-	// ImageFront is the front image of the ID document in data-uri format (e.g., "data:image/jpeg;base64,/9j/4AAQ...").
-	// Supported formats: jpeg, jpg, png, heic, tif.
-	ImageFront string `json:"image_front"`
-	// ImageBack is the back image of the ID document in data-uri format.
-	// Supported formats: jpeg, jpg, png, heic, tif.
-	ImageBack string `json:"image_back"`
-	// NationalIdentityNumber is the national identity number from the ID document.
-	// This field is required for KYC verification. Maximum length: 128 characters.
-	NationalIdentityNumber string `json:"national_identity_number"`
-}
+	// IdentifyingInformation represents identification documents for associated persons.
+	// This includes government-issued IDs such as driver's licenses, passports, or national ID cards.
+	IdentifyingInformation struct {
+		// Type is the type of identification document (e.g., "drivers_license", "passport").
+		Type IDType `json:"type"`
+		// IssuingCountry is the country that issued the identification document.
+		IssuingCountry string `json:"issuing_country"`
+		// ImageFront is the front image of the ID document in data-uri format.
+		// Supported formats: jpeg, jpg, png, heic, tif.
+		ImageFront string `json:"image_front"`
+		// ImageBack is the back image of the ID document in data-uri format.
+		// Supported formats: jpeg, jpg, png, heic, tif.
+		ImageBack string `json:"image_back"`
+		// NationalIdentityNumber is the national identity number from the ID document.
+		// This field is required for KYC verification. Maximum length: 128 characters.
+		NationalIdentityNumber string `json:"national_identity_number"`
+	}
+
+	// Document represents a business document attachment for KYB verification.
+	// Documents may include certificates of incorporation, operating agreements, or other legal documents.
+	Document struct {
+		// DocType is the type of document (e.g., "certificate_of_incorporation").
+		DocType DocumentType `json:"doc_type"`
+		// File is the document file in data-uri format.
+		// Format: "data:image/[type];base64,[base64_data]" where type is jpeg, jpg, png, heic, or tif.
+		File string `json:"file"`
+		// Description is an optional description of the document.
+		Description string `json:"description,omitempty"`
+	}
+)
 
 // AssociatedPerson represents a person associated with the business entity.
 // This includes beneficial owners, directors, signers, and persons with control over the business.
@@ -269,361 +277,336 @@ type AssociatedPerson struct {
 	POAType string `json:"poa_type"`
 }
 
-// Document represents a business document attachment for KYB verification.
-// Documents may include certificates of incorporation, operating agreements, or other legal documents.
-type Document struct {
-	// DocType is the type of document (e.g., "certificate_of_incorporation" for Certificate of Incorporation).
-	DocType DocumentType `json:"doc_type"`
-	// File is the document file in data-uri format.
-	// Format: "data:image/[type];base64,[base64_data]" where type is jpeg, jpg, png, heic, or tif.
-	File string `json:"file"`
-	// Description is an optional description of the document.
-	Description string `json:"description,omitempty"`
-}
+// CreateCustomer request and response types.
+type (
+	// CreateCustomerRequest represents the request body for creating a business customer.
+	// This request includes comprehensive KYB (Know Your Business) information required for
+	// regulatory compliance, including business details, beneficial ownership, and risk assessment.
+	CreateCustomerRequest struct {
+		// BusinessLegalName is the official registered legal name of the business entity.
+		BusinessLegalName string `json:"business_legal_name"`
+		// BusinessDescription provides a detailed description of the business operations.
+		BusinessDescription string `json:"business_description"`
+		// BusinessRegistrationNumber is the official business registration or incorporation number.
+		BusinessRegistrationNumber string `json:"business_registration_number"`
+		// Email is the primary contact email address for the business.
+		Email string `json:"email"`
+		// BusinessType specifies the legal structure (e.g., "cooperative", "corporation", "llc").
+		BusinessType BusinessType `json:"business_type"`
+		// BusinessIndustry is a NAICS code representing the business industry (e.g., "541519").
+		BusinessIndustry string `json:"business_industry"`
+		// RegisteredAddress is the official registered address of the business.
+		RegisteredAddress *Address `json:"registered_address"`
+		// DateOfIncorporation is the date when the business was officially incorporated (ISO format).
+		DateOfIncorporation string `json:"date_of_incorporation"`
+		// PhysicalAddress is the actual operating address if different from registered address.
+		PhysicalAddress *Address `json:"physical_address,omitempty"`
+		// SignedAgreementID is the identifier of the signed service agreement.
+		SignedAgreementID string `json:"signed_agreement_id"`
+		// IsDAO indicates whether this is a Decentralized Autonomous Organization.
+		IsDAO bool `json:"is_dao"`
+		// AssociatedPersons is a list of all persons associated with the business.
+		AssociatedPersons []AssociatedPerson `json:"associated_persons"`
+		// AccountPurpose describes the primary purpose of the account.
+		AccountPurpose AccountPurpose `json:"account_purpose"`
+		// SourceOfFunds is a list of sources for the funds being used.
+		SourceOfFunds []SourceOfFunds `json:"source_of_funds"`
+		// SourceOfWealth is a list of sources for the business's wealth.
+		SourceOfWealth []SourceOfWealth `json:"source_of_wealth"`
+		// Documents is a list of supporting documents for KYB verification (optional).
+		Documents []Document `json:"documents,omitempty"`
+		// PrimaryWebsite is the business's primary website URL (optional).
+		PrimaryWebsite string `json:"primary_website,omitempty"`
+		// PubliclyTraded indicates whether the business is publicly traded on a stock exchange.
+		PubliclyTraded bool `json:"publicly_traded"`
+		// EstimatedAnnualRevenueUSD is the estimated annual revenue range (e.g., "0_99999").
+		EstimatedAnnualRevenueUSD MoneyRange `json:"estimated_annual_revenue_usd"`
+		// ExpectedMonthlyFiatDeposits is the expected monthly fiat deposit range.
+		ExpectedMonthlyFiatDeposits MoneyRange `json:"expected_monthly_fiat_deposits"`
+		// ExpectedMonthlyFiatWithdrawals is the expected monthly fiat withdrawal range.
+		ExpectedMonthlyFiatWithdrawals MoneyRange `json:"expected_monthly_fiat_withdrawals"`
+		// AccountPurposeOther provides additional details if AccountPurpose is "other".
+		AccountPurposeOther string `json:"account_purpose_other,omitempty"`
+		// HighRiskActivities is a list of high-risk business activities.
+		HighRiskActivities []HighRiskActivity `json:"high_risk_activities,omitempty"`
+		// HighRiskActivitiesExplanation provides additional context for high-risk activities.
+		HighRiskActivitiesExplanation string `json:"high_risk_activities_explanation,omitempty"`
+		// TaxID is the business tax identification number.
+		TaxID string `json:"tax_id"`
+		// TaxType is the type of tax ID (e.g., "EIN", "TIN").
+		TaxType TaxIDType `json:"tax_type"`
+		// TaxCountry is the country where the business is subject to taxation (ISO 3166-1 alpha-3).
+		TaxCountry string `json:"tax_country"`
+	}
 
-// CreateCustomerRequest represents the request body for creating a business customer.
-// This request includes comprehensive KYB (Know Your Business) information required for
-// regulatory compliance, including business details, beneficial ownership, and risk assessment.
-//
-// All monetary ranges use string enumerations (e.g., "0_99999", "100000_499999").
-// Business types include: "cooperative", "corporation", "llc", "partnership", "sole_proprietorship".
-// BusinessIndustry accepts NAICS codes (e.g., "541519" for Other Computer Related Services).
-type CreateCustomerRequest struct {
-	// BusinessLegalName is the official registered legal name of the business entity.
-	BusinessLegalName string `json:"business_legal_name"`
-	// BusinessDescription provides a detailed description of the business operations and activities.
-	BusinessDescription string `json:"business_description"`
-	// BusinessRegistrationNumber is the official business registration or incorporation number.
-	BusinessRegistrationNumber string `json:"business_registration_number"`
-	// Email is the primary contact email address for the business.
-	Email string `json:"email"`
-	// BusinessType specifies the legal structure (e.g., "cooperative", "corporation", "llc").
-	BusinessType BusinessType `json:"business_type"`
-	// BusinessIndustry is a NAICS code representing the business industry (e.g., "541519").
-	// This will be converted to internal answer ID for database storage.
-	// Valid NAICS codes should be 1-10 characters in length.
-	BusinessIndustry string `json:"business_industry"`
-	// RegisteredAddress is the official registered address of the business.
-	RegisteredAddress *Address `json:"registered_address"`
-	// DateOfIncorporation is the date when the business was officially incorporated (ISO format).
-	DateOfIncorporation string `json:"date_of_incorporation"`
-	// PhysicalAddress is the actual operating address if different from registered address (optional).
-	PhysicalAddress *Address `json:"physical_address,omitempty"`
-	// SignedAgreementID is the identifier of the signed service agreement.
-	SignedAgreementID string `json:"signed_agreement_id"`
-	// IsDAO indicates whether this is a Decentralized Autonomous Organization.
-	IsDAO bool `json:"is_dao"`
-	// AssociatedPersons is a list of all persons associated with the business (owners, directors, signers).
-	// At least one associated person with ownership or control is typically required.
-	AssociatedPersons []AssociatedPerson `json:"associated_persons"`
-	// AccountPurpose describes the primary purpose of the account (e.g., "charitable_donations").
-	AccountPurpose AccountPurpose `json:"account_purpose"`
-	// SourceOfFunds is a list of sources for the funds being used (e.g., ["business_loans"]).
-	SourceOfFunds []SourceOfFunds `json:"source_of_funds"`
-	// SourceOfWealth is a list of sources for the business's wealth (e.g., ["business_dividends_or_profits"]).
-	SourceOfWealth []SourceOfWealth `json:"source_of_wealth"`
-	// Documents is a list of supporting documents for KYB verification (optional).
-	Documents []Document `json:"documents,omitempty"`
-	// PrimaryWebsite is the business's primary website URL (optional).
-	PrimaryWebsite string `json:"primary_website,omitempty"`
-	// PubliclyTraded indicates whether the business is publicly traded on a stock exchange.
-	PubliclyTraded bool `json:"publicly_traded"`
-	// EstimatedAnnualRevenueUSD is the estimated annual revenue range (e.g., "0_99999").
-	EstimatedAnnualRevenueUSD MoneyRange `json:"estimated_annual_revenue_usd"`
-	// ExpectedMonthlyFiatDeposits is the expected monthly fiat deposit range (e.g., "0_99999").
-	ExpectedMonthlyFiatDeposits MoneyRange `json:"expected_monthly_fiat_deposits"`
-	// ExpectedMonthlyFiatWithdrawals is the expected monthly fiat withdrawal range (e.g., "0_99999").
-	ExpectedMonthlyFiatWithdrawals MoneyRange `json:"expected_monthly_fiat_withdrawals"`
-	// AccountPurposeOther provides additional details if AccountPurpose is "other" (optional).
-	AccountPurposeOther string `json:"account_purpose_other,omitempty"`
-	// HighRiskActivities is a list of high-risk business activities (e.g., ["adult_entertainment"]).
-	HighRiskActivities []HighRiskActivity `json:"high_risk_activities,omitempty"`
-	// HighRiskActivitiesExplanation provides additional context for high-risk activities (optional).
-	HighRiskActivitiesExplanation string `json:"high_risk_activities_explanation,omitempty"`
-	// TaxID is the business tax identification number.
-	TaxID string `json:"tax_id"`
-	// TaxType is the type of tax ID (e.g., "EIN", "TIN").
-	TaxType TaxIDType `json:"tax_type"`
-	// TaxCountry is the country where the business is subject to taxation (ISO 3166-1 alpha-3).
-	TaxCountry string `json:"tax_country"`
-}
+	// CustomerResponse represents the standard customer response data.
+	// This structure is used for customer creation, retrieval, and update operations.
+	CustomerResponse struct {
+		// CustomerID is the unique identifier of the customer.
+		CustomerID string `json:"customer_id"`
+		// Email is the primary contact email for the customer.
+		Email string `json:"email"`
+		// BusinessLegalName is the legal business name.
+		BusinessLegalName string `json:"business_legal_name"`
+		// BusinessDescription provides a detailed description of the business operations.
+		BusinessDescription string `json:"business_description,omitempty"`
+		// BusinessType is the type of business entity.
+		BusinessType BusinessType `json:"business_type"`
+		// BusinessIndustry is a NAICS code representing the business industry.
+		BusinessIndustry string `json:"business_industry,omitempty"`
+		// BusinessRegistrationNumber is the official business registration or incorporation number.
+		BusinessRegistrationNumber string `json:"business_registration_number,omitempty"`
+		// DateOfIncorporation is the date when the business was officially incorporated (ISO format).
+		DateOfIncorporation string `json:"date_of_incorporation,omitempty"`
+		// IncorporationCountry is the country where the business was incorporated.
+		IncorporationCountry string `json:"incorporation_country,omitempty"`
+		// IncorporationState is the state or province where the business was incorporated.
+		IncorporationState string `json:"incorporation_state,omitempty"`
+		// RegisteredAddress is the official registered address of the business.
+		RegisteredAddress *Address `json:"registered_address,omitempty"`
+		// PhysicalAddress is the actual operating address if different from registered address.
+		PhysicalAddress *Address `json:"physical_address,omitempty"`
+		// PrimaryWebsite is the business's primary website URL.
+		PrimaryWebsite string `json:"primary_website,omitempty"`
+		// PubliclyTraded indicates whether the business is publicly traded on a stock exchange.
+		PubliclyTraded bool `json:"publicly_traded,omitempty"`
+		// TaxID is the business tax identification number.
+		TaxID string `json:"tax_id,omitempty"`
+		// TaxType is the type of tax ID (e.g., "EIN", "TIN").
+		TaxType TaxIDType `json:"tax_type,omitempty"`
+		// TaxCountry is the country where the business is subject to taxation.
+		TaxCountry string `json:"tax_country,omitempty"`
+		// Status is the current KYB verification status.
+		Status KybStatus `json:"status"`
+		// SubmittedAt is the timestamp when the customer application was submitted (ISO 8601 format).
+		SubmittedAt string `json:"submitted_at,omitempty"`
+		// CreatedAt is the timestamp when the customer account was created (ISO 8601 format).
+		CreatedAt string `json:"created_at"`
+		// UpdatedAt is the timestamp when the customer account was last updated (ISO 8601 format).
+		UpdatedAt string `json:"updated_at"`
+	}
 
-// CustomerResponse represents the standard customer response data.
-// This structure is used for customer creation, retrieval, and update operations.
-type CustomerResponse struct {
-	// CustomerID is the unique identifier of the customer.
-	CustomerID string `json:"customer_id"`
-	// Email is the primary contact email for the customer.
-	Email string `json:"email"`
-	// BusinessLegalName is the legal business name.
-	BusinessLegalName string `json:"business_legal_name"`
-	// BusinessDescription provides a detailed description of the business operations and activities.
-	BusinessDescription string `json:"business_description,omitempty"`
-	// BusinessType is the type of business entity.
-	BusinessType BusinessType `json:"business_type"`
-	// BusinessIndustry is a NAICS code representing the business industry.
-	BusinessIndustry string `json:"business_industry,omitempty"`
-	// BusinessRegistrationNumber is the official business registration or incorporation number.
-	BusinessRegistrationNumber string `json:"business_registration_number,omitempty"`
-	// DateOfIncorporation is the date when the business was officially incorporated (ISO format).
-	DateOfIncorporation string `json:"date_of_incorporation,omitempty"`
-	// IncorporationCountry is the country where the business was incorporated.
-	IncorporationCountry string `json:"incorporation_country,omitempty"`
-	// IncorporationState is the state or province where the business was incorporated.
-	IncorporationState string `json:"incorporation_state,omitempty"`
-	// RegisteredAddress is the official registered address of the business.
-	RegisteredAddress *Address `json:"registered_address,omitempty"`
-	// PhysicalAddress is the actual operating address if different from registered address.
-	PhysicalAddress *Address `json:"physical_address,omitempty"`
-	// PrimaryWebsite is the business's primary website URL.
-	PrimaryWebsite string `json:"primary_website,omitempty"`
-	// PubliclyTraded indicates whether the business is publicly traded on a stock exchange.
-	PubliclyTraded bool `json:"publicly_traded,omitempty"`
-	// TaxID is the business tax identification number.
-	TaxID string `json:"tax_id,omitempty"`
-	// TaxType is the type of tax ID (e.g., "EIN", "TIN").
-	TaxType TaxIDType `json:"tax_type,omitempty"`
-	// TaxCountry is the country where the business is subject to taxation.
-	TaxCountry string `json:"tax_country,omitempty"`
-	// Status is the current KYB verification status.
-	Status KybStatus `json:"status"`
-	// SubmittedAt is the timestamp when the customer application was submitted (ISO 8601 format).
-	SubmittedAt string `json:"submitted_at,omitempty"`
-	// CreatedAt is the timestamp when the customer account was created (ISO 8601 format).
-	CreatedAt string `json:"created_at"`
-	// UpdatedAt is the timestamp when the customer account was last updated (ISO 8601 format).
-	UpdatedAt string `json:"updated_at"`
-}
+	// CreateCustomerResponse is an alias for CustomerResponse.
+	CreateCustomerResponse = CustomerResponse
+)
 
-// CreateCustomerResponse is an alias for CustomerResponse.
-// This type is used for clarity in the CreateCustomer method signature.
-type CreateCustomerResponse = CustomerResponse
+// UpdateCustomer request and response types.
+type (
+	// UpdateCustomerRequest represents the request body for updating an existing business customer.
+	// This request supports partial updates - only the fields that are provided will be updated.
+	UpdateCustomerRequest struct {
+		// BusinessLegalName is the official registered legal name of the business entity.
+		BusinessLegalName *string `json:"business_legal_name,omitempty"`
+		// BusinessDescription provides a detailed description of the business operations.
+		BusinessDescription *string `json:"business_description,omitempty"`
+		// BusinessRegistrationNumber is the official business registration or incorporation number.
+		BusinessRegistrationNumber *string `json:"business_registration_number,omitempty"`
+		// Email is the primary contact email address for the business.
+		Email *string `json:"email,omitempty"`
+		// BusinessType specifies the legal structure (e.g., "cooperative", "corporation", "llc").
+		BusinessType *BusinessType `json:"business_type,omitempty"`
+		// BusinessIndustry is a NAICS code representing the business industry.
+		BusinessIndustry *string `json:"business_industry,omitempty"`
+		// RegisteredAddress is the official registered address of the business.
+		RegisteredAddress *Address `json:"registered_address,omitempty"`
+		// DateOfIncorporation is the date when the business was officially incorporated (ISO format).
+		DateOfIncorporation *string `json:"date_of_incorporation,omitempty"`
+		// PhysicalAddress is the actual operating address if different from registered address.
+		PhysicalAddress *Address `json:"physical_address,omitempty"`
+		// SignedAgreementID is the identifier of the signed service agreement.
+		SignedAgreementID *string `json:"signed_agreement_id,omitempty"`
+		// IsDAO indicates whether this is a Decentralized Autonomous Organization.
+		IsDAO *bool `json:"is_dao,omitempty"`
+		// AssociatedPersons is a list of all persons associated with the business.
+		AssociatedPersons []AssociatedPerson `json:"associated_persons,omitempty"`
+		// AccountPurpose describes the primary purpose of the account.
+		AccountPurpose *AccountPurpose `json:"account_purpose,omitempty"`
+		// SourceOfFunds is a list of sources for the funds being used.
+		SourceOfFunds []SourceOfFunds `json:"source_of_funds,omitempty"`
+		// SourceOfWealth is a list of sources for the business's wealth.
+		SourceOfWealth []SourceOfWealth `json:"source_of_wealth,omitempty"`
+		// Documents is a list of supporting documents for KYB verification.
+		Documents []Document `json:"documents,omitempty"`
+		// PrimaryWebsite is the business's primary website URL.
+		PrimaryWebsite *string `json:"primary_website,omitempty"`
+		// PubliclyTraded indicates whether the business is publicly traded on a stock exchange.
+		PubliclyTraded *bool `json:"publicly_traded,omitempty"`
+		// EstimatedAnnualRevenueUSD is the estimated annual revenue range.
+		EstimatedAnnualRevenueUSD *MoneyRange `json:"estimated_annual_revenue_usd,omitempty"`
+		// ExpectedMonthlyFiatDeposits is the expected monthly fiat deposit range.
+		ExpectedMonthlyFiatDeposits *MoneyRange `json:"expected_monthly_fiat_deposits,omitempty"`
+		// ExpectedMonthlyFiatWithdrawals is the expected monthly fiat withdrawal range.
+		ExpectedMonthlyFiatWithdrawals *MoneyRange `json:"expected_monthly_fiat_withdrawals,omitempty"`
+		// AccountPurposeOther provides additional details if AccountPurpose is "other".
+		AccountPurposeOther *string `json:"account_purpose_other,omitempty"`
+		// HighRiskActivities is a list of high-risk business activities.
+		HighRiskActivities []HighRiskActivity `json:"high_risk_activities,omitempty"`
+		// HighRiskActivitiesExplanation provides additional context for high-risk activities.
+		HighRiskActivitiesExplanation *string `json:"high_risk_activities_explanation,omitempty"`
+		// TaxID is the business tax identification number.
+		TaxID *string `json:"tax_id,omitempty"`
+		// TaxType is the type of tax ID (e.g., "EIN", "TIN").
+		TaxType *TaxIDType `json:"tax_type,omitempty"`
+		// TaxCountry is the country where the business is subject to taxation (ISO 3166-1 alpha-3).
+		TaxCountry *string `json:"tax_country,omitempty"`
+	}
 
-// UpdateCustomerRequest represents the request body for updating an existing business customer.
-// This request supports partial updates - only the fields that are provided will be updated.
-// All fields are optional (using pointers for primitive types and omitempty for complex types).
-//
-// The structure follows the generic update pattern where each field can be independently updated
-// without affecting other fields. Fields set to nil or omitted will not modify the existing values.
-type UpdateCustomerRequest struct {
-	// BusinessLegalName is the official registered legal name of the business entity.
-	BusinessLegalName *string `json:"business_legal_name,omitempty"`
-	// BusinessDescription provides a detailed description of the business operations and activities.
-	BusinessDescription *string `json:"business_description,omitempty"`
-	// BusinessRegistrationNumber is the official business registration or incorporation number.
-	BusinessRegistrationNumber *string `json:"business_registration_number,omitempty"`
-	// Email is the primary contact email address for the business.
-	Email *string `json:"email,omitempty"`
-	// BusinessType specifies the legal structure (e.g., "cooperative", "corporation", "llc").
-	BusinessType *BusinessType `json:"business_type,omitempty"`
-	// BusinessIndustry is a NAICS code representing the business industry.
-	BusinessIndustry *string `json:"business_industry,omitempty"`
-	// RegisteredAddress is the official registered address of the business.
-	RegisteredAddress *Address `json:"registered_address,omitempty"`
-	// DateOfIncorporation is the date when the business was officially incorporated (ISO format).
-	DateOfIncorporation *string `json:"date_of_incorporation,omitempty"`
-	// PhysicalAddress is the actual operating address if different from registered address.
-	PhysicalAddress *Address `json:"physical_address,omitempty"`
-	// SignedAgreementID is the identifier of the signed service agreement.
-	SignedAgreementID *string `json:"signed_agreement_id,omitempty"`
-	// IsDAO indicates whether this is a Decentralized Autonomous Organization.
-	IsDAO *bool `json:"is_dao,omitempty"`
-	// AssociatedPersons is a list of all persons associated with the business (owners, directors, signers).
-	// This can be used to add new associated persons to the customer account.
-	AssociatedPersons []AssociatedPerson `json:"associated_persons,omitempty"`
-	// AccountPurpose describes the primary purpose of the account.
-	AccountPurpose *AccountPurpose `json:"account_purpose,omitempty"`
-	// SourceOfFunds is a list of sources for the funds being used.
-	SourceOfFunds []SourceOfFunds `json:"source_of_funds,omitempty"`
-	// SourceOfWealth is a list of sources for the business's wealth.
-	SourceOfWealth []SourceOfWealth `json:"source_of_wealth,omitempty"`
-	// Documents is a list of supporting documents for KYB verification.
-	Documents []Document `json:"documents,omitempty"`
-	// PrimaryWebsite is the business's primary website URL.
-	PrimaryWebsite *string `json:"primary_website,omitempty"`
-	// PubliclyTraded indicates whether the business is publicly traded on a stock exchange.
-	PubliclyTraded *bool `json:"publicly_traded,omitempty"`
-	// EstimatedAnnualRevenueUSD is the estimated annual revenue range.
-	EstimatedAnnualRevenueUSD *MoneyRange `json:"estimated_annual_revenue_usd,omitempty"`
-	// ExpectedMonthlyFiatDeposits is the expected monthly fiat deposit range.
-	ExpectedMonthlyFiatDeposits *MoneyRange `json:"expected_monthly_fiat_deposits,omitempty"`
-	// ExpectedMonthlyFiatWithdrawals is the expected monthly fiat withdrawal range.
-	ExpectedMonthlyFiatWithdrawals *MoneyRange `json:"expected_monthly_fiat_withdrawals,omitempty"`
-	// AccountPurposeOther provides additional details if AccountPurpose is "other".
-	AccountPurposeOther *string `json:"account_purpose_other,omitempty"`
-	// HighRiskActivities is a list of high-risk business activities.
-	HighRiskActivities []HighRiskActivity `json:"high_risk_activities,omitempty"`
-	// HighRiskActivitiesExplanation provides additional context for high-risk activities.
-	HighRiskActivitiesExplanation *string `json:"high_risk_activities_explanation,omitempty"`
-	// TaxID is the business tax identification number.
-	TaxID *string `json:"tax_id,omitempty"`
-	// TaxType is the type of tax ID (e.g., "EIN", "TIN").
-	TaxType *TaxIDType `json:"tax_type,omitempty"`
-	// TaxCountry is the country where the business is subject to taxation (ISO 3166-1 alpha-3).
-	TaxCountry *string `json:"tax_country,omitempty"`
-}
+	// UpdateCustomerResponse is an alias for CustomerResponse.
+	UpdateCustomerResponse = CustomerResponse
+)
 
-// UpdateCustomerResponse is an alias for CustomerResponse.
-// This type is used for clarity in the UpdateCustomer method signature.
-type UpdateCustomerResponse = CustomerResponse
+// ListCustomers request and response types.
+type (
+	// ListCustomersRequest represents the request parameters for listing customers.
+	ListCustomersRequest struct {
+		// PageSize is the number of records per page (1-100, default 10).
+		PageSize int `json:"page_size,omitempty"`
+		// PageNum is the page number, 0-indexed (default 0).
+		PageNum int `json:"page_num,omitempty"`
+		// KybStatus filters customers by their KYB verification status.
+		KybStatus string `json:"kyb_status,omitempty"`
+	}
 
-// ListCustomersRequest represents the request parameters for listing customers.
-// This supports pagination and filtering of customer accounts.
-type ListCustomersRequest struct {
-	// PageSize is the number of records per page (1-100, default 10).
-	PageSize int `json:"page_size,omitempty"`
-	// PageNum is the page number, 0-indexed (default 0).
-	PageNum int `json:"page_num,omitempty"`
-	// KybStatus filters customers by their KYB verification status.
-	KybStatus string `json:"kyb_status,omitempty"`
-}
+	// CustomerSummary represents a summary of a customer account in list responses.
+	CustomerSummary struct {
+		// CustomerID is the unique identifier of the customer.
+		CustomerID string `json:"customer_id"`
+		// Email is the primary contact email.
+		Email string `json:"email"`
+		// BusinessLegalName is the legal business name.
+		BusinessLegalName string `json:"business_legal_name"`
+		// BusinessType is the type of business entity.
+		BusinessType BusinessType `json:"business_type"`
+		// Status is the current KYB verification status.
+		Status KybStatus `json:"status"`
+		// CreatedAt is the timestamp when the customer was created (ISO 8601 format).
+		CreatedAt string `json:"created_at"`
+		// UpdatedAt is the timestamp when the customer was last updated (ISO 8601 format).
+		UpdatedAt string `json:"updated_at"`
+	}
 
-// CustomerSummary represents a summary of a customer account in list responses.
-// This contains a subset of customer information for efficient listing.
-type CustomerSummary struct {
-	// CustomerID is the unique identifier of the customer.
-	CustomerID string `json:"customer_id"`
-	// Email is the primary contact email.
-	Email string `json:"email"`
-	// BusinessLegalName is the legal business name.
-	BusinessLegalName string `json:"business_legal_name"`
-	// BusinessType is the type of business entity.
-	BusinessType BusinessType `json:"business_type"`
-	// Status is the current KYB verification status.
-	Status KybStatus `json:"status"`
-	// CreatedAt is the timestamp when the customer was created (ISO 8601 format).
-	CreatedAt string `json:"created_at"`
-	// UpdatedAt is the timestamp when the customer was last updated (ISO 8601 format).
-	UpdatedAt string `json:"updated_at"`
-}
+	// ListCustomersResponse represents the response data for listing customers.
+	ListCustomersResponse struct {
+		// Customers is the list of customer summaries returned by the API.
+		Customers []CustomerSummary `json:"customers"`
+		// Total is the number of customers in the current response.
+		Total int `json:"total"`
+	}
+)
 
-// ListCustomersResponse represents the response data for listing customers.
-// This includes the customer list and pagination information.
-// Note: The API returns only the customer array. Pagination fields (Total, Page, PageSize, TotalPages)
-// are computed on the client side based on the returned data and request parameters.
-type ListCustomersResponse struct {
-	// Customers is the list of customer summaries returned by the API.
-	Customers []CustomerSummary `json:"customers"`
-	// Total is the number of customers in the current response (computed as len(Data)).
-	Total int `json:"total"`
-}
+// AssociatedPerson request and response types.
+type (
+	// CreateAssociatedPersonRequest represents the request body for creating an associated person.
+	CreateAssociatedPersonRequest struct {
+		AssociatedPerson
+	}
 
-// CreateAssociatedPersonRequest represents the request body for creating an associated person.
-// This wraps the AssociatedPerson structure for the creation endpoint.
-type CreateAssociatedPersonRequest struct {
-	AssociatedPerson
-}
+	// AssociatedPersonResponse represents the response data for an associated person.
+	AssociatedPersonResponse struct {
+		// AssociatedPersonID is the unique identifier for this associated person.
+		AssociatedPersonID string `json:"associated_person_id"`
+		// Email is the person's contact email address.
+		Email string `json:"email"`
+		// FirstName is the person's legal first name.
+		FirstName string `json:"first_name"`
+		// MiddleName is the person's middle name (optional).
+		MiddleName string `json:"middle_name,omitempty"`
+		// LastName is the person's legal last name.
+		LastName string `json:"last_name"`
+		// BirthDate is the person's date of birth in ISO format (e.g., "1980-01-15").
+		BirthDate string `json:"birth_date"`
+		// PrimaryNationality is the person's primary nationality or citizenship (ISO 3166-1 alpha-2).
+		PrimaryNationality string `json:"primary_nationality"`
+		// ResidentialAddress is the person's current residential address.
+		ResidentialAddress *Address `json:"residential_address"`
+		// ApplicantType is the type based on role (e.g., "UltimateBeneficialOwner").
+		ApplicantType string `json:"applicant_type"`
+		// Title is the role titles (pipe-delimited IDs, e.g., "1|2").
+		Title string `json:"title"`
+		// HasOwnership indicates whether the person has ownership stake (≥25%).
+		HasOwnership bool `json:"has_ownership"`
+		// OwnershipPercentage is the percentage of ownership (0.01-100).
+		OwnershipPercentage float64 `json:"ownership_percentage,omitempty"`
+		// HasControl indicates whether the person has control over the business (CEO, CFO, etc.).
+		HasControl bool `json:"has_control"`
+		// IsSigner indicates whether the person is an authorized signer.
+		IsSigner bool `json:"is_signer"`
+		// IsDirector indicates whether the person serves as a director.
+		IsDirector bool `json:"is_director"`
+		// CreatedAt is the timestamp when the associated person was created (ISO 8601 format).
+		CreatedAt string `json:"created_at"`
+		// UpdatedAt is the timestamp when the associated person was last updated (ISO 8601 format).
+		UpdatedAt string `json:"updated_at"`
+	}
 
-// AssociatedPersonResponse represents the response data for an associated person.
-// This is returned after creating or retrieving associated persons (beneficial owners, controllers, signers).
-type AssociatedPersonResponse struct {
-	// AssociatedPersonID is the unique identifier for this associated person.
-	AssociatedPersonID string `json:"associated_person_id"`
-	// Email is the person's contact email address.
-	Email string `json:"email"`
-	// FirstName is the person's legal first name.
-	FirstName string `json:"first_name"`
-	// MiddleName is the person's middle name (optional).
-	MiddleName string `json:"middle_name,omitempty"`
-	// LastName is the person's legal last name.
-	LastName string `json:"last_name"`
-	// BirthDate is the person's date of birth in ISO format (e.g., "1980-01-15").
-	BirthDate string `json:"birth_date"`
-	// PrimaryNationality is the person's primary nationality or citizenship (ISO 3166-1 alpha-2).
-	PrimaryNationality string `json:"primary_nationality"`
-	// ResidentialAddress is the person's current residential address.
-	ResidentialAddress *Address `json:"residential_address"`
-	// ApplicantType is the type based on role (e.g., "UltimateBeneficialOwner").
-	ApplicantType string `json:"applicant_type"`
-	// Title is the role titles (pipe-delimited IDs, e.g., "1|2").
-	Title string `json:"title"`
-	// HasOwnership indicates whether the person has ownership stake (≥25%).
-	HasOwnership bool `json:"has_ownership"`
-	// OwnershipPercentage is the percentage of ownership (0.01-100).
-	OwnershipPercentage float64 `json:"ownership_percentage,omitempty"`
-	// HasControl indicates whether the person has control over the business (CEO, CFO, etc.).
-	HasControl bool `json:"has_control"`
-	// IsSigner indicates whether the person is an authorized signer.
-	IsSigner bool `json:"is_signer"`
-	// IsDirector indicates whether the person serves as a director.
-	IsDirector bool `json:"is_director"`
-	// CreatedAt is the timestamp when the associated person was created (ISO 8601 format).
-	CreatedAt string `json:"created_at"`
-	// UpdatedAt is the timestamp when the associated person was last updated (ISO 8601 format).
-	UpdatedAt string `json:"updated_at"`
-}
+	// UpdateAssociatedPersonRequest represents the request body for updating an associated person.
+	// This request supports partial updates - only the fields that are provided will be updated.
+	UpdateAssociatedPersonRequest struct {
+		// FirstName is the person's legal first name.
+		FirstName *string `json:"first_name,omitempty"`
+		// MiddleName is the person's middle name.
+		MiddleName *string `json:"middle_name,omitempty"`
+		// LastName is the person's legal last name.
+		LastName *string `json:"last_name,omitempty"`
+		// Email is the person's contact email address.
+		Email *string `json:"email,omitempty"`
+		// Gender is the person's gender. Valid values: "male", "female".
+		Gender *Gender `json:"gender,omitempty"`
+		// ResidentialAddress is the person's current residential address.
+		ResidentialAddress *Address `json:"residential_address,omitempty"`
+		// BirthDate is the person's date of birth in ISO format (e.g., "1980-01-15").
+		BirthDate *string `json:"birth_date,omitempty"`
+		// CountryOfBirth is the country where the person was born.
+		CountryOfBirth *string `json:"country_of_birth,omitempty"`
+		// PrimaryNationality is the person's primary nationality or citizenship.
+		PrimaryNationality *string `json:"primary_nationality,omitempty"`
+		// HasOwnership indicates whether the person has ownership stake in the business.
+		HasOwnership *bool `json:"has_ownership,omitempty"`
+		// OwnershipPercentage is the percentage of ownership.
+		OwnershipPercentage *int `json:"ownership_percentage,omitempty"`
+		// HasControl indicates whether the person has control over the business operations.
+		HasControl *bool `json:"has_control,omitempty"`
+		// IsSigner indicates whether the person is authorized to sign on behalf of the business.
+		IsSigner *bool `json:"is_signer,omitempty"`
+		// IsDirector indicates whether the person serves as a director of the business.
+		IsDirector *bool `json:"is_director,omitempty"`
+		// IdentifyingInformation is a list of identification documents for this person.
+		IdentifyingInformation []IdentifyingInformation `json:"identifying_information,omitempty"`
+		// DualNationality is the person's second nationality if they hold dual citizenship.
+		DualNationality *string `json:"dual_nationality,omitempty"`
+		// CountryOfTax is the country where the person is subject to taxation.
+		CountryOfTax *string `json:"country_of_tax,omitempty"`
+		// TaxType is the type of tax identification.
+		TaxType *TaxIDType `json:"tax_type,omitempty"`
+		// TaxID is the person's tax identification number.
+		TaxID *string `json:"tax_id,omitempty"`
+		// POA is the Proof of Address document in data-uri format.
+		POA *string `json:"poa,omitempty"`
+		// POAType is the type of proof of address document.
+		POAType *string `json:"poa_type,omitempty"`
+	}
 
-// UpdateAssociatedPersonRequest represents the request body for updating an associated person.
-// This request supports partial updates - only the fields that are provided will be updated.
-// All fields are optional (using pointers for primitive types and omitempty for complex types).
-type UpdateAssociatedPersonRequest struct {
-	// FirstName is the person's legal first name.
-	FirstName *string `json:"first_name,omitempty"`
-	// MiddleName is the person's middle name.
-	MiddleName *string `json:"middle_name,omitempty"`
-	// LastName is the person's legal last name.
-	LastName *string `json:"last_name,omitempty"`
-	// Email is the person's contact email address.
-	Email *string `json:"email,omitempty"`
-	// Gender is the person's gender. Valid values: "male", "female".
-	Gender *Gender `json:"gender,omitempty"`
-	// ResidentialAddress is the person's current residential address.
-	ResidentialAddress *Address `json:"residential_address,omitempty"`
-	// BirthDate is the person's date of birth in ISO format (e.g., "1980-01-15").
-	BirthDate *string `json:"birth_date,omitempty"`
-	// CountryOfBirth is the country where the person was born.
-	CountryOfBirth *string `json:"country_of_birth,omitempty"`
-	// PrimaryNationality is the person's primary nationality or citizenship.
-	PrimaryNationality *string `json:"primary_nationality,omitempty"`
-	// HasOwnership indicates whether the person has ownership stake in the business.
-	HasOwnership *bool `json:"has_ownership,omitempty"`
-	// OwnershipPercentage is the percentage of ownership.
-	OwnershipPercentage *int `json:"ownership_percentage,omitempty"`
-	// HasControl indicates whether the person has control over the business operations.
-	HasControl *bool `json:"has_control,omitempty"`
-	// IsSigner indicates whether the person is authorized to sign on behalf of the business.
-	IsSigner *bool `json:"is_signer,omitempty"`
-	// IsDirector indicates whether the person serves as a director of the business.
-	IsDirector *bool `json:"is_director,omitempty"`
-	// IdentifyingInformation is a list of identification documents for this person.
-	IdentifyingInformation []IdentifyingInformation `json:"identifying_information,omitempty"`
-	// DualNationality is the person's second nationality if they hold dual citizenship.
-	DualNationality *string `json:"dual_nationality,omitempty"`
-	// CountryOfTax is the country where the person is subject to taxation.
-	CountryOfTax *string `json:"country_of_tax,omitempty"`
-	// TaxType is the type of tax identification.
-	TaxType *TaxIDType `json:"tax_type,omitempty"`
-	// TaxID is the person's tax identification number.
-	TaxID *string `json:"tax_id,omitempty"`
-	// POA is the Proof of Address document in data-uri format.
-	POA *string `json:"poa,omitempty"`
-	// POAType is the type of proof of address document.
-	// Examples: "utility_bill", "bank_statement", "government_letter".
-	POAType *string `json:"poa_type,omitempty"`
-}
+	// ListAssociatedPersonsResponse represents the response data for listing associated persons.
+	ListAssociatedPersonsResponse []AssociatedPersonResponse
+)
 
-// ListAssociatedPersonsResponse represents the response data for listing associated persons.
-// This contains the list of all associated persons for a specific customer.
-type ListAssociatedPersonsResponse []AssociatedPersonResponse
+// TOS (Terms of Service) request and response types.
+type (
+	// TOSLinkResponse represents the response data for creating a TOS signing link.
+	TOSLinkResponse struct {
+		Url string `json:"url"`
+		// SessionToken is the unique token for the TOS signing session.
+		SessionToken string `json:"sessionToken"`
+		// ExpiresAt is the timestamp when the session token expires (ISO 8601 format).
+		ExpiresAt string `json:"expiresAt,omitempty"`
+	}
 
-// TOSLinkResponse represents the response data for creating a TOS signing link.
-// This contains the session token that can be used to sign the Terms of Service agreement.
-type TOSLinkResponse struct {
-	Url string `json:"url"`
-	// SessionToken is the unique token for the TOS signing session.
-	// This token expires in 1 hour and should be used in the signing flow.
-	SessionToken string `json:"sessionToken"`
-	// ExpiresAt is the timestamp when the session token expires (ISO 8601 format).
-	ExpiresAt string `json:"expiresAt,omitempty"`
-}
-
-// SignAgreementResponse represents the response data for signing a TOS agreement.
-// This contains the signed agreement ID that should be used when creating a customer.
-type SignAgreementResponse struct {
-	// SignedAgreementID is the unique identifier for the signed agreement.
-	// This ID must be provided when creating a customer account.
-	SignedAgreementID string `json:"signedAgreementId"`
-}
+	// SignAgreementResponse represents the response data for signing a TOS agreement.
+	SignAgreementResponse struct {
+		// SignedAgreementID is the unique identifier for the signed agreement.
+		SignedAgreementID string `json:"signedAgreementId"`
+	}
+)
 
 type serviceImpl struct {
 	*svc.BaseService
@@ -696,15 +679,17 @@ func (s *serviceImpl) ListCustomers(ctx context.Context, req *ListCustomersReque
 }
 
 // GetCustomer retrieves a specific customer by ID.
-func (s *serviceImpl) GetCustomer(ctx context.Context, customerID string) (*CustomerResponse, error) {
-	path := fmt.Sprintf("%s/%s", ROUTE_PREFIX, customerID)
+func (s *serviceImpl) GetCustomer(ctx context.Context, id svc.CustomerID) (*CustomerResponse, error) {
+	path := fmt.Sprintf("%s/%s", ROUTE_PREFIX, id)
 	return svc.GetJSON[CustomerResponse](ctx, s.BaseService, path)
 }
 
 // UpdateCustomer updates an existing customer with partial KYB information.
 // Only the fields provided in the request will be updated; nil/omitted fields remain unchanged.
-func (s *serviceImpl) UpdateCustomer(ctx context.Context, customerID string, req *UpdateCustomerRequest) (*UpdateCustomerResponse, error) {
-	path := fmt.Sprintf("%s/%s", ROUTE_PREFIX, customerID)
+func (s *serviceImpl) UpdateCustomer(
+	ctx context.Context, id svc.CustomerID, req *UpdateCustomerRequest,
+) (*UpdateCustomerResponse, error) {
+	path := fmt.Sprintf("%s/%s", ROUTE_PREFIX, id)
 	return svc.PutJSON[*UpdateCustomerRequest, UpdateCustomerResponse](
 		ctx,
 		s.BaseService,
@@ -716,10 +701,10 @@ func (s *serviceImpl) UpdateCustomer(ctx context.Context, customerID string, req
 // CreateAssociatedPerson creates a new associated person for a customer.
 func (s *serviceImpl) CreateAssociatedPerson(
 	ctx context.Context,
-	customerID string,
+	id svc.CustomerID,
 	req *CreateAssociatedPersonRequest,
 ) (*AssociatedPersonResponse, error) {
-	path := fmt.Sprintf("%s/%s/associated_persons", ROUTE_PREFIX, customerID)
+	path := fmt.Sprintf("%s/%s/associated_persons", ROUTE_PREFIX, id)
 	return svc.PostJSON[*CreateAssociatedPersonRequest, AssociatedPersonResponse](
 		ctx,
 		s.BaseService,
@@ -729,18 +714,18 @@ func (s *serviceImpl) CreateAssociatedPerson(
 }
 
 // ListAssociatedPersons retrieves all associated persons for a specific customer.
-func (s *serviceImpl) ListAssociatedPersons(ctx context.Context, customerID string) (*ListAssociatedPersonsResponse, error) {
-	path := fmt.Sprintf("%s/%s/associated_persons", ROUTE_PREFIX, customerID)
+func (s *serviceImpl) ListAssociatedPersons(ctx context.Context, id svc.CustomerID) (*ListAssociatedPersonsResponse, error) {
+	path := fmt.Sprintf("%s/%s/associated_persons", ROUTE_PREFIX, id)
 	return svc.GetJSON[ListAssociatedPersonsResponse](ctx, s.BaseService, path)
 }
 
 // GetAssociatedPerson retrieves a specific associated person by ID.
 func (s *serviceImpl) GetAssociatedPerson(
 	ctx context.Context,
-	customerID string,
+	id svc.CustomerID,
 	associatedPersonID string,
 ) (*AssociatedPersonResponse, error) {
-	path := fmt.Sprintf("%s/%s/associated_persons/%s", ROUTE_PREFIX, customerID, associatedPersonID)
+	path := fmt.Sprintf("%s/%s/associated_persons/%s", ROUTE_PREFIX, id, associatedPersonID)
 	return svc.GetJSON[AssociatedPersonResponse](ctx, s.BaseService, path)
 }
 
@@ -748,11 +733,11 @@ func (s *serviceImpl) GetAssociatedPerson(
 // Only the fields provided in the request will be updated; nil/omitted fields remain unchanged.
 func (s *serviceImpl) UpdateAssociatedPerson(
 	ctx context.Context,
-	customerID string,
+	id svc.CustomerID,
 	associatedPersonID string,
 	req *UpdateAssociatedPersonRequest,
 ) (*AssociatedPersonResponse, error) {
-	path := fmt.Sprintf("%s/%s/associated_persons/%s", ROUTE_PREFIX, customerID, associatedPersonID)
+	path := fmt.Sprintf("%s/%s/associated_persons/%s", ROUTE_PREFIX, id, associatedPersonID)
 	return svc.PutJSON[*UpdateAssociatedPersonRequest, AssociatedPersonResponse](
 		ctx,
 		s.BaseService,
@@ -764,10 +749,10 @@ func (s *serviceImpl) UpdateAssociatedPerson(
 // DeleteAssociatedPerson soft-deletes a specific associated person.
 func (s *serviceImpl) DeleteAssociatedPerson(
 	ctx context.Context,
-	customerID string,
+	id svc.CustomerID,
 	associatedPersonID string,
 ) error {
-	path := fmt.Sprintf("%s/%s/associated_persons/%s", ROUTE_PREFIX, customerID, associatedPersonID)
+	path := fmt.Sprintf("%s/%s/associated_persons/%s", ROUTE_PREFIX, id, associatedPersonID)
 	_, err := svc.DeleteJSON[any](ctx, s.BaseService, path)
 	return err
 }

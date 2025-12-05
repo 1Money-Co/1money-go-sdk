@@ -28,7 +28,7 @@ import (
 // SimulationsTestSuite tests simulations service operations.
 // NOTE: These tests only work in sandbox/non-production environments.
 type SimulationsTestSuite struct {
-	E2ETestSuite
+	CustomerDependentTestSuite
 }
 
 // TestSimulations_SimulateDeposit_USD tests simulating a USD deposit.
@@ -38,7 +38,7 @@ func (s *SimulationsTestSuite) TestSimulations_SimulateDeposit_USD() {
 		Amount: "100.00",
 	}
 
-	resp, err := s.Client.Simulations.SimulateDeposit(s.Ctx, testCustomerID, req)
+	resp, err := s.Client.Simulations.SimulateDeposit(s.Ctx, s.CustomerID, req)
 	s.Require().NoError(err, "SimulateDeposit should succeed")
 
 	s.Require().NotNil(resp, "Response should not be nil")
@@ -55,7 +55,7 @@ func (s *SimulationsTestSuite) TestSimulations_SimulateDeposit_USDT_Ethereum() {
 		Amount:  "50.00",
 	}
 
-	resp, err := s.Client.Simulations.SimulateDeposit(s.Ctx, testCustomerID, req)
+	resp, err := s.Client.Simulations.SimulateDeposit(s.Ctx, s.CustomerID, req)
 	s.Require().NoError(err, "SimulateDeposit should succeed")
 
 	s.Require().NotNil(resp, "Response should not be nil")
@@ -71,7 +71,7 @@ func (s *SimulationsTestSuite) TestSimulations_SimulateDeposit_USDC_Polygon() {
 		Amount:  "25.00",
 	}
 
-	resp, err := s.Client.Simulations.SimulateDeposit(s.Ctx, testCustomerID, req)
+	resp, err := s.Client.Simulations.SimulateDeposit(s.Ctx, s.CustomerID, req)
 	s.Require().NoError(err, "SimulateDeposit should succeed")
 
 	s.Require().NotNil(resp, "Response should not be nil")
@@ -87,7 +87,7 @@ func (s *SimulationsTestSuite) TestSimulations_SimulateDeposit_USDT_Solana() {
 		Amount:  "75.00",
 	}
 
-	resp, err := s.Client.Simulations.SimulateDeposit(s.Ctx, testCustomerID, req)
+	resp, err := s.Client.Simulations.SimulateDeposit(s.Ctx, s.CustomerID, req)
 	s.Require().NoError(err, "SimulateDeposit should succeed")
 
 	s.Require().NotNil(resp, "Response should not be nil")

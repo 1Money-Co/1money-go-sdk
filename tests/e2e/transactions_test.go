@@ -27,66 +27,80 @@ import (
 
 // TransactionsTestSuite tests transactions service operations.
 type TransactionsTestSuite struct {
-	E2ETestSuite
+	CustomerDependentTestSuite
 }
 
-// TestTransactions_ListTransactions tests listing all transactions for a customer.
-func (s *TransactionsTestSuite) TestTransactions_ListTransactions() {
-	resp, err := s.Client.Transactions.ListTransactions(s.Ctx, testCustomerID, nil)
-	s.Require().NoError(err, "ListTransactions should succeed")
+// TestTransactions_List tests listing transactions with various scenarios.
+func (s *TransactionsTestSuite) TestTransactions_List() {
+	s.Run("Empty", func() {
+		// For a fresh customer, there might be no transactions initially
+		resp, err := s.Client.Transactions.ListTransactions(s.Ctx, s.CustomerID, nil)
+		s.Require().NoError(err, "ListTransactions should succeed even with no transactions")
+		s.Require().NotNil(resp, "Response should not be nil")
+		s.T().Logf("Transactions list: %d transactions (total: %d)", len(resp.List), resp.Total)
+	})
 
-	s.Require().NotNil(resp, "Response should not be nil")
-	s.T().Logf("Listed %d transactions (total: %d)", len(resp.List), resp.Total)
-	if len(resp.List) > 0 {
+	s.Run("WithData", func() {
+		// Ensure we have at least one transaction
+		_, err := s.EnsureTransaction()
+		s.Require().NoError(err, "EnsureTransaction should succeed")
+
+		resp, err := s.Client.Transactions.ListTransactions(s.Ctx, s.CustomerID, nil)
+		s.Require().NoError(err, "ListTransactions should succeed")
+
+		s.Require().NotNil(resp, "Response should not be nil")
+		s.Require().NotEmpty(resp.List, "Should have at least one transaction")
+		s.T().Logf("Listed %d transactions (total: %d)", len(resp.List), resp.Total)
 		s.T().Logf("First transaction:\n%s", PrettyJSON(resp.List[0]))
-	}
-}
+	})
 
-// TestTransactions_ListTransactions_WithPagination tests listing transactions with pagination.
-func (s *TransactionsTestSuite) TestTransactions_ListTransactions_WithPagination() {
-	req := &transactions.ListTransactionsRequest{
-		Page: 1,
-		Size: 5,
-	}
+	s.Run("WithPagination", func() {
+		// Ensure we have at least one transaction
+		_, err := s.EnsureTransaction()
+		s.Require().NoError(err, "EnsureTransaction should succeed")
 
-	resp, err := s.Client.Transactions.ListTransactions(s.Ctx, testCustomerID, req)
-	s.Require().NoError(err, "ListTransactions should succeed")
+		req := &transactions.ListTransactionsRequest{
+			Page: 1,
+			Size: 5,
+		}
 
-	s.Require().NotNil(resp, "Response should not be nil")
-	s.LessOrEqual(len(resp.List), 5, "Should return at most 5 transactions")
-	s.T().Logf("Listed %d transactions with pagination (total: %d)", len(resp.List), resp.Total)
-}
+		resp, err := s.Client.Transactions.ListTransactions(s.Ctx, s.CustomerID, req)
+		s.Require().NoError(err, "ListTransactions should succeed")
 
-// TestTransactions_ListTransactions_FilterByAsset tests filtering transactions by asset.
-func (s *TransactionsTestSuite) TestTransactions_ListTransactions_FilterByAsset() {
-	req := &transactions.ListTransactionsRequest{
-		Asset: assets.AssetNameUSD,
-	}
+		s.Require().NotNil(resp, "Response should not be nil")
+		s.LessOrEqual(len(resp.List), 5, "Should return at most 5 transactions")
+		s.T().Logf("Listed %d transactions with pagination (total: %d)", len(resp.List), resp.Total)
+	})
 
-	resp, err := s.Client.Transactions.ListTransactions(s.Ctx, testCustomerID, req)
-	s.Require().NoError(err, "ListTransactions should succeed")
+	s.Run("FilterByAsset", func() {
+		// Ensure we have at least one USD transaction (EnsureTransaction creates a USD deposit)
+		_, err := s.EnsureTransaction()
+		s.Require().NoError(err, "EnsureTransaction should succeed")
 
-	s.Require().NotNil(resp, "Response should not be nil")
-	s.T().Logf("Listed %d USD transactions", len(resp.List))
-	for i := range resp.List {
-		s.T().Logf("Transaction %s: %s %s", resp.List[i].TransactionID, resp.List[i].Amount, resp.List[i].Asset)
-	}
+		req := &transactions.ListTransactionsRequest{
+			Asset: assets.AssetNameUSD,
+		}
+
+		resp, err := s.Client.Transactions.ListTransactions(s.Ctx, s.CustomerID, req)
+		s.Require().NoError(err, "ListTransactions should succeed")
+
+		s.Require().NotNil(resp, "Response should not be nil")
+		s.Require().NotEmpty(resp.List, "Should have at least one USD transaction")
+		s.T().Logf("Listed %d USD transactions", len(resp.List))
+		for i := range resp.List {
+			s.T().Logf("Transaction %s: %s %s", resp.List[i].TransactionID, resp.List[i].Amount, resp.List[i].Asset)
+		}
+	})
 }
 
 // TestTransactions_GetTransaction tests retrieving a specific transaction.
 func (s *TransactionsTestSuite) TestTransactions_GetTransaction() {
-	// First list transactions to get an ID
-	listResp, err := s.Client.Transactions.ListTransactions(s.Ctx, testCustomerID, nil)
-	s.Require().NoError(err, "ListTransactions should succeed")
+	// Ensure we have at least one transaction
+	transactionID, err := s.EnsureTransaction()
+	s.Require().NoError(err, "EnsureTransaction should succeed")
 
-	if len(listResp.List) == 0 {
-		s.T().Skip("No transactions available to retrieve")
-	}
-
-	// Get the first transaction
-	transactionID := listResp.List[0].TransactionID
-
-	resp, err := s.Client.Transactions.GetTransaction(s.Ctx, testCustomerID, transactionID)
+	// Get the transaction
+	resp, err := s.Client.Transactions.GetTransaction(s.Ctx, s.CustomerID, transactionID)
 	s.Require().NoError(err, "GetTransaction should succeed")
 
 	s.Require().NotNil(resp, "Response should not be nil")

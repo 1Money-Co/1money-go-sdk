@@ -29,7 +29,7 @@ import (
 
 // CustomerTestSuite tests customer service operations.
 type CustomerTestSuite struct {
-	E2ETestSuite
+	CustomerDependentTestSuite
 }
 
 // TestCustomerService_TOSFlow tests the complete TOS signing flow.
@@ -153,6 +153,10 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer() {
 func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidFileFormat() {
 	faker := gofakeit.New(0)
 
+	// Get a valid signed agreement ID
+	signedAgreementID, err := s.EnsureSignedAgreement()
+	s.Require().NoError(err, "EnsureSignedAgreement should succeed")
+
 	// Test 1: Invalid MIME type (using unsupported format like .exe)
 	invalidMIME := "data:application/x-msdownload;base64,TVqQAAMAAAAEAAAA"
 
@@ -172,7 +176,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidFileFormat
 			Subdivision: faker.StateAbr(),
 		},
 		DateOfIncorporation: faker.Date().Format("2006-01-02"),
-		SignedAgreementID:   "121961e6-b863-4d1f-8d3b-c7caba257faf",
+		SignedAgreementID:   signedAgreementID,
 		AssociatedPersons: []customer.AssociatedPerson{
 			FakeAssociatedPerson(faker),
 		},
@@ -194,7 +198,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidFileFormat
 		TaxCountry:                     CountryUSA,
 	}
 
-	_, err := s.Client.Customer.CreateCustomer(s.Ctx, req)
+	_, err = s.Client.Customer.CreateCustomer(s.Ctx, req)
 	s.Require().Error(err, "CreateCustomer should return error for invalid MIME type")
 	s.T().Logf("Expected error for invalid MIME type: %v", err)
 }
@@ -202,6 +206,10 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidFileFormat
 // TestCustomerService_CreateCustomer_InvalidBase64 tests that invalid base64 data is rejected.
 func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidBase64() {
 	faker := gofakeit.New(0)
+
+	// Get a valid signed agreement ID
+	signedAgreementID, err := s.EnsureSignedAgreement()
+	s.Require().NoError(err, "EnsureSignedAgreement should succeed")
 
 	// Invalid base64 data (not properly encoded)
 	invalidBase64 := "data:image/jpeg;base64,this-is-not-valid-base64!!!"
@@ -222,7 +230,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidBase64() {
 			Subdivision: faker.StateAbr(),
 		},
 		DateOfIncorporation: faker.Date().Format("2006-01-02"),
-		SignedAgreementID:   "121961e6-b863-4d1f-8d3b-c7caba257faf",
+		SignedAgreementID:   signedAgreementID,
 		AssociatedPersons: []customer.AssociatedPerson{
 			FakeAssociatedPerson(faker),
 		},
@@ -244,7 +252,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidBase64() {
 		TaxCountry:                     CountryUSA,
 	}
 
-	_, err := s.Client.Customer.CreateCustomer(s.Ctx, req)
+	_, err = s.Client.Customer.CreateCustomer(s.Ctx, req)
 	s.Require().Error(err, "CreateCustomer should return error for invalid base64")
 	s.T().Logf("Expected error for invalid base64: %v", err)
 }
@@ -252,6 +260,10 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidBase64() {
 // TestCustomerService_CreateCustomer_CorruptedXLSX tests that corrupted XLSX files are rejected.
 func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_CorruptedXLSX() {
 	faker := gofakeit.New(0)
+
+	// Get a valid signed agreement ID
+	signedAgreementID, err := s.EnsureSignedAgreement()
+	s.Require().NoError(err, "EnsureSignedAgreement should succeed")
 
 	// Corrupted XLSX (random bytes that look like XLSX but are invalid)
 	corruptedData := []byte("PK\x03\x04corrupted xlsx content that is not valid")
@@ -273,7 +285,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_CorruptedXLSX() {
 			Subdivision: faker.StateAbr(),
 		},
 		DateOfIncorporation: faker.Date().Format("2006-01-02"),
-		SignedAgreementID:   "121961e6-b863-4d1f-8d3b-c7caba257faf",
+		SignedAgreementID:   signedAgreementID,
 		AssociatedPersons: []customer.AssociatedPerson{
 			FakeAssociatedPerson(faker),
 		},
@@ -295,7 +307,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_CorruptedXLSX() {
 		TaxCountry:                     CountryUSA,
 	}
 
-	_, err := s.Client.Customer.CreateCustomer(s.Ctx, req)
+	_, err = s.Client.Customer.CreateCustomer(s.Ctx, req)
 	s.Require().Error(err, "CreateCustomer should return error for corrupted XLSX")
 	s.T().Logf("Expected error for corrupted XLSX: %v", err)
 }
@@ -330,11 +342,11 @@ func (s *CustomerTestSuite) TestCustomerService_ListCustomers() {
 
 // TestCustomerService_GetCustomer tests getting a specific customer.
 func (s *CustomerTestSuite) TestCustomerService_GetCustomer() {
-	resp, err := s.Client.Customer.GetCustomer(s.Ctx, testCustomerID)
+	resp, err := s.Client.Customer.GetCustomer(s.Ctx, s.CustomerID)
 
 	s.Require().NoError(err, "GetCustomer should not return error")
 	s.Require().NotNil(resp, "Response should not be nil")
-	s.Equal(testCustomerID, resp.CustomerID, "Customer ID should match")
+	s.Equal(s.CustomerID, resp.CustomerID, "Customer ID should match")
 	s.NotEmpty(resp.BusinessLegalName, "Business name should not be empty")
 	s.NotEmpty(resp.Email, "Email should not be empty")
 	s.NotEmpty(resp.BusinessType, "Business type should not be empty")
@@ -359,11 +371,11 @@ func (s *CustomerTestSuite) TestCustomerService_UpdateCustomer() {
 		},
 	}
 
-	updateResp, err := s.Client.Customer.UpdateCustomer(s.Ctx, testCustomerID, updateReq)
+	updateResp, err := s.Client.Customer.UpdateCustomer(s.Ctx, s.CustomerID, updateReq)
 
 	s.Require().NoError(err, "UpdateCustomer should not return error")
 	s.Require().NotNil(updateResp, "Update response should not be nil")
-	s.Equal(testCustomerID, updateResp.CustomerID, "Customer ID should match")
+	s.Equal(s.CustomerID, updateResp.CustomerID, "Customer ID should match")
 	s.NotEmpty(updateResp.Status, "Status should not be empty")
 
 	s.T().Logf("Update response:\n%s", PrettyJSON(updateResp))

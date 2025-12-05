@@ -65,6 +65,7 @@ type Transport struct {
 	baseURL       string
 	httpClient    *http.Client
 	authenticator auth.Authenticator
+	retryer       *retryer
 }
 
 // Config holds transport configuration.
@@ -72,6 +73,7 @@ type Config struct {
 	BaseURL    string
 	HTTPClient *http.Client
 	Timeout    time.Duration
+	Retry      *RetryConfig
 }
 
 // NewTransport creates a new HTTP transport with the given configuration.
@@ -86,18 +88,103 @@ func NewTransport(cfg *Config, authenticator auth.Authenticator) *Transport {
 		}
 	}
 
+	// Initialize retryer with config or defaults
+	retryConfig := cfg.Retry
+	if retryConfig == nil {
+		retryConfig = DefaultRetryConfig()
+	}
+
 	return &Transport{
 		baseURL:       cfg.BaseURL,
 		httpClient:    httpClient,
 		authenticator: authenticator,
+		retryer:       newRetryer(retryConfig),
 	}
 }
 
-// Do executes an HTTP request with automatic authentication.
+// Do executes an HTTP request with automatic authentication and retry support.
 func (t *Transport) Do(ctx context.Context, req *Request) (*Response, error) {
 	log := getLogger()
 
-	// Generate authentication headers
+	var lastErr error
+	maxAttempts := t.retryer.config.MaxRetries + 1 // +1 for the initial attempt
+
+	for attempt := range maxAttempts {
+		// Check context cancellation before each attempt
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
+		// Wait before retry (skip for first attempt)
+		if attempt > 0 {
+			log.Info("retrying request",
+				zap.Int("attempt", attempt+1),
+				zap.Int("max_attempts", maxAttempts),
+				zap.String("method", req.Method),
+				zap.String("path", req.Path),
+			)
+
+			// Check if we have Retry-After information from the last error
+			var waitDuration time.Duration
+			if apiErr, ok := IsAPIError(lastErr); ok && apiErr.Detail != "" {
+				if retryAfter := parseRetryAfter(apiErr.Detail); retryAfter > 0 {
+					waitDuration = retryAfter
+				}
+			}
+
+			// Use Retry-After if available, otherwise use exponential backoff
+			if waitDuration > 0 {
+				log.Debug("using Retry-After duration",
+					zap.Duration("wait", waitDuration),
+				)
+				select {
+				case <-ctx.Done():
+					return nil, ctx.Err()
+				case <-time.After(waitDuration):
+				}
+			} else {
+				if err := t.retryer.wait(ctx, attempt-1); err != nil {
+					return nil, err
+				}
+			}
+		}
+
+		resp, err := t.doOnce(ctx, req)
+		if err == nil {
+			if attempt > 0 {
+				log.Info("request succeeded after retry",
+					zap.Int("attempts", attempt+1),
+					zap.String("method", req.Method),
+					zap.String("path", req.Path),
+				)
+			}
+			return resp, nil
+		}
+
+		lastErr = err
+
+		// Check if we should retry
+		if !t.retryer.shouldRetry(err, attempt) {
+			break
+		}
+
+		log.Warn("request failed, will retry",
+			zap.Int("attempt", attempt+1),
+			zap.Int("max_attempts", maxAttempts),
+			zap.String("method", req.Method),
+			zap.String("path", req.Path),
+			zap.Error(err),
+		)
+	}
+
+	return nil, lastErr
+}
+
+// doOnce executes a single HTTP request attempt.
+func (t *Transport) doOnce(ctx context.Context, req *Request) (*Response, error) {
+	log := getLogger()
+
+	// Generate authentication headers (regenerate for each attempt as timestamp changes)
 	sigResult, err := t.authenticator.Authenticate(req.Method, req.Path, req.Body)
 	if err != nil {
 		log.Error("failed to sign request",

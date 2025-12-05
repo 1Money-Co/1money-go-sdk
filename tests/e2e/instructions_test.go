@@ -26,12 +26,12 @@ import (
 
 // InstructionsTestSuite tests instructions service operations.
 type InstructionsTestSuite struct {
-	E2ETestSuite
+	CustomerDependentTestSuite
 }
 
 // TestInstructions_GetDepositInstruction_USD_ACH tests getting USD deposit instructions via ACH.
 func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USD_ACH() {
-	resp, err := s.Client.Instructions.GetDepositInstruction(s.Ctx, testCustomerID, assets.AssetNameUSD, assets.NetworkNameUSACH)
+	resp, err := s.Client.Instructions.GetDepositInstruction(s.Ctx, s.CustomerID, assets.AssetNameUSD, assets.NetworkNameUSACH)
 	s.Require().NoError(err, "GetDepositInstruction should succeed")
 
 	s.Require().NotNil(resp, "Response should not be nil")
@@ -49,7 +49,7 @@ func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USD_ACH()
 
 // TestInstructions_GetDepositInstruction_USD_Fedwire tests getting USD deposit instructions via Fedwire.
 func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USD_Fedwire() {
-	resp, err := s.Client.Instructions.GetDepositInstruction(s.Ctx, testCustomerID, assets.AssetNameUSD, assets.NetworkNameUSFEDWIRE)
+	resp, err := s.Client.Instructions.GetDepositInstruction(s.Ctx, s.CustomerID, assets.AssetNameUSD, assets.NetworkNameUSFEDWIRE)
 	s.Require().NoError(err, "GetDepositInstruction should succeed")
 
 	s.Require().NotNil(resp, "Response should not be nil")
@@ -61,7 +61,7 @@ func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USD_Fedwi
 
 // TestInstructions_GetDepositInstruction_USDT_Ethereum tests getting USDT deposit instructions on Ethereum.
 func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USDT_Ethereum() {
-	resp, err := s.Client.Instructions.GetDepositInstruction(s.Ctx, testCustomerID, assets.AssetNameUSDT, assets.NetworkNameETHEREUM)
+	resp, err := s.Client.Instructions.GetDepositInstruction(s.Ctx, s.CustomerID, assets.AssetNameUSDT, assets.NetworkNameETHEREUM)
 	s.Require().NoError(err, "GetDepositInstruction should succeed")
 
 	s.Require().NotNil(resp, "Response should not be nil")
@@ -78,7 +78,7 @@ func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USDT_Ethe
 
 // TestInstructions_GetDepositInstruction_USDC_Polygon tests getting USDC deposit instructions on Polygon.
 func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USDC_Polygon() {
-	resp, err := s.Client.Instructions.GetDepositInstruction(s.Ctx, testCustomerID, assets.AssetNameUSDC, assets.NetworkNamePOLYGON)
+	resp, err := s.Client.Instructions.GetDepositInstruction(s.Ctx, s.CustomerID, assets.AssetNameUSDC, assets.NetworkNamePOLYGON)
 	s.Require().NoError(err, "GetDepositInstruction should succeed")
 
 	s.Require().NotNil(resp, "Response should not be nil")

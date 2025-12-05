@@ -54,38 +54,41 @@ import (
 type Service interface {
 	// ListAssets retrieves all assets for a specific customer.
 	// Supports optional filtering by asset name, network, and sort order.
-	ListAssets(ctx context.Context, customerID string, req *ListAssetsRequest) ([]AssetResponse, error)
+	ListAssets(ctx context.Context, id svc.CustomerID, req *ListAssetsRequest) ([]AssetResponse, error)
 }
 
-// ListAssetsRequest represents the optional query parameters for listing assets.
-type ListAssetsRequest struct {
-	// Asset filters by specific asset name (e.g., "USD", "USDT").
-	Asset AssetName `json:"asset,omitempty"`
-	// Network filters by specific network name (e.g., "ETHEREUM", "SOLANA").
-	Network NetworkName `json:"network,omitempty"`
-	// SortOrder specifies the sort order for results ("ASC" or "DESC").
-	SortOrder SortOrder `json:"sort_order,omitempty"`
-}
+// ListAssets request and response types.
+type (
+	// ListAssetsRequest represents the optional query parameters for listing assets.
+	ListAssetsRequest struct {
+		// Asset filters by specific asset name (e.g., "USD", "USDT").
+		Asset AssetName `json:"asset,omitempty"`
+		// Network filters by specific network name (e.g., "ETHEREUM", "SOLANA").
+		Network NetworkName `json:"network,omitempty"`
+		// SortOrder specifies the sort order for results ("ASC" or "DESC").
+		SortOrder SortOrder `json:"sort_order,omitempty"`
+	}
 
-// AssetResponse represents a customer's asset balance.
-type AssetResponse struct {
-	// CustomerID is the unique identifier of the customer.
-	CustomerID string `json:"customer_id"`
-	// Asset is the asset name/symbol (e.g., "USD", "USDT").
-	// Uses string to handle any asset type returned by the API.
-	Asset string `json:"asset"`
-	// Network is the network name for the asset (optional, nil for fiat).
-	// Uses string to handle any network type returned by the API.
-	Network *string `json:"network,omitempty"`
-	// AvailableAmount is the available balance amount.
-	AvailableAmount string `json:"available_amount"`
-	// UnavailableAmount is the unavailable/locked balance amount.
-	UnavailableAmount string `json:"unavailable_amount"`
-	// CreatedAt is the asset record creation timestamp (ISO 8601 format).
-	CreatedAt string `json:"created_at"`
-	// ModifiedAt is the asset record last modification timestamp (ISO 8601 format).
-	ModifiedAt string `json:"modified_at"`
-}
+	// AssetResponse represents a customer's asset balance.
+	AssetResponse struct {
+		// CustomerID is the unique identifier of the customer.
+		CustomerID string `json:"customer_id"`
+		// Asset is the asset name/symbol (e.g., "USD", "USDT").
+		// Uses string to handle any asset type returned by the API.
+		Asset string `json:"asset"`
+		// Network is the network name for the asset (optional, nil for fiat).
+		// Uses string to handle any network type returned by the API.
+		Network *string `json:"network,omitempty"`
+		// AvailableAmount is the available balance amount.
+		AvailableAmount string `json:"available_amount"`
+		// UnavailableAmount is the unavailable/locked balance amount.
+		UnavailableAmount string `json:"unavailable_amount"`
+		// CreatedAt is the asset record creation timestamp (ISO 8601 format).
+		CreatedAt string `json:"created_at"`
+		// ModifiedAt is the asset record last modification timestamp (ISO 8601 format).
+		ModifiedAt string `json:"modified_at"`
+	}
+)
 
 type serviceImpl struct {
 	*svc.BaseService
@@ -99,8 +102,8 @@ func NewService(base *svc.BaseService) Service {
 }
 
 // ListAssets retrieves all assets for a specific customer.
-func (s *serviceImpl) ListAssets(ctx context.Context, customerID string, req *ListAssetsRequest) ([]AssetResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/assets", customerID)
+func (s *serviceImpl) ListAssets(ctx context.Context, id svc.CustomerID, req *ListAssetsRequest) ([]AssetResponse, error) {
+	path := fmt.Sprintf("/v1/customers/%s/assets", id)
 
 	params := make(map[string]string)
 	if req != nil {

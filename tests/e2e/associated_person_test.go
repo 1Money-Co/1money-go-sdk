@@ -27,7 +27,7 @@ import (
 
 // AssociatedPersonTestSuite tests associated person operations.
 type AssociatedPersonTestSuite struct {
-	E2ETestSuite
+	CustomerDependentTestSuite
 }
 
 // TestAssociatedPerson_Create tests creating an associated person.
@@ -38,7 +38,7 @@ func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Create() {
 		AssociatedPerson: FakeAssociatedPerson(faker),
 	}
 
-	resp, err := s.Client.Customer.CreateAssociatedPerson(s.Ctx, testCustomerID, req)
+	resp, err := s.Client.Customer.CreateAssociatedPerson(s.Ctx, s.CustomerID, req)
 
 	s.Require().NoError(err, "CreateAssociatedPerson should not return error")
 	s.Require().NotNil(resp, "Response should not be nil")
@@ -48,7 +48,7 @@ func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Create() {
 
 // TestAssociatedPerson_List tests listing associated persons.
 func (s *AssociatedPersonTestSuite) TestAssociatedPerson_List() {
-	resp, err := s.Client.Customer.ListAssociatedPersons(s.Ctx, testCustomerID)
+	resp, err := s.Client.Customer.ListAssociatedPersons(s.Ctx, s.CustomerID)
 
 	s.Require().NoError(err, "ListAssociatedPersons should not return error")
 	s.Require().NotNil(resp, "Response should not be nil")
@@ -57,11 +57,11 @@ func (s *AssociatedPersonTestSuite) TestAssociatedPerson_List() {
 
 // TestAssociatedPerson_Get tests getting a specific associated person.
 func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Get() {
-	resp, err := s.Client.Customer.GetAssociatedPerson(s.Ctx, testCustomerID, testAssociatedPersonID)
+	resp, err := s.Client.Customer.GetAssociatedPerson(s.Ctx, s.CustomerID, s.AssociatedPersonIDs[0])
 	s.Require().NoError(err, "GetAssociatedPerson should succeed")
 
 	s.Require().NotNil(resp, "Response should not be nil")
-	s.Equal(testAssociatedPersonID, resp.AssociatedPersonID, "Associated person ID should match")
+	s.Equal(s.AssociatedPersonIDs[0], resp.AssociatedPersonID, "Associated person ID should match")
 	s.T().Logf("Associated person details:\n%s", PrettyJSON(resp))
 }
 
@@ -69,7 +69,7 @@ func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Get() {
 func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Update() {
 	faker := gofakeit.New(0)
 
-	getResp, err := s.Client.Customer.GetAssociatedPerson(s.Ctx, testCustomerID, testAssociatedPersonID)
+	getResp, err := s.Client.Customer.GetAssociatedPerson(s.Ctx, s.CustomerID, s.AssociatedPersonIDs[0])
 	s.Require().NoError(err, "GetAssociatedPerson should succeed")
 	s.Require().NotNil(getResp, "Response should not be nil")
 
@@ -79,7 +79,7 @@ func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Update() {
 		Email:      &newEmail,
 		HasControl: &hasControl,
 	}
-	updateResp, err := s.Client.Customer.UpdateAssociatedPerson(s.Ctx, testCustomerID, testAssociatedPersonID, updateReq)
+	updateResp, err := s.Client.Customer.UpdateAssociatedPerson(s.Ctx, s.CustomerID, s.AssociatedPersonIDs[0], updateReq)
 	s.Require().NoError(err, "UpdateAssociatedPerson should succeed")
 	s.Require().NotNil(updateResp, "Response should not be nil")
 	s.Equal(newEmail, updateResp.Email, "Email should be updated")
@@ -89,11 +89,11 @@ func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Update() {
 
 // TestAssociatedPerson_Delete tests deleting an associated person.
 func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Delete() {
-	err := s.Client.Customer.DeleteAssociatedPerson(s.Ctx, testCustomerID, testAssociatedPersonID)
+	err := s.Client.Customer.DeleteAssociatedPerson(s.Ctx, s.CustomerID, s.AssociatedPersonIDs[0])
 	s.Require().NoError(err, "DeleteAssociatedPerson should succeed")
 
 	// Verify deletion - should return error
-	getResp, err := s.Client.Customer.GetAssociatedPerson(s.Ctx, testCustomerID, testAssociatedPersonID)
+	getResp, err := s.Client.Customer.GetAssociatedPerson(s.Ctx, s.CustomerID, s.AssociatedPersonIDs[0])
 	s.Require().Error(err, "GetAssociatedPerson should return error after deletion")
 	s.Require().Nil(getResp, "Response should be nil")
 	s.T().Log("Associated person deleted successfully")

@@ -50,47 +50,50 @@ import (
 type Service interface {
 	// GetDepositInstruction retrieves deposit instructions for a specific asset and network.
 	GetDepositInstruction(
-		ctx context.Context, customerID string, asset assets.AssetName, network assets.NetworkName,
+		ctx context.Context, id svc.CustomerID, asset assets.AssetName, network assets.NetworkName,
 	) (*InstructionResponse, error)
 }
 
-// AddressDetails represents the address details for bank instructions.
-type AddressDetails struct {
-	StreetLine1 string `json:"street_line_1,omitempty"`
-	StreetLine2 string `json:"street_line_2,omitempty"`
-	City        string `json:"city,omitempty"`
-	State       string `json:"state,omitempty"`
-	Country     string `json:"country,omitempty"`
-	PostalCode  string `json:"postal_code,omitempty"`
-}
+// Instruction detail types.
+type (
+	// AddressDetails represents the address details for bank instructions.
+	AddressDetails struct {
+		StreetLine1 string `json:"street_line_1,omitempty"`
+		StreetLine2 string `json:"street_line_2,omitempty"`
+		City        string `json:"city,omitempty"`
+		State       string `json:"state,omitempty"`
+		Country     string `json:"country,omitempty"`
+		PostalCode  string `json:"postal_code,omitempty"`
+	}
 
-// BankInstruction represents bank account details for fiat deposits.
-type BankInstruction struct {
-	// BankName is the name of the bank that holds custody over the account.
-	BankName string `json:"bank_name,omitempty"`
-	// RoutingNumber is the routing number of the account.
-	RoutingNumber string `json:"routing_number,omitempty"`
-	// AccountHolder is the name of the account holder.
-	AccountHolder string `json:"account_holder,omitempty"`
-	// AccountNumber is the account number.
-	AccountNumber string `json:"account_number,omitempty"`
-	// AccountIdentifier is the brokerage account identifier.
-	AccountIdentifier string `json:"account_identifier,omitempty"`
-	// BICCode is the SWIFT/BIC code.
-	BICCode string `json:"bic_code,omitempty"`
-	// Address contains address details for the instruction.
-	Address *AddressDetails `json:"address,omitempty"`
-	// TransactionFee is the fee for the transaction.
-	TransactionFee string `json:"transaction_fee"`
-}
+	// BankInstruction represents bank account details for fiat deposits.
+	BankInstruction struct {
+		// BankName is the name of the bank that holds custody over the account.
+		BankName string `json:"bank_name,omitempty"`
+		// RoutingNumber is the routing number of the account.
+		RoutingNumber string `json:"routing_number,omitempty"`
+		// AccountHolder is the name of the account holder.
+		AccountHolder string `json:"account_holder,omitempty"`
+		// AccountNumber is the account number.
+		AccountNumber string `json:"account_number,omitempty"`
+		// AccountIdentifier is the brokerage account identifier.
+		AccountIdentifier string `json:"account_identifier,omitempty"`
+		// BICCode is the SWIFT/BIC code.
+		BICCode string `json:"bic_code,omitempty"`
+		// Address contains address details for the instruction.
+		Address *AddressDetails `json:"address,omitempty"`
+		// TransactionFee is the fee for the transaction.
+		TransactionFee string `json:"transaction_fee"`
+	}
 
-// WalletInstruction represents wallet address details for crypto deposits.
-type WalletInstruction struct {
-	// WalletAddress is the wallet address for deposits.
-	WalletAddress string `json:"wallet_address,omitempty"`
-	// TransactionFee is the fee for the transaction.
-	TransactionFee string `json:"transaction_fee"`
-}
+	// WalletInstruction represents wallet address details for crypto deposits.
+	WalletInstruction struct {
+		// WalletAddress is the wallet address for deposits.
+		WalletAddress string `json:"wallet_address,omitempty"`
+		// TransactionFee is the fee for the transaction.
+		TransactionFee string `json:"transaction_fee"`
+	}
+)
 
 // InstructionResponse represents the response for deposit instructions.
 type InstructionResponse struct {
@@ -124,11 +127,11 @@ func NewService(base *svc.BaseService) Service {
 // GetDepositInstruction retrieves deposit instructions for a specific asset and network.
 func (s *serviceImpl) GetDepositInstruction(
 	ctx context.Context,
-	customerID string,
+	id svc.CustomerID,
 	asset assets.AssetName,
 	network assets.NetworkName,
 ) (*InstructionResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/instruction", customerID)
+	path := fmt.Sprintf("/v1/customers/%s/instruction", id)
 	params := map[string]string{
 		"asset":   string(asset),
 		"network": string(network),

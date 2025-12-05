@@ -61,32 +61,35 @@ import (
 type Service interface {
 	// SimulateDeposit simulates a deposit transaction for testing purposes.
 	// Only available in non-production environments.
-	SimulateDeposit(ctx context.Context, customerID string, req *SimulateDepositRequest) (*SimulateDepositResponse, error)
+	SimulateDeposit(ctx context.Context, id svc.CustomerID, req *SimulateDepositRequest) (*SimulateDepositResponse, error)
 }
 
-// SimulateDepositRequest represents the request body for simulating a deposit.
-type SimulateDepositRequest struct {
-	// Asset is the asset to deposit.
-	Asset assets.AssetName `json:"asset"`
-	// Network is the network for the deposit.
-	// Required for token assets (USDT, USDC, MXNB), must be a wallet network (e.g., ETHEREUM).
-	// For currency assets (USD), network is optional and will be ignored if provided.
-	Network WalletNetworkName `json:"network,omitempty"`
-	// Amount is the deposit amount.
-	Amount string `json:"amount"`
-}
+// SimulateDeposit request and response types.
+type (
+	// SimulateDepositRequest represents the request body for simulating a deposit.
+	SimulateDepositRequest struct {
+		// Asset is the asset to deposit.
+		Asset assets.AssetName `json:"asset"`
+		// Network is the network for the deposit.
+		// Required for token assets (USDT, USDC, MXNB), must be a wallet network (e.g., ETHEREUM).
+		// For currency assets (USD), network is optional and will be ignored if provided.
+		Network WalletNetworkName `json:"network,omitempty"`
+		// Amount is the deposit amount.
+		Amount string `json:"amount"`
+	}
 
-// SimulateDepositResponse represents the response for a simulated deposit.
-type SimulateDepositResponse struct {
-	// SimulationID is the unique identifier for the simulation.
-	SimulationID string `json:"simulation_id"`
-	// Status is the transaction status (SUCCESS or REVERSED for simulated deposits).
-	Status string `json:"status"`
-	// CreatedAt is the transaction creation timestamp.
-	CreatedAt string `json:"created_at"`
-	// ModifiedAt is the transaction last modification timestamp.
-	ModifiedAt string `json:"modified_at"`
-}
+	// SimulateDepositResponse represents the response for a simulated deposit.
+	SimulateDepositResponse struct {
+		// SimulationID is the unique identifier for the simulation.
+		SimulationID string `json:"simulation_id"`
+		// Status is the transaction status (SUCCESS or REVERSED for simulated deposits).
+		Status string `json:"status"`
+		// CreatedAt is the transaction creation timestamp.
+		CreatedAt string `json:"created_at"`
+		// ModifiedAt is the transaction last modification timestamp.
+		ModifiedAt string `json:"modified_at"`
+	}
+)
 
 type serviceImpl struct {
 	*svc.BaseService
@@ -102,9 +105,9 @@ func NewService(base *svc.BaseService) Service {
 // SimulateDeposit simulates a deposit transaction for testing purposes.
 func (s *serviceImpl) SimulateDeposit(
 	ctx context.Context,
-	customerID string,
+	id svc.CustomerID,
 	req *SimulateDepositRequest,
 ) (*SimulateDepositResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/simulate-transactions", customerID)
+	path := fmt.Sprintf("/v1/customers/%s/simulate-transactions", id)
 	return svc.PostJSON[SimulateDepositRequest, SimulateDepositResponse](ctx, s.BaseService, path, *req)
 }
