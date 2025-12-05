@@ -81,10 +81,22 @@ jobs:
           branch: release/${{ steps.version.outputs.tag }}
           title: "chore(release): ${{ steps.version.outputs.tag }}"
           body: |
-            Automated release preparation for `${{ steps.version.outputs.tag }}`.
+            ## Release `${{ steps.version.outputs.tag }}`
 
-            - Update `version.go`
+            Automated release preparation triggered by tag push.
+
+            ### Changes
+            - Update `version.go` to `${{ steps.version.outputs.version }}`
             - Refresh `CHANGELOG.md`
+
+            ### What happens after merge?
+            Merging this PR will automatically:
+            1. Create a GitHub Release for `${{ steps.version.outputs.tag }}`
+            2. Update the release tag to point to the merge commit
+
+            ### Checklist
+            - [ ] Changelog looks correct
+            - [ ] Version number is correct
           add-paths: |
             version.go
             CHANGELOG.md
