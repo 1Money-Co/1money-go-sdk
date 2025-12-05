@@ -2,12 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.0.0-test-647ff7d] - 2025-12-05
+## [0.0.0-test-a709ac2] - 2025-12-05
 
 ### ⚙️ Miscellaneous
 
 - **ci:** Refactor release workflow to use PR-based process
 - **ci:** Handle branch push in release workflow for testing
+- Fix release workflow
+- **ci:** Re-enable test mode for release workflow
 
 ### 🚀 Features
 
