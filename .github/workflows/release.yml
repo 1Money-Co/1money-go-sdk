@@ -35,8 +35,15 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          VERSION="${TAG#v}"
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+            VERSION="${TAG#v}"
+          else
+            # Test mode on branch
+            SHORT_SHA="${GITHUB_SHA:0:7}"
+            TAG="v0.0.0-test-${SHORT_SHA}"
+            VERSION="0.0.0-test-${SHORT_SHA}"
+          fi
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "📦 Preparing release PR for $TAG (version: $VERSION)"
