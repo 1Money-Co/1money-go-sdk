@@ -198,15 +198,21 @@ func NoRetryConfig() *RetryConfig {
 //	resp, err := c.Echo.Post(ctx, &echo.Request{Message: "hello"})
 func NewClient(cfg *Config, opts ...Option) (*Client, error) {
 	if cfg == nil {
-		cfg = &Config{
-			Sandbox: os.Getenv(credentials.EnvSandbox) == "1",
-			BaseURL: os.Getenv(credentials.EnvBaseURL),
-		}
+		cfg = &Config{}
 	}
 
-	// Apply options
+	// Apply options first (they have highest priority after explicit Config fields)
 	for _, opt := range opts {
 		opt(cfg)
+	}
+
+	// Read environment variables for fields not explicitly set
+	// This ensures env vars work regardless of whether cfg was nil or not
+	if cfg.BaseURL == "" {
+		cfg.BaseURL = os.Getenv(credentials.EnvBaseURL)
+	}
+	if !cfg.Sandbox && os.Getenv(credentials.EnvSandbox) == "1" {
+		cfg.Sandbox = true
 	}
 
 	// Load credentials using the provider chain

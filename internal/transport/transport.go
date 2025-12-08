@@ -293,6 +293,7 @@ func (t *Transport) doOnce(ctx context.Context, req *Request) (*Response, error)
 	log.Debug("request completed successfully",
 		zap.Int("status_code", httpResp.StatusCode),
 		zap.Int("response_size", len(respBody)),
+		zap.String("request_id", httpResp.Header.Get("x-request-id")),
 		zap.String("resp", string(respBody)),
 	)
 

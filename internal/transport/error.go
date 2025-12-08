@@ -134,10 +134,12 @@ func (e *APIError) IsServerError() bool {
 }
 
 // IsRetryable returns true if the error is potentially retryable.
-// Retryable errors include rate limits, server errors, and gateway timeouts.
+// Retryable errors include rate limits and gateway errors.
+// Note: 500 Internal Server Error is NOT retryable as it typically indicates
+// permanent failures (business logic errors, invalid state) that won't be resolved by retrying.
 func (e *APIError) IsRetryable() bool {
 	switch e.StatusCode {
-	case http.StatusTooManyRequests, http.StatusInternalServerError,
+	case http.StatusTooManyRequests,
 		http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
 		return true
 	default:

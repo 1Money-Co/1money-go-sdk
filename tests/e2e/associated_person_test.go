@@ -88,12 +88,27 @@ func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Update() {
 }
 
 // TestAssociatedPerson_Delete tests deleting an associated person.
+// Creates its own associated person to delete, avoiding test order dependency.
 func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Delete() {
-	err := s.Client.Customer.DeleteAssociatedPerson(s.Ctx, s.CustomerID, s.AssociatedPersonIDs[0])
+	// Create a new associated person specifically for deletion test
+	faker := gofakeit.New(0)
+	createReq := &customer.CreateAssociatedPersonRequest{
+		AssociatedPerson: FakeAssociatedPerson(faker),
+	}
+
+	createResp, err := s.Client.Customer.CreateAssociatedPerson(s.Ctx, s.CustomerID, createReq)
+	s.Require().NoError(err, "CreateAssociatedPerson should succeed")
+	s.Require().NotNil(createResp, "Create response should not be nil")
+
+	personIDToDelete := createResp.AssociatedPersonID
+	s.T().Logf("Created associated person for deletion: %s", personIDToDelete)
+
+	// Delete the newly created associated person
+	err = s.Client.Customer.DeleteAssociatedPerson(s.Ctx, s.CustomerID, personIDToDelete)
 	s.Require().NoError(err, "DeleteAssociatedPerson should succeed")
 
 	// Verify deletion - should return error
-	getResp, err := s.Client.Customer.GetAssociatedPerson(s.Ctx, s.CustomerID, s.AssociatedPersonIDs[0])
+	getResp, err := s.Client.Customer.GetAssociatedPerson(s.Ctx, s.CustomerID, personIDToDelete)
 	s.Require().Error(err, "GetAssociatedPerson should return error after deletion")
 	s.Require().Nil(getResp, "Response should be nil")
 	s.T().Log("Associated person deleted successfully")

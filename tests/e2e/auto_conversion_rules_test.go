@@ -19,7 +19,7 @@ package e2e
 import (
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v7"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/auto_conversion_rules"
@@ -124,10 +124,9 @@ func (s *AutoConversionRulesTestSuite) TestAutoConversionRules_CreateCryptoToFia
 	externalAccountID, err := s.EnsureExternalAccount()
 	s.Require().NoError(err, "EnsureExternalAccount should succeed")
 
-	faker := gofakeit.New(0)
 	network := "POLYGON"
 	createReq := &auto_conversion_rules.CreateRuleRequest{
-		IdempotencyKey: faker.UUID(),
+		IdempotencyKey: uuid.New().String(),
 		Source: auto_conversion_rules.SourceAssetInfo{
 			Asset:   "USDC",
 			Network: "POLYGON",

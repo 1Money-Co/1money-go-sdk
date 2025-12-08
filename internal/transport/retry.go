@@ -46,7 +46,7 @@ type RetryConfig struct {
 	Jitter bool
 
 	// RetryableStatusCodes allows customizing which HTTP status codes trigger retry.
-	// If nil, defaults to 429, 500, 502, 503, 504.
+	// If nil, defaults to 429, 502, 503, 504.
 	RetryableStatusCodes []int
 }
 
@@ -60,7 +60,6 @@ func DefaultRetryConfig() *RetryConfig {
 		Jitter:            true,
 		RetryableStatusCodes: []int{
 			429, // Too Many Requests
-			500, // Internal Server Error
 			502, // Bad Gateway
 			503, // Service Unavailable
 			504, // Gateway Timeout
@@ -118,7 +117,7 @@ func (r *retryer) shouldRetry(err error, attempt int) bool {
 func (r *retryer) calculateBackoff(attempt int) time.Duration {
 	// Calculate exponential backoff: initial * multiplier^attempt
 	backoff := float64(r.config.InitialBackoff)
-	for i := 0; i < attempt; i++ {
+	for range attempt {
 		backoff *= r.config.BackoffMultiplier
 	}
 
@@ -129,7 +128,7 @@ func (r *retryer) calculateBackoff(attempt int) time.Duration {
 
 	// Apply jitter if enabled: backoff * (0.5 + rand(0, 0.5))
 	if r.config.Jitter {
-		jitterFactor := 0.5 + rand.Float64()*0.5
+		jitterFactor := 0.5 + rand.Float64()*0.5 //nolint:gosec // G404: weak RNG is acceptable for jitter
 		backoff *= jitterFactor
 	}
 

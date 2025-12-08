@@ -25,6 +25,7 @@ import (
 	"testing"
 
 	"github.com/brianvoe/gofakeit/v7"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
 	"github.com/xuri/excelize/v2"
@@ -42,6 +43,21 @@ const (
 	// CountryUSA is the country code for United States.
 	CountryUSA = "USA"
 )
+
+// ValidUSStates contains valid US state codes for API validation.
+var ValidUSStates = []string{
+	"AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+	"HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+	"MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+	"NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+	"SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+	"DC",
+}
+
+// RandomUSState returns a random valid US state code.
+func RandomUSState(faker *gofakeit.Faker) string {
+	return ValidUSStates[faker.Number(0, len(ValidUSStates)-1)]
+}
 
 // E2ETestSuite defines the integration test suite for the OneMoney client.
 // This suite is used for end-to-end testing during development.
@@ -104,6 +120,44 @@ func (s *CustomerDependentTestSuite) SetupSuite() {
 	s.T().Logf("Created test customer: %s with %d associated persons", customerID, len(associatedPersonIDs))
 }
 
+// TearDownSuite cleans up resources created during testing.
+// This method cleans up auto conversion rules and external accounts.
+func (s *CustomerDependentTestSuite) TearDownSuite() {
+	if s.CustomerID == "" {
+		return
+	}
+
+	s.T().Logf("Cleaning up resources for customer: %s", s.CustomerID)
+
+	// Clean up auto conversion rules (soft delete)
+	rules, err := s.Client.AutoConversionRules.ListRules(s.Ctx, s.CustomerID, nil)
+	if err == nil && rules != nil {
+		for i := range rules.Items {
+			if rules.Items[i].Status == "ACTIVE" {
+				if delErr := s.Client.AutoConversionRules.DeleteRule(s.Ctx, s.CustomerID, rules.Items[i].AutoConversionRuleID); delErr != nil {
+					s.T().Logf("Failed to delete auto conversion rule %s: %v", rules.Items[i].AutoConversionRuleID, delErr)
+				} else {
+					s.T().Logf("Deleted auto conversion rule: %s", rules.Items[i].AutoConversionRuleID)
+				}
+			}
+		}
+	}
+
+	// Clean up external accounts
+	accounts, err := s.Client.ExternalAccounts.ListExternalAccounts(s.Ctx, s.CustomerID, nil)
+	if err == nil && accounts != nil {
+		for i := range accounts {
+			if err := s.Client.ExternalAccounts.RemoveExternalAccount(s.Ctx, s.CustomerID, accounts[i].ExternalAccountID); err != nil {
+				s.T().Logf("Failed to delete external account %s: %v", accounts[i].ExternalAccountID, err)
+			} else {
+				s.T().Logf("Deleted external account: %s", accounts[i].ExternalAccountID)
+			}
+		}
+	}
+
+	s.T().Logf("Cleanup completed for customer: %s (Note: Customer cannot be deleted due to compliance requirements)", s.CustomerID)
+}
+
 // CreateTestCustomer creates a new customer with all required data for testing.
 // Returns the customer ID, list of associated person IDs, and any error.
 func (s *CustomerDependentTestSuite) CreateTestCustomer() (
@@ -142,10 +196,10 @@ func (s *CustomerDependentTestSuite) CreateTestCustomer() (
 			StreetLine1: faker.Street(),
 			StreetLine2: fmt.Sprintf("Suite %d", faker.Number(100, 999)),
 			City:        faker.City(),
-			State:       faker.StateAbr(),
+			State:       RandomUSState(faker),
 			Country:     CountryUSA,
 			PostalCode:  faker.Zip(),
-			Subdivision: faker.StateAbr(),
+			Subdivision: RandomUSState(faker),
 		},
 		DateOfIncorporation:            faker.Date().Format("2006-01-02"),
 		SignedAgreementID:              signResp.SignedAgreementID,
@@ -287,23 +341,27 @@ func (s *CustomerDependentTestSuite) EnsureSignedAgreement() (string, error) {
 }
 
 // FakeExternalAccountRequest generates a fake external account request for testing.
-func FakeExternalAccountRequest() *external_accounts.CreateExternalAccountRequest {
-	faker := gofakeit.New(0)
-	return &external_accounts.CreateExternalAccountRequest{
-		IdempotencyKey:       faker.UUID(),
-		BankNetworkName:      external_accounts.BankNetworkNameUSACH,
-		Currency:             external_accounts.CurrencyUSD,
-		BankName:             faker.Company() + " Bank",
-		BankAccountOwnerName: faker.Name(),
-		BankAccountNumber:    faker.DigitN(9),
-		BankRoutingNumber:    faker.DigitN(9),
+// Uses uuid.New() for IdempotencyKey to ensure uniqueness across test runs.
+func FakeExternalAccountRequest() *external_accounts.CreateReq {
+	return &external_accounts.CreateReq{
+		IdempotencyKey:  uuid.New().String(),
+		Network:         external_accounts.BankNetworkNameUSACH,
+		Currency:        external_accounts.CurrencyUSD,
+		CountryCode:     external_accounts.CountryCodeUSA,
+		AccountNumber:   gofakeit.DigitN(9),
+		InstitutionID:   gofakeit.DigitN(9),
+		InstitutionName: gofakeit.Company() + " Bank",
 	}
 }
 
 // FakeEthereumAddress generates a fake Ethereum wallet address for testing.
+// Returns a valid 42-character address (0x + 40 hex chars).
 func FakeEthereumAddress() string {
-	faker := gofakeit.New(0)
-	return "0x" + faker.HexUint(160)
+	addrBytes := make([]byte, 20)
+	for i := range addrBytes {
+		addrBytes[i] = byte(gofakeit.Number(0, 255))
+	}
+	return fmt.Sprintf("0x%x", addrBytes)
 }
 
 // FakeCustomerDocuments generates fake documents required for customer creation.
@@ -395,11 +453,11 @@ func FakeXLSXData() []byte {
 
 // FakeAutoConversionRuleRequest generates a fake auto conversion rule request for testing.
 // Creates a USD -> USDC (Polygon) conversion rule by default.
+// Uses uuid.New() for IdempotencyKey to ensure uniqueness across test runs.
 func FakeAutoConversionRuleRequest() *auto_conversion_rules.CreateRuleRequest {
-	faker := gofakeit.New(0)
 	network := "POLYGON"
 	return &auto_conversion_rules.CreateRuleRequest{
-		IdempotencyKey: faker.UUID(),
+		IdempotencyKey: uuid.New().String(),
 		Source: auto_conversion_rules.SourceAssetInfo{
 			Asset:   "USD",
 			Network: "US_ACH",
@@ -427,10 +485,10 @@ func FakeAssociatedPerson(faker *gofakeit.Faker) customer.AssociatedPerson {
 		ResidentialAddress: &customer.Address{
 			StreetLine1: faker.Street(),
 			City:        faker.City(),
-			State:       faker.StateAbr(),
+			State:       RandomUSState(faker),
 			Country:     CountryUSA,
 			PostalCode:  faker.Zip(),
-			Subdivision: faker.StateAbr(),
+			Subdivision: RandomUSState(faker),
 		},
 		BirthDate:           faker.Date().Format("2006-01-02"),
 		CountryOfBirth:      CountryUSA,

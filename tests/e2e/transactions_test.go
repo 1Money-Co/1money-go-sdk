@@ -31,12 +31,14 @@ type TransactionsTestSuite struct {
 }
 
 // TestTransactions_List tests listing transactions with various scenarios.
+// Validates response structure and field values.
 func (s *TransactionsTestSuite) TestTransactions_List() {
 	s.Run("Empty", func() {
 		// For a fresh customer, there might be no transactions initially
 		resp, err := s.Client.Transactions.ListTransactions(s.Ctx, s.CustomerID, nil)
 		s.Require().NoError(err, "ListTransactions should succeed even with no transactions")
 		s.Require().NotNil(resp, "Response should not be nil")
+		s.GreaterOrEqual(resp.Total, 0, "Total should be non-negative")
 		s.T().Logf("Transactions list: %d transactions (total: %d)", len(resp.List), resp.Total)
 	})
 
@@ -50,8 +52,20 @@ func (s *TransactionsTestSuite) TestTransactions_List() {
 
 		s.Require().NotNil(resp, "Response should not be nil")
 		s.Require().NotEmpty(resp.List, "Should have at least one transaction")
+		s.Positive(resp.Total, "Total should be greater than 0")
+
+		// Validate first transaction structure
+		tx := resp.List[0]
+		s.NotEmpty(tx.TransactionID, "TransactionID should not be empty")
+		s.NotEmpty(tx.TransactionAction, "TransactionAction should not be empty")
+		s.NotEmpty(tx.Amount, "Amount should not be empty")
+		s.NotEmpty(tx.Status, "Status should not be empty")
+		s.NotEmpty(tx.CreatedAt, "CreatedAt should not be empty")
+		s.NotEmpty(tx.ModifiedAt, "ModifiedAt should not be empty")
+		s.Equal(s.CustomerID, tx.CustomerID, "CustomerID should match")
+
 		s.T().Logf("Listed %d transactions (total: %d)", len(resp.List), resp.Total)
-		s.T().Logf("First transaction:\n%s", PrettyJSON(resp.List[0]))
+		s.T().Logf("First transaction:\n%s", PrettyJSON(tx))
 	})
 
 	s.Run("WithPagination", func() {
@@ -86,14 +100,19 @@ func (s *TransactionsTestSuite) TestTransactions_List() {
 
 		s.Require().NotNil(resp, "Response should not be nil")
 		s.Require().NotEmpty(resp.List, "Should have at least one USD transaction")
-		s.T().Logf("Listed %d USD transactions", len(resp.List))
+
+		// Validate all returned transactions have USD asset
 		for i := range resp.List {
-			s.T().Logf("Transaction %s: %s %s", resp.List[i].TransactionID, resp.List[i].Amount, resp.List[i].Asset)
+			s.Equal(string(assets.AssetNameUSD), resp.List[i].Asset,
+				"All filtered transactions should have USD asset")
 		}
+
+		s.T().Logf("Listed %d USD transactions", len(resp.List))
 	})
 }
 
 // TestTransactions_GetTransaction tests retrieving a specific transaction.
+// Validates all response fields.
 func (s *TransactionsTestSuite) TestTransactions_GetTransaction() {
 	// Ensure we have at least one transaction
 	transactionID, err := s.EnsureTransaction()
@@ -103,8 +122,20 @@ func (s *TransactionsTestSuite) TestTransactions_GetTransaction() {
 	resp, err := s.Client.Transactions.GetTransaction(s.Ctx, s.CustomerID, transactionID)
 	s.Require().NoError(err, "GetTransaction should succeed")
 
+	// Validate response structure
 	s.Require().NotNil(resp, "Response should not be nil")
 	s.Equal(transactionID, resp.TransactionID, "TransactionID should match")
+	s.Equal(s.CustomerID, resp.CustomerID, "CustomerID should match")
+	s.NotEmpty(resp.TransactionAction, "TransactionAction should not be empty")
+	s.NotEmpty(resp.Amount, "Amount should not be empty")
+	s.NotEmpty(resp.Status, "Status should not be empty")
+	s.NotEmpty(resp.CreatedAt, "CreatedAt should not be empty")
+	s.NotEmpty(resp.ModifiedAt, "ModifiedAt should not be empty")
+
+	// Validate transaction action is valid
+	validActions := []string{"DEPOSIT", "WITHDRAWAL", "CONVERSION"}
+	s.Contains(validActions, resp.TransactionAction, "TransactionAction should be valid")
+
 	s.T().Logf("Retrieved transaction:\n%s", PrettyJSON(resp))
 }
 

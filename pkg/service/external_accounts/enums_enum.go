@@ -171,6 +171,1281 @@ func (x *BankNetworkName) AppendText(b []byte) ([]byte, error) {
 }
 
 const (
+	// CountryCodeAND is a CountryCode of type AND.
+	CountryCodeAND CountryCode = "AND"
+	// CountryCodeARE is a CountryCode of type ARE.
+	CountryCodeARE CountryCode = "ARE"
+	// CountryCodeAFG is a CountryCode of type AFG.
+	CountryCodeAFG CountryCode = "AFG"
+	// CountryCodeATG is a CountryCode of type ATG.
+	CountryCodeATG CountryCode = "ATG"
+	// CountryCodeAIA is a CountryCode of type AIA.
+	CountryCodeAIA CountryCode = "AIA"
+	// CountryCodeALB is a CountryCode of type ALB.
+	CountryCodeALB CountryCode = "ALB"
+	// CountryCodeARM is a CountryCode of type ARM.
+	CountryCodeARM CountryCode = "ARM"
+	// CountryCodeAGO is a CountryCode of type AGO.
+	CountryCodeAGO CountryCode = "AGO"
+	// CountryCodeARG is a CountryCode of type ARG.
+	CountryCodeARG CountryCode = "ARG"
+	// CountryCodeASM is a CountryCode of type ASM.
+	CountryCodeASM CountryCode = "ASM"
+	// CountryCodeAUT is a CountryCode of type AUT.
+	CountryCodeAUT CountryCode = "AUT"
+	// CountryCodeAUS is a CountryCode of type AUS.
+	CountryCodeAUS CountryCode = "AUS"
+	// CountryCodeABW is a CountryCode of type ABW.
+	CountryCodeABW CountryCode = "ABW"
+	// CountryCodeAZE is a CountryCode of type AZE.
+	CountryCodeAZE CountryCode = "AZE"
+	// CountryCodeBIH is a CountryCode of type BIH.
+	CountryCodeBIH CountryCode = "BIH"
+	// CountryCodeBRB is a CountryCode of type BRB.
+	CountryCodeBRB CountryCode = "BRB"
+	// CountryCodeBGD is a CountryCode of type BGD.
+	CountryCodeBGD CountryCode = "BGD"
+	// CountryCodeBEL is a CountryCode of type BEL.
+	CountryCodeBEL CountryCode = "BEL"
+	// CountryCodeBFA is a CountryCode of type BFA.
+	CountryCodeBFA CountryCode = "BFA"
+	// CountryCodeBGR is a CountryCode of type BGR.
+	CountryCodeBGR CountryCode = "BGR"
+	// CountryCodeBHR is a CountryCode of type BHR.
+	CountryCodeBHR CountryCode = "BHR"
+	// CountryCodeBDI is a CountryCode of type BDI.
+	CountryCodeBDI CountryCode = "BDI"
+	// CountryCodeBEN is a CountryCode of type BEN.
+	CountryCodeBEN CountryCode = "BEN"
+	// CountryCodeBLM is a CountryCode of type BLM.
+	CountryCodeBLM CountryCode = "BLM"
+	// CountryCodeBMU is a CountryCode of type BMU.
+	CountryCodeBMU CountryCode = "BMU"
+	// CountryCodeBRN is a CountryCode of type BRN.
+	CountryCodeBRN CountryCode = "BRN"
+	// CountryCodeBOL is a CountryCode of type BOL.
+	CountryCodeBOL CountryCode = "BOL"
+	// CountryCodeBRA is a CountryCode of type BRA.
+	CountryCodeBRA CountryCode = "BRA"
+	// CountryCodeBHS is a CountryCode of type BHS.
+	CountryCodeBHS CountryCode = "BHS"
+	// CountryCodeBTN is a CountryCode of type BTN.
+	CountryCodeBTN CountryCode = "BTN"
+	// CountryCodeBWA is a CountryCode of type BWA.
+	CountryCodeBWA CountryCode = "BWA"
+	// CountryCodeBLR is a CountryCode of type BLR.
+	CountryCodeBLR CountryCode = "BLR"
+	// CountryCodeBLZ is a CountryCode of type BLZ.
+	CountryCodeBLZ CountryCode = "BLZ"
+	// CountryCodeCAN is a CountryCode of type CAN.
+	CountryCodeCAN CountryCode = "CAN"
+	// CountryCodeCCK is a CountryCode of type CCK.
+	CountryCodeCCK CountryCode = "CCK"
+	// CountryCodeCOD is a CountryCode of type COD.
+	CountryCodeCOD CountryCode = "COD"
+	// CountryCodeCAF is a CountryCode of type CAF.
+	CountryCodeCAF CountryCode = "CAF"
+	// CountryCodeCOG is a CountryCode of type COG.
+	CountryCodeCOG CountryCode = "COG"
+	// CountryCodeCHE is a CountryCode of type CHE.
+	CountryCodeCHE CountryCode = "CHE"
+	// CountryCodeCIV is a CountryCode of type CIV.
+	CountryCodeCIV CountryCode = "CIV"
+	// CountryCodeCOK is a CountryCode of type COK.
+	CountryCodeCOK CountryCode = "COK"
+	// CountryCodeCHL is a CountryCode of type CHL.
+	CountryCodeCHL CountryCode = "CHL"
+	// CountryCodeCMR is a CountryCode of type CMR.
+	CountryCodeCMR CountryCode = "CMR"
+	// CountryCodeCHN is a CountryCode of type CHN.
+	CountryCodeCHN CountryCode = "CHN"
+	// CountryCodeCOL is a CountryCode of type COL.
+	CountryCodeCOL CountryCode = "COL"
+	// CountryCodeCRI is a CountryCode of type CRI.
+	CountryCodeCRI CountryCode = "CRI"
+	// CountryCodeCUB is a CountryCode of type CUB.
+	CountryCodeCUB CountryCode = "CUB"
+	// CountryCodeCPV is a CountryCode of type CPV.
+	CountryCodeCPV CountryCode = "CPV"
+	// CountryCodeCUW is a CountryCode of type CUW.
+	CountryCodeCUW CountryCode = "CUW"
+	// CountryCodeCXR is a CountryCode of type CXR.
+	CountryCodeCXR CountryCode = "CXR"
+	// CountryCodeCYP is a CountryCode of type CYP.
+	CountryCodeCYP CountryCode = "CYP"
+	// CountryCodeCZE is a CountryCode of type CZE.
+	CountryCodeCZE CountryCode = "CZE"
+	// CountryCodeDEU is a CountryCode of type DEU.
+	CountryCodeDEU CountryCode = "DEU"
+	// CountryCodeDJI is a CountryCode of type DJI.
+	CountryCodeDJI CountryCode = "DJI"
+	// CountryCodeDNK is a CountryCode of type DNK.
+	CountryCodeDNK CountryCode = "DNK"
+	// CountryCodeDMA is a CountryCode of type DMA.
+	CountryCodeDMA CountryCode = "DMA"
+	// CountryCodeDOM is a CountryCode of type DOM.
+	CountryCodeDOM CountryCode = "DOM"
+	// CountryCodeDZA is a CountryCode of type DZA.
+	CountryCodeDZA CountryCode = "DZA"
+	// CountryCodeECU is a CountryCode of type ECU.
+	CountryCodeECU CountryCode = "ECU"
+	// CountryCodeEST is a CountryCode of type EST.
+	CountryCodeEST CountryCode = "EST"
+	// CountryCodeEGY is a CountryCode of type EGY.
+	CountryCodeEGY CountryCode = "EGY"
+	// CountryCodeESH is a CountryCode of type ESH.
+	CountryCodeESH CountryCode = "ESH"
+	// CountryCodeERI is a CountryCode of type ERI.
+	CountryCodeERI CountryCode = "ERI"
+	// CountryCodeESP is a CountryCode of type ESP.
+	CountryCodeESP CountryCode = "ESP"
+	// CountryCodeETH is a CountryCode of type ETH.
+	CountryCodeETH CountryCode = "ETH"
+	// CountryCodeFIN is a CountryCode of type FIN.
+	CountryCodeFIN CountryCode = "FIN"
+	// CountryCodeFJI is a CountryCode of type FJI.
+	CountryCodeFJI CountryCode = "FJI"
+	// CountryCodeFLK is a CountryCode of type FLK.
+	CountryCodeFLK CountryCode = "FLK"
+	// CountryCodeFSM is a CountryCode of type FSM.
+	CountryCodeFSM CountryCode = "FSM"
+	// CountryCodeFRO is a CountryCode of type FRO.
+	CountryCodeFRO CountryCode = "FRO"
+	// CountryCodeFRA is a CountryCode of type FRA.
+	CountryCodeFRA CountryCode = "FRA"
+	// CountryCodeGAB is a CountryCode of type GAB.
+	CountryCodeGAB CountryCode = "GAB"
+	// CountryCodeGBR is a CountryCode of type GBR.
+	CountryCodeGBR CountryCode = "GBR"
+	// CountryCodeGRD is a CountryCode of type GRD.
+	CountryCodeGRD CountryCode = "GRD"
+	// CountryCodeGEO is a CountryCode of type GEO.
+	CountryCodeGEO CountryCode = "GEO"
+	// CountryCodeGUF is a CountryCode of type GUF.
+	CountryCodeGUF CountryCode = "GUF"
+	// CountryCodeGGY is a CountryCode of type GGY.
+	CountryCodeGGY CountryCode = "GGY"
+	// CountryCodeGHA is a CountryCode of type GHA.
+	CountryCodeGHA CountryCode = "GHA"
+	// CountryCodeGIB is a CountryCode of type GIB.
+	CountryCodeGIB CountryCode = "GIB"
+	// CountryCodeGRL is a CountryCode of type GRL.
+	CountryCodeGRL CountryCode = "GRL"
+	// CountryCodeGMB is a CountryCode of type GMB.
+	CountryCodeGMB CountryCode = "GMB"
+	// CountryCodeGIN is a CountryCode of type GIN.
+	CountryCodeGIN CountryCode = "GIN"
+	// CountryCodeGLP is a CountryCode of type GLP.
+	CountryCodeGLP CountryCode = "GLP"
+	// CountryCodeGNQ is a CountryCode of type GNQ.
+	CountryCodeGNQ CountryCode = "GNQ"
+	// CountryCodeGRC is a CountryCode of type GRC.
+	CountryCodeGRC CountryCode = "GRC"
+	// CountryCodeSGS is a CountryCode of type SGS.
+	CountryCodeSGS CountryCode = "SGS"
+	// CountryCodeGTM is a CountryCode of type GTM.
+	CountryCodeGTM CountryCode = "GTM"
+	// CountryCodeGUM is a CountryCode of type GUM.
+	CountryCodeGUM CountryCode = "GUM"
+	// CountryCodeGNB is a CountryCode of type GNB.
+	CountryCodeGNB CountryCode = "GNB"
+	// CountryCodeGUY is a CountryCode of type GUY.
+	CountryCodeGUY CountryCode = "GUY"
+	// CountryCodeHKG is a CountryCode of type HKG.
+	CountryCodeHKG CountryCode = "HKG"
+	// CountryCodeHND is a CountryCode of type HND.
+	CountryCodeHND CountryCode = "HND"
+	// CountryCodeHRV is a CountryCode of type HRV.
+	CountryCodeHRV CountryCode = "HRV"
+	// CountryCodeHTI is a CountryCode of type HTI.
+	CountryCodeHTI CountryCode = "HTI"
+	// CountryCodeHUN is a CountryCode of type HUN.
+	CountryCodeHUN CountryCode = "HUN"
+	// CountryCodeIDN is a CountryCode of type IDN.
+	CountryCodeIDN CountryCode = "IDN"
+	// CountryCodeIRL is a CountryCode of type IRL.
+	CountryCodeIRL CountryCode = "IRL"
+	// CountryCodeISR is a CountryCode of type ISR.
+	CountryCodeISR CountryCode = "ISR"
+	// CountryCodeIMN is a CountryCode of type IMN.
+	CountryCodeIMN CountryCode = "IMN"
+	// CountryCodeIND is a CountryCode of type IND.
+	CountryCodeIND CountryCode = "IND"
+	// CountryCodeIOT is a CountryCode of type IOT.
+	CountryCodeIOT CountryCode = "IOT"
+	// CountryCodeIRQ is a CountryCode of type IRQ.
+	CountryCodeIRQ CountryCode = "IRQ"
+	// CountryCodeIRN is a CountryCode of type IRN.
+	CountryCodeIRN CountryCode = "IRN"
+	// CountryCodeISL is a CountryCode of type ISL.
+	CountryCodeISL CountryCode = "ISL"
+	// CountryCodeITA is a CountryCode of type ITA.
+	CountryCodeITA CountryCode = "ITA"
+	// CountryCodeJEY is a CountryCode of type JEY.
+	CountryCodeJEY CountryCode = "JEY"
+	// CountryCodeJAM is a CountryCode of type JAM.
+	CountryCodeJAM CountryCode = "JAM"
+	// CountryCodeJOR is a CountryCode of type JOR.
+	CountryCodeJOR CountryCode = "JOR"
+	// CountryCodeJPN is a CountryCode of type JPN.
+	CountryCodeJPN CountryCode = "JPN"
+	// CountryCodeKEN is a CountryCode of type KEN.
+	CountryCodeKEN CountryCode = "KEN"
+	// CountryCodeKGZ is a CountryCode of type KGZ.
+	CountryCodeKGZ CountryCode = "KGZ"
+	// CountryCodeKHM is a CountryCode of type KHM.
+	CountryCodeKHM CountryCode = "KHM"
+	// CountryCodeKIR is a CountryCode of type KIR.
+	CountryCodeKIR CountryCode = "KIR"
+	// CountryCodeCOM is a CountryCode of type COM.
+	CountryCodeCOM CountryCode = "COM"
+	// CountryCodeKNA is a CountryCode of type KNA.
+	CountryCodeKNA CountryCode = "KNA"
+	// CountryCodePRK is a CountryCode of type PRK.
+	CountryCodePRK CountryCode = "PRK"
+	// CountryCodeKOR is a CountryCode of type KOR.
+	CountryCodeKOR CountryCode = "KOR"
+	// CountryCodeKWT is a CountryCode of type KWT.
+	CountryCodeKWT CountryCode = "KWT"
+	// CountryCodeCYM is a CountryCode of type CYM.
+	CountryCodeCYM CountryCode = "CYM"
+	// CountryCodeKAZ is a CountryCode of type KAZ.
+	CountryCodeKAZ CountryCode = "KAZ"
+	// CountryCodeLAO is a CountryCode of type LAO.
+	CountryCodeLAO CountryCode = "LAO"
+	// CountryCodeLBN is a CountryCode of type LBN.
+	CountryCodeLBN CountryCode = "LBN"
+	// CountryCodeLCA is a CountryCode of type LCA.
+	CountryCodeLCA CountryCode = "LCA"
+	// CountryCodeLIE is a CountryCode of type LIE.
+	CountryCodeLIE CountryCode = "LIE"
+	// CountryCodeLKA is a CountryCode of type LKA.
+	CountryCodeLKA CountryCode = "LKA"
+	// CountryCodeLBR is a CountryCode of type LBR.
+	CountryCodeLBR CountryCode = "LBR"
+	// CountryCodeLSO is a CountryCode of type LSO.
+	CountryCodeLSO CountryCode = "LSO"
+	// CountryCodeLTU is a CountryCode of type LTU.
+	CountryCodeLTU CountryCode = "LTU"
+	// CountryCodeLUX is a CountryCode of type LUX.
+	CountryCodeLUX CountryCode = "LUX"
+	// CountryCodeLVA is a CountryCode of type LVA.
+	CountryCodeLVA CountryCode = "LVA"
+	// CountryCodeLBY is a CountryCode of type LBY.
+	CountryCodeLBY CountryCode = "LBY"
+	// CountryCodeMAR is a CountryCode of type MAR.
+	CountryCodeMAR CountryCode = "MAR"
+	// CountryCodeMCO is a CountryCode of type MCO.
+	CountryCodeMCO CountryCode = "MCO"
+	// CountryCodeMDA is a CountryCode of type MDA.
+	CountryCodeMDA CountryCode = "MDA"
+	// CountryCodeMNE is a CountryCode of type MNE.
+	CountryCodeMNE CountryCode = "MNE"
+	// CountryCodeMAF is a CountryCode of type MAF.
+	CountryCodeMAF CountryCode = "MAF"
+	// CountryCodeMDG is a CountryCode of type MDG.
+	CountryCodeMDG CountryCode = "MDG"
+	// CountryCodeMHL is a CountryCode of type MHL.
+	CountryCodeMHL CountryCode = "MHL"
+	// CountryCodeMKD is a CountryCode of type MKD.
+	CountryCodeMKD CountryCode = "MKD"
+	// CountryCodeMLI is a CountryCode of type MLI.
+	CountryCodeMLI CountryCode = "MLI"
+	// CountryCodeMMR is a CountryCode of type MMR.
+	CountryCodeMMR CountryCode = "MMR"
+	// CountryCodeMNG is a CountryCode of type MNG.
+	CountryCodeMNG CountryCode = "MNG"
+	// CountryCodeMAC is a CountryCode of type MAC.
+	CountryCodeMAC CountryCode = "MAC"
+	// CountryCodeMNP is a CountryCode of type MNP.
+	CountryCodeMNP CountryCode = "MNP"
+	// CountryCodeMTQ is a CountryCode of type MTQ.
+	CountryCodeMTQ CountryCode = "MTQ"
+	// CountryCodeMRT is a CountryCode of type MRT.
+	CountryCodeMRT CountryCode = "MRT"
+	// CountryCodeMSR is a CountryCode of type MSR.
+	CountryCodeMSR CountryCode = "MSR"
+	// CountryCodeMLT is a CountryCode of type MLT.
+	CountryCodeMLT CountryCode = "MLT"
+	// CountryCodeMUS is a CountryCode of type MUS.
+	CountryCodeMUS CountryCode = "MUS"
+	// CountryCodeMDV is a CountryCode of type MDV.
+	CountryCodeMDV CountryCode = "MDV"
+	// CountryCodeMWI is a CountryCode of type MWI.
+	CountryCodeMWI CountryCode = "MWI"
+	// CountryCodeMEX is a CountryCode of type MEX.
+	CountryCodeMEX CountryCode = "MEX"
+	// CountryCodeMYS is a CountryCode of type MYS.
+	CountryCodeMYS CountryCode = "MYS"
+	// CountryCodeMOZ is a CountryCode of type MOZ.
+	CountryCodeMOZ CountryCode = "MOZ"
+	// CountryCodeNAM is a CountryCode of type NAM.
+	CountryCodeNAM CountryCode = "NAM"
+	// CountryCodeNCL is a CountryCode of type NCL.
+	CountryCodeNCL CountryCode = "NCL"
+	// CountryCodeNER is a CountryCode of type NER.
+	CountryCodeNER CountryCode = "NER"
+	// CountryCodeNFK is a CountryCode of type NFK.
+	CountryCodeNFK CountryCode = "NFK"
+	// CountryCodeNGA is a CountryCode of type NGA.
+	CountryCodeNGA CountryCode = "NGA"
+	// CountryCodeNIC is a CountryCode of type NIC.
+	CountryCodeNIC CountryCode = "NIC"
+	// CountryCodeNLD is a CountryCode of type NLD.
+	CountryCodeNLD CountryCode = "NLD"
+	// CountryCodeNOR is a CountryCode of type NOR.
+	CountryCodeNOR CountryCode = "NOR"
+	// CountryCodeNPL is a CountryCode of type NPL.
+	CountryCodeNPL CountryCode = "NPL"
+	// CountryCodeNRU is a CountryCode of type NRU.
+	CountryCodeNRU CountryCode = "NRU"
+	// CountryCodeNIU is a CountryCode of type NIU.
+	CountryCodeNIU CountryCode = "NIU"
+	// CountryCodeNZL is a CountryCode of type NZL.
+	CountryCodeNZL CountryCode = "NZL"
+	// CountryCodeOMN is a CountryCode of type OMN.
+	CountryCodeOMN CountryCode = "OMN"
+	// CountryCodePAN is a CountryCode of type PAN.
+	CountryCodePAN CountryCode = "PAN"
+	// CountryCodePER is a CountryCode of type PER.
+	CountryCodePER CountryCode = "PER"
+	// CountryCodePYF is a CountryCode of type PYF.
+	CountryCodePYF CountryCode = "PYF"
+	// CountryCodePNG is a CountryCode of type PNG.
+	CountryCodePNG CountryCode = "PNG"
+	// CountryCodePHL is a CountryCode of type PHL.
+	CountryCodePHL CountryCode = "PHL"
+	// CountryCodePAK is a CountryCode of type PAK.
+	CountryCodePAK CountryCode = "PAK"
+	// CountryCodePOL is a CountryCode of type POL.
+	CountryCodePOL CountryCode = "POL"
+	// CountryCodeSPM is a CountryCode of type SPM.
+	CountryCodeSPM CountryCode = "SPM"
+	// CountryCodePCN is a CountryCode of type PCN.
+	CountryCodePCN CountryCode = "PCN"
+	// CountryCodePRI is a CountryCode of type PRI.
+	CountryCodePRI CountryCode = "PRI"
+	// CountryCodePSE is a CountryCode of type PSE.
+	CountryCodePSE CountryCode = "PSE"
+	// CountryCodePRT is a CountryCode of type PRT.
+	CountryCodePRT CountryCode = "PRT"
+	// CountryCodePLW is a CountryCode of type PLW.
+	CountryCodePLW CountryCode = "PLW"
+	// CountryCodePRY is a CountryCode of type PRY.
+	CountryCodePRY CountryCode = "PRY"
+	// CountryCodeQAT is a CountryCode of type QAT.
+	CountryCodeQAT CountryCode = "QAT"
+	// CountryCodeREU is a CountryCode of type REU.
+	CountryCodeREU CountryCode = "REU"
+	// CountryCodeROU is a CountryCode of type ROU.
+	CountryCodeROU CountryCode = "ROU"
+	// CountryCodeSRB is a CountryCode of type SRB.
+	CountryCodeSRB CountryCode = "SRB"
+	// CountryCodeRUS is a CountryCode of type RUS.
+	CountryCodeRUS CountryCode = "RUS"
+	// CountryCodeRWA is a CountryCode of type RWA.
+	CountryCodeRWA CountryCode = "RWA"
+	// CountryCodeSAU is a CountryCode of type SAU.
+	CountryCodeSAU CountryCode = "SAU"
+	// CountryCodeSLB is a CountryCode of type SLB.
+	CountryCodeSLB CountryCode = "SLB"
+	// CountryCodeSYC is a CountryCode of type SYC.
+	CountryCodeSYC CountryCode = "SYC"
+	// CountryCodeSDN is a CountryCode of type SDN.
+	CountryCodeSDN CountryCode = "SDN"
+	// CountryCodeSWE is a CountryCode of type SWE.
+	CountryCodeSWE CountryCode = "SWE"
+	// CountryCodeSGP is a CountryCode of type SGP.
+	CountryCodeSGP CountryCode = "SGP"
+	// CountryCodeSHN is a CountryCode of type SHN.
+	CountryCodeSHN CountryCode = "SHN"
+	// CountryCodeSVN is a CountryCode of type SVN.
+	CountryCodeSVN CountryCode = "SVN"
+	// CountryCodeSJM is a CountryCode of type SJM.
+	CountryCodeSJM CountryCode = "SJM"
+	// CountryCodeSVK is a CountryCode of type SVK.
+	CountryCodeSVK CountryCode = "SVK"
+	// CountryCodeSLE is a CountryCode of type SLE.
+	CountryCodeSLE CountryCode = "SLE"
+	// CountryCodeSMR is a CountryCode of type SMR.
+	CountryCodeSMR CountryCode = "SMR"
+	// CountryCodeSEN is a CountryCode of type SEN.
+	CountryCodeSEN CountryCode = "SEN"
+	// CountryCodeSOM is a CountryCode of type SOM.
+	CountryCodeSOM CountryCode = "SOM"
+	// CountryCodeSUR is a CountryCode of type SUR.
+	CountryCodeSUR CountryCode = "SUR"
+	// CountryCodeSSD is a CountryCode of type SSD.
+	CountryCodeSSD CountryCode = "SSD"
+	// CountryCodeSTP is a CountryCode of type STP.
+	CountryCodeSTP CountryCode = "STP"
+	// CountryCodeSLV is a CountryCode of type SLV.
+	CountryCodeSLV CountryCode = "SLV"
+	// CountryCodeSXM is a CountryCode of type SXM.
+	CountryCodeSXM CountryCode = "SXM"
+	// CountryCodeSYR is a CountryCode of type SYR.
+	CountryCodeSYR CountryCode = "SYR"
+	// CountryCodeSWZ is a CountryCode of type SWZ.
+	CountryCodeSWZ CountryCode = "SWZ"
+	// CountryCodeTCA is a CountryCode of type TCA.
+	CountryCodeTCA CountryCode = "TCA"
+	// CountryCodeTCD is a CountryCode of type TCD.
+	CountryCodeTCD CountryCode = "TCD"
+	// CountryCodeTGO is a CountryCode of type TGO.
+	CountryCodeTGO CountryCode = "TGO"
+	// CountryCodeTHA is a CountryCode of type THA.
+	CountryCodeTHA CountryCode = "THA"
+	// CountryCodeTJK is a CountryCode of type TJK.
+	CountryCodeTJK CountryCode = "TJK"
+	// CountryCodeTKL is a CountryCode of type TKL.
+	CountryCodeTKL CountryCode = "TKL"
+	// CountryCodeTLS is a CountryCode of type TLS.
+	CountryCodeTLS CountryCode = "TLS"
+	// CountryCodeTKM is a CountryCode of type TKM.
+	CountryCodeTKM CountryCode = "TKM"
+	// CountryCodeTUN is a CountryCode of type TUN.
+	CountryCodeTUN CountryCode = "TUN"
+	// CountryCodeTON is a CountryCode of type TON.
+	CountryCodeTON CountryCode = "TON"
+	// CountryCodeTUR is a CountryCode of type TUR.
+	CountryCodeTUR CountryCode = "TUR"
+	// CountryCodeTTO is a CountryCode of type TTO.
+	CountryCodeTTO CountryCode = "TTO"
+	// CountryCodeTUV is a CountryCode of type TUV.
+	CountryCodeTUV CountryCode = "TUV"
+	// CountryCodeTWN is a CountryCode of type TWN.
+	CountryCodeTWN CountryCode = "TWN"
+	// CountryCodeTZA is a CountryCode of type TZA.
+	CountryCodeTZA CountryCode = "TZA"
+	// CountryCodeUKR is a CountryCode of type UKR.
+	CountryCodeUKR CountryCode = "UKR"
+	// CountryCodeUGA is a CountryCode of type UGA.
+	CountryCodeUGA CountryCode = "UGA"
+	// CountryCodeUSA is a CountryCode of type USA.
+	CountryCodeUSA CountryCode = "USA"
+	// CountryCodeURY is a CountryCode of type URY.
+	CountryCodeURY CountryCode = "URY"
+	// CountryCodeUZB is a CountryCode of type UZB.
+	CountryCodeUZB CountryCode = "UZB"
+	// CountryCodeVAT is a CountryCode of type VAT.
+	CountryCodeVAT CountryCode = "VAT"
+	// CountryCodeVCT is a CountryCode of type VCT.
+	CountryCodeVCT CountryCode = "VCT"
+	// CountryCodeVEN is a CountryCode of type VEN.
+	CountryCodeVEN CountryCode = "VEN"
+	// CountryCodeVGB is a CountryCode of type VGB.
+	CountryCodeVGB CountryCode = "VGB"
+	// CountryCodeVIR is a CountryCode of type VIR.
+	CountryCodeVIR CountryCode = "VIR"
+	// CountryCodeVNM is a CountryCode of type VNM.
+	CountryCodeVNM CountryCode = "VNM"
+	// CountryCodeVUT is a CountryCode of type VUT.
+	CountryCodeVUT CountryCode = "VUT"
+	// CountryCodeWLF is a CountryCode of type WLF.
+	CountryCodeWLF CountryCode = "WLF"
+	// CountryCodeWSM is a CountryCode of type WSM.
+	CountryCodeWSM CountryCode = "WSM"
+	// CountryCodeYEM is a CountryCode of type YEM.
+	CountryCodeYEM CountryCode = "YEM"
+	// CountryCodeMYT is a CountryCode of type MYT.
+	CountryCodeMYT CountryCode = "MYT"
+	// CountryCodeZAF is a CountryCode of type ZAF.
+	CountryCodeZAF CountryCode = "ZAF"
+	// CountryCodeZMB is a CountryCode of type ZMB.
+	CountryCodeZMB CountryCode = "ZMB"
+	// CountryCodeZWE is a CountryCode of type ZWE.
+	CountryCodeZWE CountryCode = "ZWE"
+)
+
+var ErrInvalidCountryCode = fmt.Errorf("not a valid CountryCode, try [%s]", strings.Join(_CountryCodeNames, ", "))
+
+var _CountryCodeNames = []string{
+	string(CountryCodeAND),
+	string(CountryCodeARE),
+	string(CountryCodeAFG),
+	string(CountryCodeATG),
+	string(CountryCodeAIA),
+	string(CountryCodeALB),
+	string(CountryCodeARM),
+	string(CountryCodeAGO),
+	string(CountryCodeARG),
+	string(CountryCodeASM),
+	string(CountryCodeAUT),
+	string(CountryCodeAUS),
+	string(CountryCodeABW),
+	string(CountryCodeAZE),
+	string(CountryCodeBIH),
+	string(CountryCodeBRB),
+	string(CountryCodeBGD),
+	string(CountryCodeBEL),
+	string(CountryCodeBFA),
+	string(CountryCodeBGR),
+	string(CountryCodeBHR),
+	string(CountryCodeBDI),
+	string(CountryCodeBEN),
+	string(CountryCodeBLM),
+	string(CountryCodeBMU),
+	string(CountryCodeBRN),
+	string(CountryCodeBOL),
+	string(CountryCodeBRA),
+	string(CountryCodeBHS),
+	string(CountryCodeBTN),
+	string(CountryCodeBWA),
+	string(CountryCodeBLR),
+	string(CountryCodeBLZ),
+	string(CountryCodeCAN),
+	string(CountryCodeCCK),
+	string(CountryCodeCOD),
+	string(CountryCodeCAF),
+	string(CountryCodeCOG),
+	string(CountryCodeCHE),
+	string(CountryCodeCIV),
+	string(CountryCodeCOK),
+	string(CountryCodeCHL),
+	string(CountryCodeCMR),
+	string(CountryCodeCHN),
+	string(CountryCodeCOL),
+	string(CountryCodeCRI),
+	string(CountryCodeCUB),
+	string(CountryCodeCPV),
+	string(CountryCodeCUW),
+	string(CountryCodeCXR),
+	string(CountryCodeCYP),
+	string(CountryCodeCZE),
+	string(CountryCodeDEU),
+	string(CountryCodeDJI),
+	string(CountryCodeDNK),
+	string(CountryCodeDMA),
+	string(CountryCodeDOM),
+	string(CountryCodeDZA),
+	string(CountryCodeECU),
+	string(CountryCodeEST),
+	string(CountryCodeEGY),
+	string(CountryCodeESH),
+	string(CountryCodeERI),
+	string(CountryCodeESP),
+	string(CountryCodeETH),
+	string(CountryCodeFIN),
+	string(CountryCodeFJI),
+	string(CountryCodeFLK),
+	string(CountryCodeFSM),
+	string(CountryCodeFRO),
+	string(CountryCodeFRA),
+	string(CountryCodeGAB),
+	string(CountryCodeGBR),
+	string(CountryCodeGRD),
+	string(CountryCodeGEO),
+	string(CountryCodeGUF),
+	string(CountryCodeGGY),
+	string(CountryCodeGHA),
+	string(CountryCodeGIB),
+	string(CountryCodeGRL),
+	string(CountryCodeGMB),
+	string(CountryCodeGIN),
+	string(CountryCodeGLP),
+	string(CountryCodeGNQ),
+	string(CountryCodeGRC),
+	string(CountryCodeSGS),
+	string(CountryCodeGTM),
+	string(CountryCodeGUM),
+	string(CountryCodeGNB),
+	string(CountryCodeGUY),
+	string(CountryCodeHKG),
+	string(CountryCodeHND),
+	string(CountryCodeHRV),
+	string(CountryCodeHTI),
+	string(CountryCodeHUN),
+	string(CountryCodeIDN),
+	string(CountryCodeIRL),
+	string(CountryCodeISR),
+	string(CountryCodeIMN),
+	string(CountryCodeIND),
+	string(CountryCodeIOT),
+	string(CountryCodeIRQ),
+	string(CountryCodeIRN),
+	string(CountryCodeISL),
+	string(CountryCodeITA),
+	string(CountryCodeJEY),
+	string(CountryCodeJAM),
+	string(CountryCodeJOR),
+	string(CountryCodeJPN),
+	string(CountryCodeKEN),
+	string(CountryCodeKGZ),
+	string(CountryCodeKHM),
+	string(CountryCodeKIR),
+	string(CountryCodeCOM),
+	string(CountryCodeKNA),
+	string(CountryCodePRK),
+	string(CountryCodeKOR),
+	string(CountryCodeKWT),
+	string(CountryCodeCYM),
+	string(CountryCodeKAZ),
+	string(CountryCodeLAO),
+	string(CountryCodeLBN),
+	string(CountryCodeLCA),
+	string(CountryCodeLIE),
+	string(CountryCodeLKA),
+	string(CountryCodeLBR),
+	string(CountryCodeLSO),
+	string(CountryCodeLTU),
+	string(CountryCodeLUX),
+	string(CountryCodeLVA),
+	string(CountryCodeLBY),
+	string(CountryCodeMAR),
+	string(CountryCodeMCO),
+	string(CountryCodeMDA),
+	string(CountryCodeMNE),
+	string(CountryCodeMAF),
+	string(CountryCodeMDG),
+	string(CountryCodeMHL),
+	string(CountryCodeMKD),
+	string(CountryCodeMLI),
+	string(CountryCodeMMR),
+	string(CountryCodeMNG),
+	string(CountryCodeMAC),
+	string(CountryCodeMNP),
+	string(CountryCodeMTQ),
+	string(CountryCodeMRT),
+	string(CountryCodeMSR),
+	string(CountryCodeMLT),
+	string(CountryCodeMUS),
+	string(CountryCodeMDV),
+	string(CountryCodeMWI),
+	string(CountryCodeMEX),
+	string(CountryCodeMYS),
+	string(CountryCodeMOZ),
+	string(CountryCodeNAM),
+	string(CountryCodeNCL),
+	string(CountryCodeNER),
+	string(CountryCodeNFK),
+	string(CountryCodeNGA),
+	string(CountryCodeNIC),
+	string(CountryCodeNLD),
+	string(CountryCodeNOR),
+	string(CountryCodeNPL),
+	string(CountryCodeNRU),
+	string(CountryCodeNIU),
+	string(CountryCodeNZL),
+	string(CountryCodeOMN),
+	string(CountryCodePAN),
+	string(CountryCodePER),
+	string(CountryCodePYF),
+	string(CountryCodePNG),
+	string(CountryCodePHL),
+	string(CountryCodePAK),
+	string(CountryCodePOL),
+	string(CountryCodeSPM),
+	string(CountryCodePCN),
+	string(CountryCodePRI),
+	string(CountryCodePSE),
+	string(CountryCodePRT),
+	string(CountryCodePLW),
+	string(CountryCodePRY),
+	string(CountryCodeQAT),
+	string(CountryCodeREU),
+	string(CountryCodeROU),
+	string(CountryCodeSRB),
+	string(CountryCodeRUS),
+	string(CountryCodeRWA),
+	string(CountryCodeSAU),
+	string(CountryCodeSLB),
+	string(CountryCodeSYC),
+	string(CountryCodeSDN),
+	string(CountryCodeSWE),
+	string(CountryCodeSGP),
+	string(CountryCodeSHN),
+	string(CountryCodeSVN),
+	string(CountryCodeSJM),
+	string(CountryCodeSVK),
+	string(CountryCodeSLE),
+	string(CountryCodeSMR),
+	string(CountryCodeSEN),
+	string(CountryCodeSOM),
+	string(CountryCodeSUR),
+	string(CountryCodeSSD),
+	string(CountryCodeSTP),
+	string(CountryCodeSLV),
+	string(CountryCodeSXM),
+	string(CountryCodeSYR),
+	string(CountryCodeSWZ),
+	string(CountryCodeTCA),
+	string(CountryCodeTCD),
+	string(CountryCodeTGO),
+	string(CountryCodeTHA),
+	string(CountryCodeTJK),
+	string(CountryCodeTKL),
+	string(CountryCodeTLS),
+	string(CountryCodeTKM),
+	string(CountryCodeTUN),
+	string(CountryCodeTON),
+	string(CountryCodeTUR),
+	string(CountryCodeTTO),
+	string(CountryCodeTUV),
+	string(CountryCodeTWN),
+	string(CountryCodeTZA),
+	string(CountryCodeUKR),
+	string(CountryCodeUGA),
+	string(CountryCodeUSA),
+	string(CountryCodeURY),
+	string(CountryCodeUZB),
+	string(CountryCodeVAT),
+	string(CountryCodeVCT),
+	string(CountryCodeVEN),
+	string(CountryCodeVGB),
+	string(CountryCodeVIR),
+	string(CountryCodeVNM),
+	string(CountryCodeVUT),
+	string(CountryCodeWLF),
+	string(CountryCodeWSM),
+	string(CountryCodeYEM),
+	string(CountryCodeMYT),
+	string(CountryCodeZAF),
+	string(CountryCodeZMB),
+	string(CountryCodeZWE),
+}
+
+// CountryCodeNames returns a list of possible string values of CountryCode.
+func CountryCodeNames() []string {
+	tmp := make([]string, len(_CountryCodeNames))
+	copy(tmp, _CountryCodeNames)
+	return tmp
+}
+
+// String implements the Stringer interface.
+func (x CountryCode) String() string {
+	return string(x)
+}
+
+// IsValid provides a quick way to determine if the typed value is
+// part of the allowed enumerated values
+func (x CountryCode) IsValid() bool {
+	_, err := ParseCountryCode(string(x))
+	return err == nil
+}
+
+var _CountryCodeValue = map[string]CountryCode{
+	"AND": CountryCodeAND,
+	"and": CountryCodeAND,
+	"ARE": CountryCodeARE,
+	"are": CountryCodeARE,
+	"AFG": CountryCodeAFG,
+	"afg": CountryCodeAFG,
+	"ATG": CountryCodeATG,
+	"atg": CountryCodeATG,
+	"AIA": CountryCodeAIA,
+	"aia": CountryCodeAIA,
+	"ALB": CountryCodeALB,
+	"alb": CountryCodeALB,
+	"ARM": CountryCodeARM,
+	"arm": CountryCodeARM,
+	"AGO": CountryCodeAGO,
+	"ago": CountryCodeAGO,
+	"ARG": CountryCodeARG,
+	"arg": CountryCodeARG,
+	"ASM": CountryCodeASM,
+	"asm": CountryCodeASM,
+	"AUT": CountryCodeAUT,
+	"aut": CountryCodeAUT,
+	"AUS": CountryCodeAUS,
+	"aus": CountryCodeAUS,
+	"ABW": CountryCodeABW,
+	"abw": CountryCodeABW,
+	"AZE": CountryCodeAZE,
+	"aze": CountryCodeAZE,
+	"BIH": CountryCodeBIH,
+	"bih": CountryCodeBIH,
+	"BRB": CountryCodeBRB,
+	"brb": CountryCodeBRB,
+	"BGD": CountryCodeBGD,
+	"bgd": CountryCodeBGD,
+	"BEL": CountryCodeBEL,
+	"bel": CountryCodeBEL,
+	"BFA": CountryCodeBFA,
+	"bfa": CountryCodeBFA,
+	"BGR": CountryCodeBGR,
+	"bgr": CountryCodeBGR,
+	"BHR": CountryCodeBHR,
+	"bhr": CountryCodeBHR,
+	"BDI": CountryCodeBDI,
+	"bdi": CountryCodeBDI,
+	"BEN": CountryCodeBEN,
+	"ben": CountryCodeBEN,
+	"BLM": CountryCodeBLM,
+	"blm": CountryCodeBLM,
+	"BMU": CountryCodeBMU,
+	"bmu": CountryCodeBMU,
+	"BRN": CountryCodeBRN,
+	"brn": CountryCodeBRN,
+	"BOL": CountryCodeBOL,
+	"bol": CountryCodeBOL,
+	"BRA": CountryCodeBRA,
+	"bra": CountryCodeBRA,
+	"BHS": CountryCodeBHS,
+	"bhs": CountryCodeBHS,
+	"BTN": CountryCodeBTN,
+	"btn": CountryCodeBTN,
+	"BWA": CountryCodeBWA,
+	"bwa": CountryCodeBWA,
+	"BLR": CountryCodeBLR,
+	"blr": CountryCodeBLR,
+	"BLZ": CountryCodeBLZ,
+	"blz": CountryCodeBLZ,
+	"CAN": CountryCodeCAN,
+	"can": CountryCodeCAN,
+	"CCK": CountryCodeCCK,
+	"cck": CountryCodeCCK,
+	"COD": CountryCodeCOD,
+	"cod": CountryCodeCOD,
+	"CAF": CountryCodeCAF,
+	"caf": CountryCodeCAF,
+	"COG": CountryCodeCOG,
+	"cog": CountryCodeCOG,
+	"CHE": CountryCodeCHE,
+	"che": CountryCodeCHE,
+	"CIV": CountryCodeCIV,
+	"civ": CountryCodeCIV,
+	"COK": CountryCodeCOK,
+	"cok": CountryCodeCOK,
+	"CHL": CountryCodeCHL,
+	"chl": CountryCodeCHL,
+	"CMR": CountryCodeCMR,
+	"cmr": CountryCodeCMR,
+	"CHN": CountryCodeCHN,
+	"chn": CountryCodeCHN,
+	"COL": CountryCodeCOL,
+	"col": CountryCodeCOL,
+	"CRI": CountryCodeCRI,
+	"cri": CountryCodeCRI,
+	"CUB": CountryCodeCUB,
+	"cub": CountryCodeCUB,
+	"CPV": CountryCodeCPV,
+	"cpv": CountryCodeCPV,
+	"CUW": CountryCodeCUW,
+	"cuw": CountryCodeCUW,
+	"CXR": CountryCodeCXR,
+	"cxr": CountryCodeCXR,
+	"CYP": CountryCodeCYP,
+	"cyp": CountryCodeCYP,
+	"CZE": CountryCodeCZE,
+	"cze": CountryCodeCZE,
+	"DEU": CountryCodeDEU,
+	"deu": CountryCodeDEU,
+	"DJI": CountryCodeDJI,
+	"dji": CountryCodeDJI,
+	"DNK": CountryCodeDNK,
+	"dnk": CountryCodeDNK,
+	"DMA": CountryCodeDMA,
+	"dma": CountryCodeDMA,
+	"DOM": CountryCodeDOM,
+	"dom": CountryCodeDOM,
+	"DZA": CountryCodeDZA,
+	"dza": CountryCodeDZA,
+	"ECU": CountryCodeECU,
+	"ecu": CountryCodeECU,
+	"EST": CountryCodeEST,
+	"est": CountryCodeEST,
+	"EGY": CountryCodeEGY,
+	"egy": CountryCodeEGY,
+	"ESH": CountryCodeESH,
+	"esh": CountryCodeESH,
+	"ERI": CountryCodeERI,
+	"eri": CountryCodeERI,
+	"ESP": CountryCodeESP,
+	"esp": CountryCodeESP,
+	"ETH": CountryCodeETH,
+	"eth": CountryCodeETH,
+	"FIN": CountryCodeFIN,
+	"fin": CountryCodeFIN,
+	"FJI": CountryCodeFJI,
+	"fji": CountryCodeFJI,
+	"FLK": CountryCodeFLK,
+	"flk": CountryCodeFLK,
+	"FSM": CountryCodeFSM,
+	"fsm": CountryCodeFSM,
+	"FRO": CountryCodeFRO,
+	"fro": CountryCodeFRO,
+	"FRA": CountryCodeFRA,
+	"fra": CountryCodeFRA,
+	"GAB": CountryCodeGAB,
+	"gab": CountryCodeGAB,
+	"GBR": CountryCodeGBR,
+	"gbr": CountryCodeGBR,
+	"GRD": CountryCodeGRD,
+	"grd": CountryCodeGRD,
+	"GEO": CountryCodeGEO,
+	"geo": CountryCodeGEO,
+	"GUF": CountryCodeGUF,
+	"guf": CountryCodeGUF,
+	"GGY": CountryCodeGGY,
+	"ggy": CountryCodeGGY,
+	"GHA": CountryCodeGHA,
+	"gha": CountryCodeGHA,
+	"GIB": CountryCodeGIB,
+	"gib": CountryCodeGIB,
+	"GRL": CountryCodeGRL,
+	"grl": CountryCodeGRL,
+	"GMB": CountryCodeGMB,
+	"gmb": CountryCodeGMB,
+	"GIN": CountryCodeGIN,
+	"gin": CountryCodeGIN,
+	"GLP": CountryCodeGLP,
+	"glp": CountryCodeGLP,
+	"GNQ": CountryCodeGNQ,
+	"gnq": CountryCodeGNQ,
+	"GRC": CountryCodeGRC,
+	"grc": CountryCodeGRC,
+	"SGS": CountryCodeSGS,
+	"sgs": CountryCodeSGS,
+	"GTM": CountryCodeGTM,
+	"gtm": CountryCodeGTM,
+	"GUM": CountryCodeGUM,
+	"gum": CountryCodeGUM,
+	"GNB": CountryCodeGNB,
+	"gnb": CountryCodeGNB,
+	"GUY": CountryCodeGUY,
+	"guy": CountryCodeGUY,
+	"HKG": CountryCodeHKG,
+	"hkg": CountryCodeHKG,
+	"HND": CountryCodeHND,
+	"hnd": CountryCodeHND,
+	"HRV": CountryCodeHRV,
+	"hrv": CountryCodeHRV,
+	"HTI": CountryCodeHTI,
+	"hti": CountryCodeHTI,
+	"HUN": CountryCodeHUN,
+	"hun": CountryCodeHUN,
+	"IDN": CountryCodeIDN,
+	"idn": CountryCodeIDN,
+	"IRL": CountryCodeIRL,
+	"irl": CountryCodeIRL,
+	"ISR": CountryCodeISR,
+	"isr": CountryCodeISR,
+	"IMN": CountryCodeIMN,
+	"imn": CountryCodeIMN,
+	"IND": CountryCodeIND,
+	"ind": CountryCodeIND,
+	"IOT": CountryCodeIOT,
+	"iot": CountryCodeIOT,
+	"IRQ": CountryCodeIRQ,
+	"irq": CountryCodeIRQ,
+	"IRN": CountryCodeIRN,
+	"irn": CountryCodeIRN,
+	"ISL": CountryCodeISL,
+	"isl": CountryCodeISL,
+	"ITA": CountryCodeITA,
+	"ita": CountryCodeITA,
+	"JEY": CountryCodeJEY,
+	"jey": CountryCodeJEY,
+	"JAM": CountryCodeJAM,
+	"jam": CountryCodeJAM,
+	"JOR": CountryCodeJOR,
+	"jor": CountryCodeJOR,
+	"JPN": CountryCodeJPN,
+	"jpn": CountryCodeJPN,
+	"KEN": CountryCodeKEN,
+	"ken": CountryCodeKEN,
+	"KGZ": CountryCodeKGZ,
+	"kgz": CountryCodeKGZ,
+	"KHM": CountryCodeKHM,
+	"khm": CountryCodeKHM,
+	"KIR": CountryCodeKIR,
+	"kir": CountryCodeKIR,
+	"COM": CountryCodeCOM,
+	"com": CountryCodeCOM,
+	"KNA": CountryCodeKNA,
+	"kna": CountryCodeKNA,
+	"PRK": CountryCodePRK,
+	"prk": CountryCodePRK,
+	"KOR": CountryCodeKOR,
+	"kor": CountryCodeKOR,
+	"KWT": CountryCodeKWT,
+	"kwt": CountryCodeKWT,
+	"CYM": CountryCodeCYM,
+	"cym": CountryCodeCYM,
+	"KAZ": CountryCodeKAZ,
+	"kaz": CountryCodeKAZ,
+	"LAO": CountryCodeLAO,
+	"lao": CountryCodeLAO,
+	"LBN": CountryCodeLBN,
+	"lbn": CountryCodeLBN,
+	"LCA": CountryCodeLCA,
+	"lca": CountryCodeLCA,
+	"LIE": CountryCodeLIE,
+	"lie": CountryCodeLIE,
+	"LKA": CountryCodeLKA,
+	"lka": CountryCodeLKA,
+	"LBR": CountryCodeLBR,
+	"lbr": CountryCodeLBR,
+	"LSO": CountryCodeLSO,
+	"lso": CountryCodeLSO,
+	"LTU": CountryCodeLTU,
+	"ltu": CountryCodeLTU,
+	"LUX": CountryCodeLUX,
+	"lux": CountryCodeLUX,
+	"LVA": CountryCodeLVA,
+	"lva": CountryCodeLVA,
+	"LBY": CountryCodeLBY,
+	"lby": CountryCodeLBY,
+	"MAR": CountryCodeMAR,
+	"mar": CountryCodeMAR,
+	"MCO": CountryCodeMCO,
+	"mco": CountryCodeMCO,
+	"MDA": CountryCodeMDA,
+	"mda": CountryCodeMDA,
+	"MNE": CountryCodeMNE,
+	"mne": CountryCodeMNE,
+	"MAF": CountryCodeMAF,
+	"maf": CountryCodeMAF,
+	"MDG": CountryCodeMDG,
+	"mdg": CountryCodeMDG,
+	"MHL": CountryCodeMHL,
+	"mhl": CountryCodeMHL,
+	"MKD": CountryCodeMKD,
+	"mkd": CountryCodeMKD,
+	"MLI": CountryCodeMLI,
+	"mli": CountryCodeMLI,
+	"MMR": CountryCodeMMR,
+	"mmr": CountryCodeMMR,
+	"MNG": CountryCodeMNG,
+	"mng": CountryCodeMNG,
+	"MAC": CountryCodeMAC,
+	"mac": CountryCodeMAC,
+	"MNP": CountryCodeMNP,
+	"mnp": CountryCodeMNP,
+	"MTQ": CountryCodeMTQ,
+	"mtq": CountryCodeMTQ,
+	"MRT": CountryCodeMRT,
+	"mrt": CountryCodeMRT,
+	"MSR": CountryCodeMSR,
+	"msr": CountryCodeMSR,
+	"MLT": CountryCodeMLT,
+	"mlt": CountryCodeMLT,
+	"MUS": CountryCodeMUS,
+	"mus": CountryCodeMUS,
+	"MDV": CountryCodeMDV,
+	"mdv": CountryCodeMDV,
+	"MWI": CountryCodeMWI,
+	"mwi": CountryCodeMWI,
+	"MEX": CountryCodeMEX,
+	"mex": CountryCodeMEX,
+	"MYS": CountryCodeMYS,
+	"mys": CountryCodeMYS,
+	"MOZ": CountryCodeMOZ,
+	"moz": CountryCodeMOZ,
+	"NAM": CountryCodeNAM,
+	"nam": CountryCodeNAM,
+	"NCL": CountryCodeNCL,
+	"ncl": CountryCodeNCL,
+	"NER": CountryCodeNER,
+	"ner": CountryCodeNER,
+	"NFK": CountryCodeNFK,
+	"nfk": CountryCodeNFK,
+	"NGA": CountryCodeNGA,
+	"nga": CountryCodeNGA,
+	"NIC": CountryCodeNIC,
+	"nic": CountryCodeNIC,
+	"NLD": CountryCodeNLD,
+	"nld": CountryCodeNLD,
+	"NOR": CountryCodeNOR,
+	"nor": CountryCodeNOR,
+	"NPL": CountryCodeNPL,
+	"npl": CountryCodeNPL,
+	"NRU": CountryCodeNRU,
+	"nru": CountryCodeNRU,
+	"NIU": CountryCodeNIU,
+	"niu": CountryCodeNIU,
+	"NZL": CountryCodeNZL,
+	"nzl": CountryCodeNZL,
+	"OMN": CountryCodeOMN,
+	"omn": CountryCodeOMN,
+	"PAN": CountryCodePAN,
+	"pan": CountryCodePAN,
+	"PER": CountryCodePER,
+	"per": CountryCodePER,
+	"PYF": CountryCodePYF,
+	"pyf": CountryCodePYF,
+	"PNG": CountryCodePNG,
+	"png": CountryCodePNG,
+	"PHL": CountryCodePHL,
+	"phl": CountryCodePHL,
+	"PAK": CountryCodePAK,
+	"pak": CountryCodePAK,
+	"POL": CountryCodePOL,
+	"pol": CountryCodePOL,
+	"SPM": CountryCodeSPM,
+	"spm": CountryCodeSPM,
+	"PCN": CountryCodePCN,
+	"pcn": CountryCodePCN,
+	"PRI": CountryCodePRI,
+	"pri": CountryCodePRI,
+	"PSE": CountryCodePSE,
+	"pse": CountryCodePSE,
+	"PRT": CountryCodePRT,
+	"prt": CountryCodePRT,
+	"PLW": CountryCodePLW,
+	"plw": CountryCodePLW,
+	"PRY": CountryCodePRY,
+	"pry": CountryCodePRY,
+	"QAT": CountryCodeQAT,
+	"qat": CountryCodeQAT,
+	"REU": CountryCodeREU,
+	"reu": CountryCodeREU,
+	"ROU": CountryCodeROU,
+	"rou": CountryCodeROU,
+	"SRB": CountryCodeSRB,
+	"srb": CountryCodeSRB,
+	"RUS": CountryCodeRUS,
+	"rus": CountryCodeRUS,
+	"RWA": CountryCodeRWA,
+	"rwa": CountryCodeRWA,
+	"SAU": CountryCodeSAU,
+	"sau": CountryCodeSAU,
+	"SLB": CountryCodeSLB,
+	"slb": CountryCodeSLB,
+	"SYC": CountryCodeSYC,
+	"syc": CountryCodeSYC,
+	"SDN": CountryCodeSDN,
+	"sdn": CountryCodeSDN,
+	"SWE": CountryCodeSWE,
+	"swe": CountryCodeSWE,
+	"SGP": CountryCodeSGP,
+	"sgp": CountryCodeSGP,
+	"SHN": CountryCodeSHN,
+	"shn": CountryCodeSHN,
+	"SVN": CountryCodeSVN,
+	"svn": CountryCodeSVN,
+	"SJM": CountryCodeSJM,
+	"sjm": CountryCodeSJM,
+	"SVK": CountryCodeSVK,
+	"svk": CountryCodeSVK,
+	"SLE": CountryCodeSLE,
+	"sle": CountryCodeSLE,
+	"SMR": CountryCodeSMR,
+	"smr": CountryCodeSMR,
+	"SEN": CountryCodeSEN,
+	"sen": CountryCodeSEN,
+	"SOM": CountryCodeSOM,
+	"som": CountryCodeSOM,
+	"SUR": CountryCodeSUR,
+	"sur": CountryCodeSUR,
+	"SSD": CountryCodeSSD,
+	"ssd": CountryCodeSSD,
+	"STP": CountryCodeSTP,
+	"stp": CountryCodeSTP,
+	"SLV": CountryCodeSLV,
+	"slv": CountryCodeSLV,
+	"SXM": CountryCodeSXM,
+	"sxm": CountryCodeSXM,
+	"SYR": CountryCodeSYR,
+	"syr": CountryCodeSYR,
+	"SWZ": CountryCodeSWZ,
+	"swz": CountryCodeSWZ,
+	"TCA": CountryCodeTCA,
+	"tca": CountryCodeTCA,
+	"TCD": CountryCodeTCD,
+	"tcd": CountryCodeTCD,
+	"TGO": CountryCodeTGO,
+	"tgo": CountryCodeTGO,
+	"THA": CountryCodeTHA,
+	"tha": CountryCodeTHA,
+	"TJK": CountryCodeTJK,
+	"tjk": CountryCodeTJK,
+	"TKL": CountryCodeTKL,
+	"tkl": CountryCodeTKL,
+	"TLS": CountryCodeTLS,
+	"tls": CountryCodeTLS,
+	"TKM": CountryCodeTKM,
+	"tkm": CountryCodeTKM,
+	"TUN": CountryCodeTUN,
+	"tun": CountryCodeTUN,
+	"TON": CountryCodeTON,
+	"ton": CountryCodeTON,
+	"TUR": CountryCodeTUR,
+	"tur": CountryCodeTUR,
+	"TTO": CountryCodeTTO,
+	"tto": CountryCodeTTO,
+	"TUV": CountryCodeTUV,
+	"tuv": CountryCodeTUV,
+	"TWN": CountryCodeTWN,
+	"twn": CountryCodeTWN,
+	"TZA": CountryCodeTZA,
+	"tza": CountryCodeTZA,
+	"UKR": CountryCodeUKR,
+	"ukr": CountryCodeUKR,
+	"UGA": CountryCodeUGA,
+	"uga": CountryCodeUGA,
+	"USA": CountryCodeUSA,
+	"usa": CountryCodeUSA,
+	"URY": CountryCodeURY,
+	"ury": CountryCodeURY,
+	"UZB": CountryCodeUZB,
+	"uzb": CountryCodeUZB,
+	"VAT": CountryCodeVAT,
+	"vat": CountryCodeVAT,
+	"VCT": CountryCodeVCT,
+	"vct": CountryCodeVCT,
+	"VEN": CountryCodeVEN,
+	"ven": CountryCodeVEN,
+	"VGB": CountryCodeVGB,
+	"vgb": CountryCodeVGB,
+	"VIR": CountryCodeVIR,
+	"vir": CountryCodeVIR,
+	"VNM": CountryCodeVNM,
+	"vnm": CountryCodeVNM,
+	"VUT": CountryCodeVUT,
+	"vut": CountryCodeVUT,
+	"WLF": CountryCodeWLF,
+	"wlf": CountryCodeWLF,
+	"WSM": CountryCodeWSM,
+	"wsm": CountryCodeWSM,
+	"YEM": CountryCodeYEM,
+	"yem": CountryCodeYEM,
+	"MYT": CountryCodeMYT,
+	"myt": CountryCodeMYT,
+	"ZAF": CountryCodeZAF,
+	"zaf": CountryCodeZAF,
+	"ZMB": CountryCodeZMB,
+	"zmb": CountryCodeZMB,
+	"ZWE": CountryCodeZWE,
+	"zwe": CountryCodeZWE,
+}
+
+// ParseCountryCode attempts to convert a string to a CountryCode.
+func ParseCountryCode(name string) (CountryCode, error) {
+	if x, ok := _CountryCodeValue[name]; ok {
+		return x, nil
+	}
+	// Case insensitive parse, do a separate lookup to prevent unnecessary cost of lowercasing a string if we don't need to.
+	if x, ok := _CountryCodeValue[strings.ToLower(name)]; ok {
+		return x, nil
+	}
+	return CountryCode(""), fmt.Errorf("%s is %w", name, ErrInvalidCountryCode)
+}
+
+// MarshalText implements the text marshaller method.
+func (x CountryCode) MarshalText() ([]byte, error) {
+	return []byte(string(x)), nil
+}
+
+// UnmarshalText implements the text unmarshaller method.
+func (x *CountryCode) UnmarshalText(text []byte) error {
+	tmp, err := ParseCountryCode(string(text))
+	if err != nil {
+		return err
+	}
+	*x = tmp
+	return nil
+}
+
+// AppendText appends the textual representation of itself to the end of b
+// (allocating a larger slice if necessary) and returns the updated slice.
+//
+// Implementations must not retain b, nor mutate any bytes within b[:len(b)].
+func (x *CountryCode) AppendText(b []byte) ([]byte, error) {
+	return append(b, x.String()...), nil
+}
+
+const (
 	// CurrencyUSD is a Currency of type USD.
 	CurrencyUSD Currency = "USD"
 )

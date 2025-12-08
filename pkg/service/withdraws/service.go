@@ -63,7 +63,7 @@ type Service interface {
 		ctx context.Context, id svc.CustomerID, req *CreateWithdrawalRequest,
 	) (*WithdrawalResponse, error)
 	// GetWithdrawal retrieves a specific withdrawal by ID.
-	GetWithdrawal(ctx context.Context, id svc.CustomerID, withdrawalID string) (*WithdrawalResponse, error)
+	GetWithdrawal(ctx context.Context, id svc.CustomerID, transactionID string) (*WithdrawalResponse, error)
 	// GetWithdrawalByIdempotencyKey retrieves a withdrawal by its idempotency key.
 	GetWithdrawalByIdempotencyKey(
 		ctx context.Context, id svc.CustomerID, idempotencyKey string,

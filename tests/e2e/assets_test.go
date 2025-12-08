@@ -61,14 +61,33 @@ func (s *AssetsTestSuite) TestAssets_ListAssets() {
 		{
 			name: "FilterByNetwork",
 			req:  &assets.ListAssetsRequest{Network: assets.NetworkNameETHEREUM},
+			checkFn: func(resp []assets.AssetResponse) {
+				for _, asset := range resp {
+					s.Equal(string(assets.NetworkNameETHEREUM), asset.Network, "Network should be ETHEREUM")
+				}
+			},
 		},
 		{
 			name: "WithSortOrderDesc",
 			req:  &assets.ListAssetsRequest{SortOrder: assets.SortOrderDESC},
+			checkFn: func(resp []assets.AssetResponse) {
+				// Verify descending order by CreatedAt
+				for i := 1; i < len(resp); i++ {
+					s.GreaterOrEqual(resp[i-1].CreatedAt, resp[i].CreatedAt,
+						"Assets should be sorted in descending order by CreatedAt")
+				}
+			},
 		},
 		{
 			name: "WithSortOrderAsc",
 			req:  &assets.ListAssetsRequest{SortOrder: assets.SortOrderASC},
+			checkFn: func(resp []assets.AssetResponse) {
+				// Verify ascending order by CreatedAt
+				for i := 1; i < len(resp); i++ {
+					s.LessOrEqual(resp[i-1].CreatedAt, resp[i].CreatedAt,
+						"Assets should be sorted in ascending order by CreatedAt")
+				}
+			},
 		},
 	}
 

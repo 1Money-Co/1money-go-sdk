@@ -49,17 +49,12 @@ func (s *CustomerTestSuite) TestCustomerService_TOSFlow() {
 	s.T().Logf("Signed agreement with ID:\n%s", PrettyJSON(signResp))
 }
 
-func (s *CustomerTestSuite) TestCustomerService_SignTOS() {
-	sessionToken := "54dbc3d2-d88e-4ae2-839f-4d2f9906ade2" //nolint:gosec // test session token
-	signResp, err := s.Client.Customer.SignTOSAgreement(s.Ctx, sessionToken)
-	s.Require().NoError(err, "SignTOSAgreement should not return error")
-	s.Require().NotNil(signResp, "SignTOSAgreement response should not be nil")
-	s.NotEmpty(signResp.SignedAgreementID, "Signed agreement ID should not be empty")
-	s.T().Logf("Signed agreement with ID:\n%s", PrettyJSON(signResp))
-}
-
 // TestCustomerService_CreateCustomer tests customer creation.
 func (s *CustomerTestSuite) TestCustomerService_CreateCustomer() {
+	// Get a valid signed agreement ID dynamically
+	signedAgreementID, err := s.EnsureSignedAgreement()
+	s.Require().NoError(err, "EnsureSignedAgreement should succeed")
+
 	faker := gofakeit.New(0)
 
 	req := &customer.CreateCustomerRequest{
@@ -79,7 +74,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer() {
 			Subdivision: faker.StateAbr(),
 		},
 		DateOfIncorporation: faker.Date().Format("2006-01-02"),
-		SignedAgreementID:   "dfdff042-0ad4-4010-8054-5eb234a0de94",
+		SignedAgreementID:   signedAgreementID,
 		AssociatedPersons: []customer.AssociatedPerson{
 			FakeAssociatedPerson(faker),
 			FakeAssociatedPerson(faker),
