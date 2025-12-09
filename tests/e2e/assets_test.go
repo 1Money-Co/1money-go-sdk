@@ -63,7 +63,8 @@ func (s *AssetsTestSuite) TestAssets_ListAssets() {
 			req:  &assets.ListAssetsRequest{Network: assets.NetworkNameETHEREUM},
 			checkFn: func(resp []assets.AssetResponse) {
 				for _, asset := range resp {
-					s.Equal(string(assets.NetworkNameETHEREUM), asset.Network, "Network should be ETHEREUM")
+					s.Require().NotNil(asset.Network, "Network should not be nil")
+					s.Equal(string(assets.NetworkNameETHEREUM), *asset.Network, "Network should be ETHEREUM")
 				}
 			},
 		},

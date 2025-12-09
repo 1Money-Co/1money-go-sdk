@@ -214,7 +214,8 @@ func (t *Transport) doOnce(ctx context.Context, req *Request) (*Response, error)
 	)
 
 	// Print curl command separately for easy copy-paste
-	if os.Getenv("ONEMONEY_DEBUG_CURL") == "1" {
+	// Skip if body is too large (> 4KB) to avoid cluttering output
+	if debugCurlEnabled {
 		fmt.Fprintln(os.Stderr, buildCurlCommand(httpReq, req.Body))
 	}
 
@@ -349,7 +350,7 @@ func (t *Transport) buildHTTPRequest(ctx context.Context, req *Request, sigResul
 	}
 
 	// Add X-Forwarded-For header in debug mode for testing rate limiting
-	if os.Getenv("ONEMONEY_DEBUG") == "1" {
+	if debugEnabled {
 		if localIP := getLocalIP(); localIP != "" {
 			httpReq.Header.Set("X-Forwarded-For", localIP)
 		}
@@ -402,30 +403,47 @@ func joinStrings(strs []string, sep string) string {
 	return result
 }
 
-// buildCurlCommand generates a curl command string from an HTTP request for debugging.
+// buildCurlCommand generates a single-line curl command for easy copy-paste.
 func buildCurlCommand(req *http.Request, body []byte) string {
-	var lines []string
-	lines = append(lines, "curl -v")
+	var parts []string
+	parts = append(parts, "curl")
 
 	// Add method
 	if req.Method != http.MethodGet {
-		lines = append(lines, fmt.Sprintf("  -X %s", req.Method))
+		parts = append(parts, fmt.Sprintf("-X %s", req.Method))
 	}
 
 	// Add headers
 	for key, values := range req.Header {
 		for _, value := range values {
-			lines = append(lines, fmt.Sprintf("  -H '%s: %s'", key, value))
+			escapedValue := escapeShellString(value)
+			parts = append(parts, fmt.Sprintf("-H '%s: %s'", key, escapedValue))
 		}
 	}
 
 	// Add body
 	if len(body) > 0 {
-		lines = append(lines, fmt.Sprintf("  -d '%s'", string(body)))
+		escapedBody := escapeShellString(string(body))
+		parts = append(parts, fmt.Sprintf("-d '%s'", escapedBody))
 	}
 
 	// Add URL
-	lines = append(lines, fmt.Sprintf("  '%s'", req.URL.String()))
+	parts = append(parts, fmt.Sprintf("'%s'", req.URL.String()))
 
-	return joinStrings(lines, " \\\n")
+	return joinStrings(parts, " ")
+}
+
+// escapeShellString escapes single quotes for safe use in shell single-quoted strings.
+// In shell, single-quoted strings don't support escape sequences, so we need to
+// end the string, add an escaped quote, and start a new string: ' -> '\”
+func escapeShellString(s string) string {
+	result := ""
+	for _, c := range s {
+		if c == '\'' {
+			result += `'\''`
+		} else {
+			result += string(c)
+		}
+	}
+	return result
 }

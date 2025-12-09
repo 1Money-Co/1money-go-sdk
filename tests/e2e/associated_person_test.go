@@ -114,6 +114,58 @@ func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Delete() {
 	s.T().Log("Associated person deleted successfully")
 }
 
+// TestAssociatedPerson_FileSizeLimit tests that files larger than 3MB are rejected.
+func (s *AssociatedPersonTestSuite) TestAssociatedPerson_FileSizeLimit() {
+	faker := gofakeit.New(0)
+
+	// Generate data larger than 3MB (3 * 1024 * 1024 = 3145728 bytes)
+	// We need slightly more to ensure we exceed the limit after base64 encoding
+	oversizedData := make([]byte, 3*1024*1024+1)
+	for i := range oversizedData {
+		oversizedData[i] = byte(i % 256)
+	}
+	oversizedDataURI := customer.EncodeBase64ToDataURI(oversizedData, customer.ImageFormatJpeg)
+
+	s.Run("OversizedPOA", func() {
+		person := FakeAssociatedPerson(faker)
+		person.POA = oversizedDataURI
+
+		req := &customer.CreateAssociatedPersonRequest{
+			AssociatedPerson: person,
+		}
+
+		resp, err := s.Client.Customer.CreateAssociatedPerson(s.Ctx, s.CustomerID, req)
+		s.Require().Error(err, "CreateAssociatedPerson with oversized POA should fail")
+		s.Require().Nil(resp, "Response should be nil")
+	})
+
+	s.Run("OversizedImageFront", func() {
+		person := FakeAssociatedPerson(faker)
+		person.IdentifyingInformation[0].ImageFront = oversizedDataURI
+
+		req := &customer.CreateAssociatedPersonRequest{
+			AssociatedPerson: person,
+		}
+
+		resp, err := s.Client.Customer.CreateAssociatedPerson(s.Ctx, s.CustomerID, req)
+		s.Require().Error(err, "CreateAssociatedPerson with oversized ImageFront should fail")
+		s.Require().Nil(resp, "Response should be nil")
+	})
+
+	s.Run("OversizedImageBack", func() {
+		person := FakeAssociatedPerson(faker)
+		person.IdentifyingInformation[0].ImageBack = oversizedDataURI
+
+		req := &customer.CreateAssociatedPersonRequest{
+			AssociatedPerson: person,
+		}
+
+		resp, err := s.Client.Customer.CreateAssociatedPerson(s.Ctx, s.CustomerID, req)
+		s.Require().Error(err, "CreateAssociatedPerson with oversized ImageBack should fail")
+		s.Require().Nil(resp, "Response should be nil")
+	})
+}
+
 // TestAssociatedPersonTestSuite runs the associated person test suite.
 func TestAssociatedPersonTestSuite(t *testing.T) {
 	suite.Run(t, new(AssociatedPersonTestSuite))

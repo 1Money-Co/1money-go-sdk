@@ -112,6 +112,7 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_CreateAndGet() {
 	resp, err := s.Client.ExternalAccounts.ListExternalAccounts(s.Ctx, s.CustomerID, nil)
 	s.Require().NoError(err, "ListExternalAccounts should succeed even with no accounts")
 	s.Require().NotNil(resp, "Response should not be nil")
+	s.Require().NotEmpty(resp, "Should have at least one external account")
 	s.T().Logf("External accounts list: %v accounts", resp)
 
 	// Get external account by ID

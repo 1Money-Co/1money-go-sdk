@@ -21,6 +21,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"path/filepath"
 	"testing"
 
@@ -106,18 +109,51 @@ type CustomerDependentTestSuite struct {
 	AssociatedPersonIDs []string
 }
 
-// SetupSuite creates a new customer for the test suite.
+// SetupSuite creates or reuses a customer for the test suite.
+// If an existing customer is found, it will be reused to speed up tests.
 func (s *CustomerDependentTestSuite) SetupSuite() {
 	s.E2ETestSuite.SetupSuite()
 
-	customerID, associatedPersonIDs, err := s.CreateTestCustomer()
+	// Try to reuse existing customer
+	customerID, associatedPersonIDs, err := s.GetOrCreateTestCustomer()
 	if err != nil {
-		s.T().Fatalf("failed to create test customer: %v", err)
+		s.T().Fatalf("failed to get or create test customer: %v", err)
 	}
 
 	s.CustomerID = customerID
 	s.AssociatedPersonIDs = associatedPersonIDs
-	s.T().Logf("Created test customer: %s with %d associated persons", customerID, len(associatedPersonIDs))
+}
+
+// GetOrCreateTestCustomer returns an existing customer if available, otherwise creates a new one.
+func (s *CustomerDependentTestSuite) GetOrCreateTestCustomer() (
+	customerID string,
+	associatedPersonIDs []string,
+	err error,
+) {
+	// Try to find an existing customer
+	listResp, err := s.Client.Customer.ListCustomers(s.Ctx, &customer.ListCustomersRequest{
+		PageSize: 1,
+	})
+	if err == nil && listResp != nil && len(listResp.Customers) > 0 {
+		existingCustomer := listResp.Customers[0]
+		s.T().Logf("Reusing existing customer: %s (%s)", existingCustomer.CustomerID, existingCustomer.BusinessLegalName)
+
+		// Get associated persons for the existing customer
+		associatedPersonsResp, err := s.Client.Customer.ListAssociatedPersons(s.Ctx, existingCustomer.CustomerID)
+		if err != nil {
+			return "", nil, fmt.Errorf("ListAssociatedPersons failed: %w", err)
+		}
+
+		for i := range *associatedPersonsResp {
+			associatedPersonIDs = append(associatedPersonIDs, (*associatedPersonsResp)[i].AssociatedPersonID)
+		}
+
+		return existingCustomer.CustomerID, associatedPersonIDs, nil
+	}
+
+	// No existing customer found, create a new one
+	s.T().Log("No existing customer found, creating new test customer...")
+	return s.CreateTestCustomer()
 }
 
 // TearDownSuite cleans up resources created during testing.
@@ -364,42 +400,64 @@ func FakeEthereumAddress() string {
 	return fmt.Sprintf("0x%x", addrBytes)
 }
 
+// FakeImagePNG generates a valid PNG image as bytes.
+// Uses Go's image package to create a real PNG image.
+func FakeImagePNG(width, height int) []byte {
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	// Fill with a random color
+	c := color.RGBA{
+		R: uint8(gofakeit.Number(0, 255)),
+		G: uint8(gofakeit.Number(0, 255)),
+		B: uint8(gofakeit.Number(0, 255)),
+		A: 255,
+	}
+	for y := range height {
+		for x := range width {
+			img.Set(x, y, c)
+		}
+	}
+
+	var buf bytes.Buffer
+	_ = png.Encode(&buf, img)
+	return buf.Bytes()
+}
+
 // FakeCustomerDocuments generates fake documents required for customer creation.
 func FakeCustomerDocuments() []customer.Document {
 	return []customer.Document{
 		{
 			DocType:     customer.DocumentTypeFlowOfFunds,
-			File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
 			Description: "Proof of Funds",
 		},
 		{
 			DocType:     customer.DocumentTypeRegistrationDocument,
-			File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
 			Description: "Certificate of Incorporation",
 		},
 		{
 			DocType:     customer.DocumentTypeProofOfTaxIdentification,
-			File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
 			Description: "W9 Form",
 		},
 		{
 			DocType:     customer.DocumentTypeShareholderRegister,
-			File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
 			Description: "Ownership Structure",
 		},
 		{
 			DocType:     customer.DocumentTypeESignatureCertificate,
-			File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
 			Description: "Authorized Representative List",
 		},
 		{
 			DocType:     customer.DocumentTypeEvidenceOfGoodStanding,
-			File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
 			Description: "Evidence of Good Standing",
 		},
 		{
 			DocType:     customer.DocumentTypeProofOfAddress,
-			File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
 			Description: "Proof of Address",
 		},
 	}
@@ -502,15 +560,15 @@ func FakeAssociatedPerson(faker *gofakeit.Faker) customer.AssociatedPerson {
 			{
 				Type:                   customer.IDTypeDriversLicense,
 				IssuingCountry:         CountryUSA,
-				ImageFront:             customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				ImageBack:              customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+				ImageFront:             customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+				ImageBack:              customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
 				NationalIdentityNumber: faker.LetterN(8) + faker.DigitN(4),
 			},
 		},
 		CountryOfTax: CountryUSA,
 		TaxType:      customer.TaxIDTypeSSN,
 		TaxID:        faker.SSN(),
-		POA:          customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
+		POA:          customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
 		POAType:      "utility_bill",
 	}
 }
