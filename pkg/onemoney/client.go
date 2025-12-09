@@ -64,7 +64,7 @@ type Client struct {
 // 2. Environment variables: ONEMONEY_ACCESS_KEY, ONEMONEY_SECRET_KEY
 // 3. Config file: ~/.onemoney/credentials (with optional Profile)
 type Config struct {
-	// BaseURL is the API base URL (e.g., "http://localhost:9000")
+	// BaseURL is the API base URL (default: "https://api.sandbox.1money.com")
 	// Can also be set via ONEMONEY_BASE_URL environment variable or config file
 	BaseURL string
 
@@ -179,7 +179,7 @@ func NoRetryConfig() *RetryConfig {
 //	c := scp.NewClient(&scp.Config{
 //	    AccessKey: "your-access-key",
 //	    SecretKey: "your-secret-key",
-//	    BaseURL:   "http://localhost:9000",
+//	    BaseURL:   "https://api.sandbox.1money.com",
 //	})
 //
 // Example with environment variables:
@@ -236,7 +236,7 @@ func NewClient(cfg *Config, opts ...Option) (*Client, error) {
 
 	// Set defaults
 	if cfg.BaseURL == "" {
-		cfg.BaseURL = "http://localhost:9000/openapi"
+		cfg.BaseURL = "https://api.sandbox.1money.com"
 	}
 	if cfg.Timeout == 0 {
 		cfg.Timeout = 30 * time.Second

@@ -421,6 +421,13 @@ run-cli access-key secret-key:
     @echo "Running CLI tool..."
     {{ GO }} run cmd/main.go -access-key {{ access-key }} -secret-key {{ secret-key }} echo
 
+[doc("run create_customer example (requires ONEMONEY_ACCESS_KEY and ONEMONEY_SECRET_KEY in .env)")]
+[group("Tools")]
+example-create-customer:
+    @echo "Running create_customer example..."
+    @echo "Make sure ONEMONEY_ACCESS_KEY and ONEMONEY_SECRET_KEY are set in .env file"
+    {{ GO }} run examples/create_customer/main.go
+
 [doc("Count lines of code")]
 [group("Tools")]
 cloc:

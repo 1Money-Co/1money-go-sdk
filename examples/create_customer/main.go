@@ -18,26 +18,68 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"log"
 
 	"github.com/1Money-Co/1money-go-sdk/pkg/onemoney"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/customer"
+	"github.com/joho/godotenv"
 )
 
+// generateSampleImage generates a valid PNG image for testing purposes.
+// In production, you should use real document images.
+func generateSampleImage(width, height int) []byte {
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	// Fill with a light gray color
+	c := color.RGBA{R: 200, G: 200, B: 200, A: 255}
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			img.Set(x, y, c)
+		}
+	}
+
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		panic(fmt.Sprintf("failed to encode PNG: %v", err))
+	}
+	return buf.Bytes()
+}
+
 func main() {
+	// Load .env file if it exists (silently ignore if not found)
+	// This allows users to set ONEMONEY_ACCESS_KEY and ONEMONEY_SECRET_KEY in .env
+	_ = godotenv.Load()
 	// Create a client (credentials can be provided via environment variables
 	// ONEMONEY_ACCESS_KEY and ONEMONEY_SECRET_KEY, or via config file)
-	client, err := onemoney.NewClient(&onemoney.Config{
-		AccessKey: "your-access-key",
-		SecretKey: "your-secret-key",
-	})
+	client, err := onemoney.NewClient(&onemoney.Config{})
 	if err != nil {
 		log.Fatalf("failed to create client: %v", err)
 	}
 
-	// Build the create customer request
+	ctx := context.Background()
+
+	// Step 1: Create TOS link to get session token
+	fmt.Println("Creating TOS link...")
+	tosResp, err := client.Customer.CreateTOSLink(ctx)
+	if err != nil {
+		log.Fatalf("failed to create TOS link: %v", err)
+	}
+	fmt.Printf("TOS link created. Session token: %s\n", tosResp.SessionToken)
+
+	// Step 2: Sign the agreement using the session token
+	fmt.Println("Signing TOS agreement...")
+	signResp, err := client.Customer.SignTOSAgreement(ctx, tosResp.SessionToken)
+	if err != nil {
+		log.Fatalf("failed to sign TOS agreement: %v", err)
+	}
+	fmt.Printf("TOS agreement signed. Signed agreement ID: %s\n", signResp.SignedAgreementID)
+
+	// Step 3: Build the create customer request
 	req := &customer.CreateCustomerRequest{
 		// Business information
 		BusinessLegalName:          "Acme Corporation",
@@ -45,7 +87,7 @@ func main() {
 		BusinessRegistrationNumber: "REG-123456",
 		Email:                      "contact@acme-corp.example.com",
 		BusinessType:               customer.BusinessTypeCorporation,
-		BusinessIndustry:           "541511", // Custom Computer Programming Services
+		BusinessIndustry:           "332999", // All Other Miscellaneous Fabricated Metal Product Manufacturing
 
 		// Registered address
 		RegisteredAddress: &customer.Address{
@@ -61,8 +103,8 @@ func main() {
 		// Incorporation details
 		DateOfIncorporation: "2020-01-15",
 
-		// Signed agreement ID from TOS flow (obtain via CreateTOSLink + SignTOSAgreement)
-		SignedAgreementID: "your-signed-agreement-id",
+		// Signed agreement ID from TOS flow
+		SignedAgreementID: signResp.SignedAgreementID,
 
 		// Associated persons (owners, directors, signers)
 		AssociatedPersons: []customer.AssociatedPerson{
@@ -91,15 +133,15 @@ func main() {
 					{
 						Type:                   customer.IDTypeDriversLicense,
 						IssuingCountry:         "USA",
-						ImageFront:             "data:image/jpeg;base64,...", // Base64 encoded front image
-						ImageBack:              "data:image/jpeg;base64,...", // Base64 encoded back image
+						ImageFront:             customer.EncodeBase64ToDataURI(generateSampleImage(100, 100), customer.ImageFormatPng),
+						ImageBack:              customer.EncodeBase64ToDataURI(generateSampleImage(100, 100), customer.ImageFormatPng),
 						NationalIdentityNumber: "D1234567",
 					},
 				},
 				CountryOfTax: "USA",
 				TaxType:      customer.TaxIDTypeSSN,
 				TaxID:        "123-45-6789",
-				POA:          "data:image/jpeg;base64,...", // Proof of address image
+				POA:          customer.EncodeBase64ToDataURI(generateSampleImage(100, 100), customer.ImageFormatPng),
 				POAType:      "utility_bill",
 			},
 		},
@@ -108,17 +150,43 @@ func main() {
 		SourceOfFunds:  []customer.SourceOfFunds{customer.SourceOfFundsSalesOfGoodsAndServices},
 		SourceOfWealth: []customer.SourceOfWealth{customer.SourceOfWealthBusinessDividendsOrProfits},
 
-		// Required documents
+		// Required documents for Corporation in US region
+		// Note: In production, use real document files with customer.EncodeFileToDataURI() or customer.EncodeDocumentFileToDataURI()
 		Documents: []customer.Document{
 			{
+				DocType:     customer.DocumentTypeFlowOfFunds,
+				File:        customer.EncodeDocumentToDataURI(generateSampleImage(100, 100), customer.FileFormatPng),
+				Description: "Proof of Funds",
+			},
+			{
 				DocType:     customer.DocumentTypeRegistrationDocument,
-				File:        "data:image/jpeg;base64,...", // Certificate of incorporation
+				File:        customer.EncodeDocumentToDataURI(generateSampleImage(100, 100), customer.FileFormatPng),
 				Description: "Certificate of Incorporation",
 			},
 			{
 				DocType:     customer.DocumentTypeProofOfTaxIdentification,
-				File:        "data:application/pdf;base64,...", // W9 form as PDF
+				File:        customer.EncodeDocumentToDataURI(generateSampleImage(100, 100), customer.FileFormatPng),
 				Description: "W9 Form",
+			},
+			{
+				DocType:     customer.DocumentTypeShareholderRegister,
+				File:        customer.EncodeDocumentToDataURI(generateSampleImage(100, 100), customer.FileFormatPng),
+				Description: "Ownership Structure",
+			},
+			{
+				DocType:     customer.DocumentTypeESignatureCertificate,
+				File:        customer.EncodeDocumentToDataURI(generateSampleImage(100, 100), customer.FileFormatPng),
+				Description: "Authorized Representative List",
+			},
+			{
+				DocType:     customer.DocumentTypeEvidenceOfGoodStanding,
+				File:        customer.EncodeDocumentToDataURI(generateSampleImage(100, 100), customer.FileFormatPng),
+				Description: "Evidence of Good Standing",
+			},
+			{
+				DocType:     customer.DocumentTypeProofOfAddress,
+				File:        customer.EncodeDocumentToDataURI(generateSampleImage(100, 100), customer.FileFormatPng),
+				Description: "Proof of Address",
 			},
 		},
 
@@ -136,8 +204,8 @@ func main() {
 		TaxCountry: "USA",
 	}
 
-	// Create the customer
-	ctx := context.Background()
+	// Step 4: Create the customer
+	fmt.Println("Creating customer...")
 	resp, err := client.Customer.CreateCustomer(ctx, req)
 	if err != nil {
 		log.Fatalf("failed to create customer: %v", err)
@@ -146,4 +214,51 @@ func main() {
 	fmt.Println("Customer created successfully!")
 	fmt.Println("Customer ID:", resp.CustomerID)
 	fmt.Println("Status:", resp.Status)
+
+	// Step 5: Get the created customer
+	fmt.Println("\nRetrieving customer details...")
+	customerResp, err := client.Customer.GetCustomer(ctx, resp.CustomerID)
+	if err != nil {
+		log.Fatalf("failed to get customer: %v", err)
+	}
+
+	fmt.Println("Customer retrieved successfully!")
+	fmt.Println("Customer ID:", customerResp.CustomerID)
+	fmt.Println("Business Legal Name:", customerResp.BusinessLegalName)
+	fmt.Println("Email:", customerResp.Email)
+	fmt.Println("Business Type:", customerResp.BusinessType)
+	fmt.Println("Status:", customerResp.Status)
+	if customerResp.CreatedAt != "" {
+		fmt.Println("Created At:", customerResp.CreatedAt)
+	}
+	if customerResp.UpdatedAt != "" {
+		fmt.Println("Updated At:", customerResp.UpdatedAt)
+	}
+
+	// Step 6: List all customers
+	fmt.Println("\nListing all customers...")
+	listReq := &customer.ListCustomersRequest{
+		PageSize: 10,
+		PageNum:  0,
+	}
+	listResp, err := client.Customer.ListCustomers(ctx, listReq)
+	if err != nil {
+		log.Fatalf("failed to list customers: %v", err)
+	}
+
+	fmt.Printf("Found %d customer(s):\n", listResp.Total)
+	for i, c := range listResp.Customers {
+		fmt.Printf("\nCustomer %d:\n", i+1)
+		fmt.Println("  Customer ID:", c.CustomerID)
+		fmt.Println("  Business Legal Name:", c.BusinessLegalName)
+		fmt.Println("  Email:", c.Email)
+		fmt.Println("  Business Type:", c.BusinessType)
+		fmt.Println("  Status:", c.Status)
+		if c.CreatedAt != "" {
+			fmt.Println("  Created At:", c.CreatedAt)
+		}
+		if c.UpdatedAt != "" {
+			fmt.Println("  Updated At:", c.UpdatedAt)
+		}
+	}
 }

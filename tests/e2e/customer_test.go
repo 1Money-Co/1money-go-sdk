@@ -443,7 +443,7 @@ func (s *CustomerTestSuite) TestCustomerService_UpdateCustomer() {
 	faker := gofakeit.New(0)
 
 	updateReq := &customer.UpdateCustomerRequest{
-		BusinessIndustry: utils.AsPtr("541519"),
+		BusinessIndustry: utils.AsPtr("332999"),
 		AccountPurpose:   utils.AsPtr(customer.AccountPurposeTreasuryManagement),
 		AssociatedPersons: []customer.AssociatedPerson{
 			FakeAssociatedPerson(faker),
