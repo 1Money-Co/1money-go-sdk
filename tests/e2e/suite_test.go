@@ -399,15 +399,26 @@ func FakeEthereumAddress() string {
 	return fmt.Sprintf("0x%x", addrBytes)
 }
 
+// safeUint8 converts an int to uint8 with bounds checking to avoid overflow.
+func safeUint8(n int) uint8 {
+	if n < 0 {
+		return 0
+	}
+	if n > 255 {
+		return 255
+	}
+	return uint8(n)
+}
+
 // FakeImagePNG generates a valid PNG image as bytes.
 // Uses Go's image package to create a real PNG image.
 func FakeImagePNG(width, height int) []byte {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	// Fill with a random color
 	c := color.RGBA{
-		R: uint8(gofakeit.Number(0, 255)),
-		G: uint8(gofakeit.Number(0, 255)),
-		B: uint8(gofakeit.Number(0, 255)),
+		R: safeUint8(gofakeit.Number(0, 255)),
+		G: safeUint8(gofakeit.Number(0, 255)),
+		B: safeUint8(gofakeit.Number(0, 255)),
 		A: 255,
 	}
 	for y := range height {
