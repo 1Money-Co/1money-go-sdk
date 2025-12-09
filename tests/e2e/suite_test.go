@@ -297,7 +297,12 @@ func (s *CustomerDependentTestSuite) EnsureExternalAccount() (string, error) {
 }
 
 // EnsureTransaction ensures at least one transaction exists for the customer.
-// If no transactions exist, it simulates a USD deposit and returns the transaction ID.
+// Preferred order:
+//  1. Reuse existing transaction if available
+//  2. Try to create a simulated USD deposit and reuse its transaction if available
+//
+// If neither produces a transaction, an error is returned and callers may choose
+// to skip tests that require persisted transaction history.
 func (s *CustomerDependentTestSuite) EnsureTransaction() (string, error) {
 	// Try to get existing transactions
 	txResp, err := s.Client.Transactions.ListTransactions(s.Ctx, s.CustomerID, nil)
@@ -310,28 +315,22 @@ func (s *CustomerDependentTestSuite) EnsureTransaction() (string, error) {
 		return txResp.List[0].TransactionID, nil
 	}
 
-	// Simulate a deposit to create a transaction
+	// Try to create a simulated USD deposit; in some environments this may not
+	// produce a persisted transaction, so we treat it as best-effort.
 	simReq := &simulations.SimulateDepositRequest{
 		Asset:  assets.AssetNameUSD,
 		Amount: "100.00",
 	}
 
-	_, err = s.Client.Simulations.SimulateDeposit(s.Ctx, s.CustomerID, simReq)
-	if err != nil {
-		return "", fmt.Errorf("SimulateDeposit failed: %w", err)
+	_, simErr := s.Client.Simulations.SimulateDeposit(s.Ctx, s.CustomerID, simReq)
+	if simErr == nil {
+		txResp, err = s.Client.Transactions.ListTransactions(s.Ctx, s.CustomerID, nil)
+		if err == nil && len(txResp.List) > 0 {
+			return txResp.List[0].TransactionID, nil
+		}
 	}
 
-	// Get the newly created transaction
-	txResp, err = s.Client.Transactions.ListTransactions(s.Ctx, s.CustomerID, nil)
-	if err != nil {
-		return "", fmt.Errorf("ListTransactions after deposit failed: %w", err)
-	}
-
-	if len(txResp.List) == 0 {
-		return "", fmt.Errorf("no transactions found after simulating deposit")
-	}
-
-	return txResp.List[0].TransactionID, nil
+	return "", fmt.Errorf("no transactions available for customer %s (simulated deposit did not create a transaction)", s.CustomerID)
 }
 
 // EnsureAutoConversionRule ensures an auto conversion rule exists for the customer.

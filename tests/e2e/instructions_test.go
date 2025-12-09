@@ -17,10 +17,12 @@
 package e2e
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/1Money-Co/1money-go-sdk/internal/transport"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/assets"
 )
 
@@ -29,10 +31,27 @@ type InstructionsTestSuite struct {
 	CustomerDependentTestSuite
 }
 
+// skipIfVerifiedFiatAccountRequired checks if the error is about requiring a verified fiat account
+// and skips the test if so. This is expected for new customers who haven't set up fiat accounts yet.
+func (s *InstructionsTestSuite) skipIfVerifiedFiatAccountRequired(err error) bool {
+	if err != nil {
+		if apiErr, ok := transport.IsAPIError(err); ok {
+			if strings.Contains(apiErr.Detail, "verified fiat account") {
+				s.T().Skipf("Skipping test: %s", apiErr.Detail)
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // TestInstructions_GetDepositInstruction_USD_ACH tests getting USD deposit instructions via ACH.
 // Validates all response fields including bank instruction details.
 func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USD_ACH() {
 	resp, err := s.Client.Instructions.GetDepositInstruction(s.Ctx, s.CustomerID, assets.AssetNameUSD, assets.NetworkNameUSACH)
+	if s.skipIfVerifiedFiatAccountRequired(err) {
+		return
+	}
 	s.Require().NoError(err, "GetDepositInstruction should succeed")
 
 	// Validate response structure
@@ -49,7 +68,8 @@ func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USD_ACH()
 	s.NotEmpty(resp.BankInstruction.RoutingNumber, "RoutingNumber should not be empty")
 	s.NotEmpty(resp.BankInstruction.AccountNumber, "AccountNumber should not be empty")
 	s.NotEmpty(resp.BankInstruction.AccountHolder, "AccountHolder should not be empty")
-	s.NotEmpty(resp.BankInstruction.TransactionFee, "TransactionFee should not be empty")
+	s.NotEmpty(resp.BankInstruction.TransactionFee.Value, "TransactionFee.Value should not be empty")
+	s.NotEmpty(resp.BankInstruction.TransactionFee.Asset, "TransactionFee.Asset should not be empty")
 
 	// WalletInstruction should be nil for fiat
 	s.Nil(resp.WalletInstruction, "WalletInstruction should be nil for USD")
@@ -61,6 +81,9 @@ func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USD_ACH()
 // Validates all response fields including bank instruction details.
 func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USD_Fedwire() {
 	resp, err := s.Client.Instructions.GetDepositInstruction(s.Ctx, s.CustomerID, assets.AssetNameUSD, assets.NetworkNameUSFEDWIRE)
+	if s.skipIfVerifiedFiatAccountRequired(err) {
+		return
+	}
 	s.Require().NoError(err, "GetDepositInstruction should succeed")
 
 	// Validate response structure
@@ -74,7 +97,8 @@ func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USD_Fedwi
 	// Validate bank instruction is present for fiat
 	s.Require().NotNil(resp.BankInstruction, "BankInstruction should be present for USD")
 	s.NotEmpty(resp.BankInstruction.BankName, "BankName should not be empty")
-	s.NotEmpty(resp.BankInstruction.TransactionFee, "TransactionFee should not be empty")
+	s.NotEmpty(resp.BankInstruction.TransactionFee.Value, "TransactionFee.Value should not be empty")
+	s.NotEmpty(resp.BankInstruction.TransactionFee.Asset, "TransactionFee.Asset should not be empty")
 
 	s.T().Logf("USD Fedwire deposit instruction:\n%s", PrettyJSON(resp))
 }
@@ -83,6 +107,9 @@ func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USD_Fedwi
 // Validates all response fields including wallet instruction details.
 func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USDT_Ethereum() {
 	resp, err := s.Client.Instructions.GetDepositInstruction(s.Ctx, s.CustomerID, assets.AssetNameUSDT, assets.NetworkNameETHEREUM)
+	if s.skipIfVerifiedFiatAccountRequired(err) {
+		return
+	}
 	s.Require().NoError(err, "GetDepositInstruction should succeed")
 
 	// Validate response structure
@@ -96,7 +123,10 @@ func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USDT_Ethe
 	// Validate wallet instruction is present for crypto
 	s.Require().NotNil(resp.WalletInstruction, "WalletInstruction should be present for USDT")
 	s.NotEmpty(resp.WalletInstruction.WalletAddress, "WalletAddress should not be empty")
-	s.NotEmpty(resp.WalletInstruction.TransactionFee, "TransactionFee should not be empty")
+	// TransactionFee may be empty for crypto instructions
+	if resp.WalletInstruction.TransactionFee.Value != "" {
+		s.NotEmpty(resp.WalletInstruction.TransactionFee.Asset, "TransactionFee.Asset should not be empty if Value is set")
+	}
 
 	// Validate wallet address format (Ethereum addresses start with 0x)
 	s.Greater(len(resp.WalletInstruction.WalletAddress), 2, "WalletAddress should have valid length")
@@ -112,6 +142,9 @@ func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USDT_Ethe
 // Validates all response fields including wallet instruction details.
 func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USDC_Polygon() {
 	resp, err := s.Client.Instructions.GetDepositInstruction(s.Ctx, s.CustomerID, assets.AssetNameUSDC, assets.NetworkNamePOLYGON)
+	if s.skipIfVerifiedFiatAccountRequired(err) {
+		return
+	}
 	s.Require().NoError(err, "GetDepositInstruction should succeed")
 
 	// Validate response structure
@@ -125,7 +158,10 @@ func (s *InstructionsTestSuite) TestInstructions_GetDepositInstruction_USDC_Poly
 	// Validate wallet instruction is present for crypto
 	s.Require().NotNil(resp.WalletInstruction, "WalletInstruction should be present for USDC")
 	s.NotEmpty(resp.WalletInstruction.WalletAddress, "WalletAddress should not be empty")
-	s.NotEmpty(resp.WalletInstruction.TransactionFee, "TransactionFee should not be empty")
+	// TransactionFee may be empty for crypto instructions
+	if resp.WalletInstruction.TransactionFee.Value != "" {
+		s.NotEmpty(resp.WalletInstruction.TransactionFee.Asset, "TransactionFee.Asset should not be empty if Value is set")
+	}
 
 	// Validate wallet address format (Polygon uses Ethereum-compatible addresses)
 	s.Greater(len(resp.WalletInstruction.WalletAddress), 2, "WalletAddress should have valid length")

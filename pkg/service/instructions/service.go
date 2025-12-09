@@ -66,6 +66,14 @@ type (
 		PostalCode  string `json:"postal_code,omitempty"`
 	}
 
+	// TransactionFee represents fee information for a transaction.
+	TransactionFee struct {
+		// Value is the fee amount.
+		Value string `json:"value"`
+		// Asset is the fee asset (fiat currency or crypto token).
+		Asset string `json:"asset"`
+	}
+
 	// BankInstruction represents bank account details for fiat deposits.
 	BankInstruction struct {
 		// BankName is the name of the bank that holds custody over the account.
@@ -83,7 +91,7 @@ type (
 		// Address contains address details for the instruction.
 		Address *AddressDetails `json:"address,omitempty"`
 		// TransactionFee is the fee for the transaction.
-		TransactionFee string `json:"transaction_fee"`
+		TransactionFee TransactionFee `json:"transaction_fee"`
 	}
 
 	// WalletInstruction represents wallet address details for crypto deposits.
@@ -91,7 +99,7 @@ type (
 		// WalletAddress is the wallet address for deposits.
 		WalletAddress string `json:"wallet_address,omitempty"`
 		// TransactionFee is the fee for the transaction.
-		TransactionFee string `json:"transaction_fee"`
+		TransactionFee TransactionFee `json:"transaction_fee"`
 	}
 )
 
@@ -131,7 +139,7 @@ func (s *serviceImpl) GetDepositInstruction(
 	asset assets.AssetName,
 	network assets.NetworkName,
 ) (*InstructionResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/instruction", id)
+	path := fmt.Sprintf("/v1/customers/%s/deposit_instructions", id)
 	params := map[string]string{
 		"asset":   string(asset),
 		"network": string(network),
