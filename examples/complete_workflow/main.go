@@ -164,7 +164,9 @@ func getOrCreateCustomer(ctx context.Context, client *onemoney.Client) string {
 
 	// Create new customer (simplified - see create_customer example for full details)
 	fmt.Println("Creating new customer...")
-	tosResp, err := client.Customer.CreateTOSLink(ctx)
+	tosResp, err := client.Customer.CreateTOSLink(ctx, &customer.CreateTOSLinkRequest{
+		RedirectUri: "https://example.com/tos-completed",
+	})
 	if err != nil {
 		log.Fatalf("failed to create TOS link: %v", err)
 	}
