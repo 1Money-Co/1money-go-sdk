@@ -18,6 +18,7 @@ package e2e
 
 import (
 	"fmt"
+	"net/url"
 	"testing"
 
 	"github.com/brianvoe/gofakeit/v7"
@@ -35,11 +36,15 @@ type CustomerTestSuite struct {
 // TestCustomerService_TOSFlow tests the complete TOS signing flow.
 func (s *CustomerTestSuite) TestCustomerService_TOSFlow() {
 	// Step 1: Create TOS link
-	tosResp, err := s.Client.Customer.CreateTOSLink(s.Ctx)
+	const exampleRedirectURI = "https://example.com/terms-of-service-completed"
+	tosResp, err := s.Client.Customer.CreateTOSLink(s.Ctx, &customer.CreateTOSLinkRequest{
+		RedirectUri: exampleRedirectURI,
+	})
 	s.Require().NoError(err, "CreateTOSLink should not return error")
 	s.Require().NotNil(tosResp, "CreateTOSLink response should not be nil")
 	s.NotEmpty(tosResp.SessionToken, "Session token should not be empty")
 	s.T().Logf("Created TOS link with session token:\n%s", PrettyJSON(tosResp))
+	s.Require().Contains(tosResp.Url, url.QueryEscape(exampleRedirectURI), "Redirect URI should be included in the URL")
 
 	// Step 2: Sign the agreement using the session token
 	signResp, err := s.Client.Customer.SignTOSAgreement(s.Ctx, tosResp.SessionToken)

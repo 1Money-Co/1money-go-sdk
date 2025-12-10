@@ -204,7 +204,7 @@ func (s *CustomerDependentTestSuite) CreateTestCustomer() (
 	faker := gofakeit.New(0)
 
 	// Step 1: Create TOS link
-	tosResp, err := s.Client.Customer.CreateTOSLink(s.Ctx)
+	tosResp, err := s.Client.Customer.CreateTOSLink(s.Ctx, nil)
 	if err != nil {
 		return "", nil, fmt.Errorf("CreateTOSLink failed: %w", err)
 	}
@@ -361,7 +361,7 @@ func (s *CustomerDependentTestSuite) EnsureAutoConversionRule() (string, error) 
 // EnsureSignedAgreement creates a TOS link and signs it, returning the SignedAgreementID.
 func (s *CustomerDependentTestSuite) EnsureSignedAgreement() (string, error) {
 	// Create TOS link
-	tosResp, err := s.Client.Customer.CreateTOSLink(s.Ctx)
+	tosResp, err := s.Client.Customer.CreateTOSLink(s.Ctx, nil)
 	if err != nil {
 		return "", fmt.Errorf("CreateTOSLink failed: %w", err)
 	}

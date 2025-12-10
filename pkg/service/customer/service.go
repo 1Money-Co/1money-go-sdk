@@ -143,7 +143,8 @@ type Service interface {
 	// CreateTOSLink creates a session token for signing the Terms of Service agreement.
 	// This is the first step in the customer onboarding flow.
 	// The session expires in 1 hour.
-	CreateTOSLink(ctx context.Context) (*TOSLinkResponse, error)
+	// Pass nil for req if no redirect URI is needed.
+	CreateTOSLink(ctx context.Context, req *CreateTOSLinkRequest) (*TOSLinkResponse, error)
 	// SignTOSAgreement signs the Terms of Service agreement using the session token.
 	// This is the second step in the customer onboarding flow.
 	// Returns a signed_agreement_id to be used in customer creation.
@@ -592,13 +593,22 @@ type (
 
 // TOS (Terms of Service) request and response types.
 type (
+	// CreateTOSLinkRequest represents the request body for creating a TOS signing link.
+	CreateTOSLinkRequest struct {
+		// RedirectUri is the URL where the user will be redirected after signing the TOS.
+		// The URL will be appended to the TOS link as a query parameter.
+		RedirectUri string `json:"redirectUri,omitempty"`
+	}
+
 	// TOSLinkResponse represents the response data for creating a TOS signing link.
 	TOSLinkResponse struct {
+		// Url is the hosted TOS signing page URL.
+		// If RedirectUri was provided, it will be included as a query parameter.
 		Url string `json:"url"`
 		// SessionToken is the unique token for the TOS signing session.
 		SessionToken string `json:"sessionToken"`
-		// ExpiresAt is the timestamp when the session token expires (ISO 8601 format).
-		ExpiresAt string `json:"expiresAt,omitempty"`
+		// ExpiresIn is the number of seconds until the session token expires.
+		ExpiresIn int `json:"expiresIn"`
 	}
 
 	// SignAgreementResponse represents the response data for signing a TOS agreement.
@@ -621,13 +631,16 @@ func NewService(base *svc.BaseService) Service {
 
 // CreateTOSLink creates a session token for signing the Terms of Service agreement.
 // This is the first step in the customer onboarding flow. The session expires in 1 hour.
-func (s *serviceImpl) CreateTOSLink(ctx context.Context) (*TOSLinkResponse, error) {
+func (s *serviceImpl) CreateTOSLink(ctx context.Context, req *CreateTOSLinkRequest) (*TOSLinkResponse, error) {
 	path := fmt.Sprintf("%s/tos_links", ROUTE_PREFIX)
-	return svc.PostJSON[any, TOSLinkResponse](
+	if req == nil {
+		req = &CreateTOSLinkRequest{}
+	}
+	return svc.PostJSON[*CreateTOSLinkRequest, TOSLinkResponse](
 		ctx,
 		s.BaseService,
 		path,
-		nil,
+		req,
 	)
 }
 
