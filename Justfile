@@ -421,6 +421,11 @@ run-cli access-key secret-key:
     @echo "Running CLI tool..."
     {{ GO }} run cmd/main.go -access-key {{ access-key }} -secret-key {{ secret-key }} echo
 
+[group("Tools")]
+example:
+    @echo "Running example..."
+    {{ GO }} run examples/complete_workflow/main.go
+
 [doc("Count lines of code")]
 [group("Tools")]
 cloc:

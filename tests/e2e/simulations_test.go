@@ -28,26 +28,41 @@ import (
 // SimulationsTestSuite tests simulations service operations.
 // NOTE: These tests only work in sandbox/non-production environments.
 type SimulationsTestSuite struct {
-	E2ETestSuite
+	CustomerDependentTestSuite
 }
 
 // TestSimulations_SimulateDeposit_USD tests simulating a USD deposit.
+// Validates all response fields and verifies a transaction was created.
 func (s *SimulationsTestSuite) TestSimulations_SimulateDeposit_USD() {
 	req := &simulations.SimulateDepositRequest{
 		Asset:  assets.AssetNameUSD,
 		Amount: "100.00",
 	}
 
-	resp, err := s.Client.Simulations.SimulateDeposit(s.Ctx, testCustomerID, req)
+	resp, err := s.Client.Simulations.SimulateDeposit(s.Ctx, s.CustomerID, req)
 	s.Require().NoError(err, "SimulateDeposit should succeed")
 
+	// Validate response structure
 	s.Require().NotNil(resp, "Response should not be nil")
 	s.NotEmpty(resp.SimulationID, "SimulationID should not be empty")
 	s.NotEmpty(resp.Status, "Status should not be empty")
+	s.NotEmpty(resp.CreatedAt, "CreatedAt should not be empty")
+	s.NotEmpty(resp.ModifiedAt, "ModifiedAt should not be empty")
+
+	// Validate status is valid (COMPLETED or REVERSED for simulated deposits)
+	s.Contains([]string{"COMPLETED", "REVERSED"}, resp.Status, "Status should be COMPLETED or REVERSED")
+
 	s.T().Logf("Simulated USD deposit:\n%s", PrettyJSON(resp))
+
+	// Optionally list transactions after simulation for observability.
+	// In some environments simulated deposits may not create persisted transactions.
+	txResp, err := s.Client.Transactions.ListTransactions(s.Ctx, s.CustomerID, nil)
+	s.Require().NoError(err, "ListTransactions should succeed")
+	s.T().Logf("Transactions after simulation: count=%d (total=%d)", len(txResp.List), txResp.Total)
 }
 
 // TestSimulations_SimulateDeposit_USDT_Ethereum tests simulating a USDT deposit on Ethereum.
+// Validates all response fields.
 func (s *SimulationsTestSuite) TestSimulations_SimulateDeposit_USDT_Ethereum() {
 	req := &simulations.SimulateDepositRequest{
 		Asset:   assets.AssetNameUSDT,
@@ -55,15 +70,22 @@ func (s *SimulationsTestSuite) TestSimulations_SimulateDeposit_USDT_Ethereum() {
 		Amount:  "50.00",
 	}
 
-	resp, err := s.Client.Simulations.SimulateDeposit(s.Ctx, testCustomerID, req)
+	resp, err := s.Client.Simulations.SimulateDeposit(s.Ctx, s.CustomerID, req)
 	s.Require().NoError(err, "SimulateDeposit should succeed")
 
+	// Validate response structure
 	s.Require().NotNil(resp, "Response should not be nil")
 	s.NotEmpty(resp.SimulationID, "SimulationID should not be empty")
+	s.NotEmpty(resp.Status, "Status should not be empty")
+	s.NotEmpty(resp.CreatedAt, "CreatedAt should not be empty")
+	s.NotEmpty(resp.ModifiedAt, "ModifiedAt should not be empty")
+	s.Contains([]string{"COMPLETED", "REVERSED"}, resp.Status, "Status should be COMPLETED or REVERSED")
+
 	s.T().Logf("Simulated USDT Ethereum deposit:\n%s", PrettyJSON(resp))
 }
 
 // TestSimulations_SimulateDeposit_USDC_Polygon tests simulating a USDC deposit on Polygon.
+// Validates all response fields.
 func (s *SimulationsTestSuite) TestSimulations_SimulateDeposit_USDC_Polygon() {
 	req := &simulations.SimulateDepositRequest{
 		Asset:   assets.AssetNameUSDC,
@@ -71,15 +93,22 @@ func (s *SimulationsTestSuite) TestSimulations_SimulateDeposit_USDC_Polygon() {
 		Amount:  "25.00",
 	}
 
-	resp, err := s.Client.Simulations.SimulateDeposit(s.Ctx, testCustomerID, req)
+	resp, err := s.Client.Simulations.SimulateDeposit(s.Ctx, s.CustomerID, req)
 	s.Require().NoError(err, "SimulateDeposit should succeed")
 
+	// Validate response structure
 	s.Require().NotNil(resp, "Response should not be nil")
 	s.NotEmpty(resp.SimulationID, "SimulationID should not be empty")
+	s.NotEmpty(resp.Status, "Status should not be empty")
+	s.NotEmpty(resp.CreatedAt, "CreatedAt should not be empty")
+	s.NotEmpty(resp.ModifiedAt, "ModifiedAt should not be empty")
+	s.Contains([]string{"COMPLETED", "REVERSED"}, resp.Status, "Status should be COMPLETED or REVERSED")
+
 	s.T().Logf("Simulated USDC Polygon deposit:\n%s", PrettyJSON(resp))
 }
 
 // TestSimulations_SimulateDeposit_USDT_Solana tests simulating a USDT deposit on Solana.
+// Validates all response fields.
 func (s *SimulationsTestSuite) TestSimulations_SimulateDeposit_USDT_Solana() {
 	req := &simulations.SimulateDepositRequest{
 		Asset:   assets.AssetNameUSDT,
@@ -87,11 +116,17 @@ func (s *SimulationsTestSuite) TestSimulations_SimulateDeposit_USDT_Solana() {
 		Amount:  "75.00",
 	}
 
-	resp, err := s.Client.Simulations.SimulateDeposit(s.Ctx, testCustomerID, req)
+	resp, err := s.Client.Simulations.SimulateDeposit(s.Ctx, s.CustomerID, req)
 	s.Require().NoError(err, "SimulateDeposit should succeed")
 
+	// Validate response structure
 	s.Require().NotNil(resp, "Response should not be nil")
 	s.NotEmpty(resp.SimulationID, "SimulationID should not be empty")
+	s.NotEmpty(resp.Status, "Status should not be empty")
+	s.NotEmpty(resp.CreatedAt, "CreatedAt should not be empty")
+	s.NotEmpty(resp.ModifiedAt, "ModifiedAt should not be empty")
+	s.Contains([]string{"COMPLETED", "REVERSED"}, resp.Status, "Status should be COMPLETED or REVERSED")
+
 	s.T().Logf("Simulated USDT Solana deposit:\n%s", PrettyJSON(resp))
 }
 

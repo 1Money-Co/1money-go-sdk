@@ -50,12 +50,20 @@ func (s *EchoTestSuite) TestEchoService_Post() {
 
 // TestRateLimiter tests that the rate limiter is working correctly for both API key and user limits.
 // Each test case uses a different API key to ensure independent rate limit testing.
+// Requires ONEMONEY_SECONDARY_ACCESS_KEY and ONEMONEY_SECONDARY_SECRET_KEY environment variables.
 func (s *EchoTestSuite) TestRateLimiter() {
+	// Skip if secondary credentials are not configured
+	secondaryAccessKey := os.Getenv("ONEMONEY_SECONDARY_ACCESS_KEY")
+	secondarySecretKey := os.Getenv("ONEMONEY_SECONDARY_SECRET_KEY")
+	if secondaryAccessKey == "" || secondarySecretKey == "" {
+		s.T().Skip("Skipping rate limiter test: ONEMONEY_SECONDARY_ACCESS_KEY and ONEMONEY_SECONDARY_SECRET_KEY environment variables are required")
+	}
+
 	// Create secondary client with different API key for independent rate limit testing
 	secondaryClient, err := onemoney.NewClient(&onemoney.Config{
 		BaseURL:   os.Getenv("ONEMONEY_BASE_URL"),
-		AccessKey: "ALWUT3B11PGRKDDU05IR",
-		SecretKey: "ewhWWIO7JuEHNHj3maIM2x-ghN1vCbxlXNcnANqoyL8",
+		AccessKey: secondaryAccessKey,
+		SecretKey: secondarySecretKey,
 	})
 	s.Require().NoError(err, "failed to create secondary client")
 

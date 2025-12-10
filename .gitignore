@@ -20,3 +20,4 @@ coverage.dat
 .env
 .history/
 .env.*
+openapi.json

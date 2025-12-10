@@ -29,7 +29,7 @@ import (
 
 // CustomerTestSuite tests customer service operations.
 type CustomerTestSuite struct {
-	E2ETestSuite
+	CustomerDependentTestSuite
 }
 
 // TestCustomerService_TOSFlow tests the complete TOS signing flow.
@@ -49,17 +49,12 @@ func (s *CustomerTestSuite) TestCustomerService_TOSFlow() {
 	s.T().Logf("Signed agreement with ID:\n%s", PrettyJSON(signResp))
 }
 
-func (s *CustomerTestSuite) TestCustomerService_SignTOS() {
-	sessionToken := "54dbc3d2-d88e-4ae2-839f-4d2f9906ade2" //nolint:gosec // test session token
-	signResp, err := s.Client.Customer.SignTOSAgreement(s.Ctx, sessionToken)
-	s.Require().NoError(err, "SignTOSAgreement should not return error")
-	s.Require().NotNil(signResp, "SignTOSAgreement response should not be nil")
-	s.NotEmpty(signResp.SignedAgreementID, "Signed agreement ID should not be empty")
-	s.T().Logf("Signed agreement with ID:\n%s", PrettyJSON(signResp))
-}
-
 // TestCustomerService_CreateCustomer tests customer creation.
 func (s *CustomerTestSuite) TestCustomerService_CreateCustomer() {
+	// Get a valid signed agreement ID dynamically
+	signedAgreementID, err := s.EnsureSignedAgreement()
+	s.Require().NoError(err, "EnsureSignedAgreement should succeed")
+
 	faker := gofakeit.New(0)
 
 	req := &customer.CreateCustomerRequest{
@@ -79,52 +74,16 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer() {
 			Subdivision: faker.StateAbr(),
 		},
 		DateOfIncorporation: faker.Date().Format("2006-01-02"),
-		SignedAgreementID:   "dfdff042-0ad4-4010-8054-5eb234a0de94",
+		SignedAgreementID:   signedAgreementID,
 		AssociatedPersons: []customer.AssociatedPerson{
 			FakeAssociatedPerson(faker),
 			FakeAssociatedPerson(faker),
 			FakeAssociatedPerson(faker),
 			FakeAssociatedPerson(faker),
 		},
-		SourceOfFunds:  []customer.SourceOfFunds{customer.SourceOfFundsSalesOfGoodsAndServices},
-		SourceOfWealth: []customer.SourceOfWealth{customer.SourceOfWealthBusinessDividendsOrProfits},
-		Documents: []customer.Document{
-			{
-				DocType:     customer.DocumentTypeFlowOfFunds,
-				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				Description: "Proof of Funds",
-			},
-			{
-				DocType:     customer.DocumentTypeRegistrationDocument,
-				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				Description: "Certificate of Incorporation",
-			},
-			{
-				DocType:     customer.DocumentTypeProofOfTaxIdentification,
-				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				Description: "W9 Form",
-			},
-			{
-				DocType:     customer.DocumentTypeShareholderRegister,
-				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				Description: "Ownership Structure",
-			},
-			{
-				DocType:     customer.DocumentTypeESignatureCertificate,
-				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				Description: "Authorized Representative List",
-			},
-			{
-				DocType:     customer.DocumentTypeEvidenceOfGoodStanding,
-				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				Description: "Evidence of Good Standing",
-			},
-			{
-				DocType:     customer.DocumentTypeProofOfAddress,
-				File:        customer.EncodeBase64ToDataURI(gofakeit.ImageJpeg(100, 100), customer.ImageFormatJpeg),
-				Description: "Proof of Address",
-			},
-		},
+		SourceOfFunds:                  []customer.SourceOfFunds{customer.SourceOfFundsSalesOfGoodsAndServices},
+		SourceOfWealth:                 []customer.SourceOfWealth{customer.SourceOfWealthBusinessDividendsOrProfits},
+		Documents:                      FakeCustomerDocuments(),
 		AccountPurpose:                 customer.AccountPurposeTreasuryManagement,
 		IsDAO:                          false,
 		PubliclyTraded:                 false,
@@ -144,7 +103,11 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer() {
 	s.Equal(req.BusinessLegalName, resp.BusinessLegalName, "Business name should match")
 	s.Equal(req.Email, resp.Email, "Customer email should match")
 	s.Equal(req.BusinessType, resp.BusinessType, "Business type should match")
-	s.NotEmpty(resp.Status, "Status should not be empty")
+	s.Contains(
+		[]customer.KybStatus{customer.KybStatusPendingReview, customer.KybStatusUnderReview},
+		resp.Status,
+		"New customer status should be pending_review or under_review",
+	)
 	s.NotEmpty(resp.CreatedAt, "CreatedAt should not be empty")
 	s.NotEmpty(resp.UpdatedAt, "UpdatedAt should not be empty")
 }
@@ -152,6 +115,10 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer() {
 // TestCustomerService_CreateCustomer_InvalidFileFormat tests that invalid file formats are rejected.
 func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidFileFormat() {
 	faker := gofakeit.New(0)
+
+	// Get a valid signed agreement ID
+	signedAgreementID, err := s.EnsureSignedAgreement()
+	s.Require().NoError(err, "EnsureSignedAgreement should succeed")
 
 	// Test 1: Invalid MIME type (using unsupported format like .exe)
 	invalidMIME := "data:application/x-msdownload;base64,TVqQAAMAAAAEAAAA"
@@ -172,7 +139,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidFileFormat
 			Subdivision: faker.StateAbr(),
 		},
 		DateOfIncorporation: faker.Date().Format("2006-01-02"),
-		SignedAgreementID:   "121961e6-b863-4d1f-8d3b-c7caba257faf",
+		SignedAgreementID:   signedAgreementID,
 		AssociatedPersons: []customer.AssociatedPerson{
 			FakeAssociatedPerson(faker),
 		},
@@ -194,7 +161,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidFileFormat
 		TaxCountry:                     CountryUSA,
 	}
 
-	_, err := s.Client.Customer.CreateCustomer(s.Ctx, req)
+	_, err = s.Client.Customer.CreateCustomer(s.Ctx, req)
 	s.Require().Error(err, "CreateCustomer should return error for invalid MIME type")
 	s.T().Logf("Expected error for invalid MIME type: %v", err)
 }
@@ -202,6 +169,10 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidFileFormat
 // TestCustomerService_CreateCustomer_InvalidBase64 tests that invalid base64 data is rejected.
 func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidBase64() {
 	faker := gofakeit.New(0)
+
+	// Get a valid signed agreement ID
+	signedAgreementID, err := s.EnsureSignedAgreement()
+	s.Require().NoError(err, "EnsureSignedAgreement should succeed")
 
 	// Invalid base64 data (not properly encoded)
 	invalidBase64 := "data:image/jpeg;base64,this-is-not-valid-base64!!!"
@@ -222,7 +193,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidBase64() {
 			Subdivision: faker.StateAbr(),
 		},
 		DateOfIncorporation: faker.Date().Format("2006-01-02"),
-		SignedAgreementID:   "121961e6-b863-4d1f-8d3b-c7caba257faf",
+		SignedAgreementID:   signedAgreementID,
 		AssociatedPersons: []customer.AssociatedPerson{
 			FakeAssociatedPerson(faker),
 		},
@@ -244,7 +215,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidBase64() {
 		TaxCountry:                     CountryUSA,
 	}
 
-	_, err := s.Client.Customer.CreateCustomer(s.Ctx, req)
+	_, err = s.Client.Customer.CreateCustomer(s.Ctx, req)
 	s.Require().Error(err, "CreateCustomer should return error for invalid base64")
 	s.T().Logf("Expected error for invalid base64: %v", err)
 }
@@ -252,6 +223,10 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidBase64() {
 // TestCustomerService_CreateCustomer_CorruptedXLSX tests that corrupted XLSX files are rejected.
 func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_CorruptedXLSX() {
 	faker := gofakeit.New(0)
+
+	// Get a valid signed agreement ID
+	signedAgreementID, err := s.EnsureSignedAgreement()
+	s.Require().NoError(err, "EnsureSignedAgreement should succeed")
 
 	// Corrupted XLSX (random bytes that look like XLSX but are invalid)
 	corruptedData := []byte("PK\x03\x04corrupted xlsx content that is not valid")
@@ -273,7 +248,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_CorruptedXLSX() {
 			Subdivision: faker.StateAbr(),
 		},
 		DateOfIncorporation: faker.Date().Format("2006-01-02"),
-		SignedAgreementID:   "121961e6-b863-4d1f-8d3b-c7caba257faf",
+		SignedAgreementID:   signedAgreementID,
 		AssociatedPersons: []customer.AssociatedPerson{
 			FakeAssociatedPerson(faker),
 		},
@@ -295,9 +270,127 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_CorruptedXLSX() {
 		TaxCountry:                     CountryUSA,
 	}
 
-	_, err := s.Client.Customer.CreateCustomer(s.Ctx, req)
+	_, err = s.Client.Customer.CreateCustomer(s.Ctx, req)
 	s.Require().Error(err, "CreateCustomer should return error for corrupted XLSX")
 	s.T().Logf("Expected error for corrupted XLSX: %v", err)
+}
+
+// TestCustomerService_CreateCustomer_OversizedDocument tests that documents exceeding 10MB are rejected.
+func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_OversizedDocument() {
+	faker := gofakeit.New(0)
+
+	// Get a valid signed agreement ID
+	signedAgreementID, err := s.EnsureSignedAgreement()
+	s.Require().NoError(err, "EnsureSignedAgreement should succeed")
+
+	// Create a file larger than 10MB (10 * 1024 * 1024 = 10485760 bytes)
+	// We'll create ~11MB of random data
+	oversizedData := make([]byte, 11*1024*1024)
+	for i := range oversizedData {
+		oversizedData[i] = byte(i % 256)
+	}
+	oversizedFile := customer.EncodeBase64ToDataURI(oversizedData, customer.ImageFormatPng)
+
+	req := &customer.CreateCustomerRequest{
+		BusinessLegalName:          faker.Company(),
+		BusinessDescription:        faker.JobDescriptor(),
+		BusinessRegistrationNumber: fmt.Sprintf("%s-%d", faker.LetterN(3), faker.Number(100000, 999999)),
+		Email:                      faker.Email(),
+		BusinessType:               customer.BusinessTypeCorporation,
+		BusinessIndustry:           "332999",
+		RegisteredAddress: &customer.Address{
+			StreetLine1: faker.Street(),
+			City:        faker.City(),
+			State:       faker.StateAbr(),
+			Country:     CountryUSA,
+			PostalCode:  faker.Zip(),
+			Subdivision: faker.StateAbr(),
+		},
+		DateOfIncorporation: faker.Date().Format("2006-01-02"),
+		SignedAgreementID:   signedAgreementID,
+		AssociatedPersons: []customer.AssociatedPerson{
+			FakeAssociatedPerson(faker),
+		},
+		SourceOfFunds:  []customer.SourceOfFunds{customer.SourceOfFundsSalesOfGoodsAndServices},
+		SourceOfWealth: []customer.SourceOfWealth{customer.SourceOfWealthBusinessDividendsOrProfits},
+		Documents: []customer.Document{
+			{
+				DocType:     customer.DocumentTypeFlowOfFunds,
+				File:        oversizedFile, // File > 10MB
+				Description: "Oversized document test",
+			},
+		},
+		AccountPurpose:                 customer.AccountPurposeTreasuryManagement,
+		EstimatedAnnualRevenueUSD:      customer.MoneyRange099999,
+		ExpectedMonthlyFiatDeposits:    customer.MoneyRange099999,
+		ExpectedMonthlyFiatWithdrawals: customer.MoneyRange099999,
+		TaxID:                          fmt.Sprintf("%d-%d", faker.Number(10, 99), faker.Number(1000000, 9999999)),
+		TaxType:                        customer.TaxIDTypeEIN,
+		TaxCountry:                     CountryUSA,
+	}
+
+	_, err = s.Client.Customer.CreateCustomer(s.Ctx, req)
+	s.Require().Error(err, "CreateCustomer should return error for oversized document (>10MB)")
+	s.T().Logf("Expected error for oversized document: %v", err)
+}
+
+// TestCustomerService_CreateCustomer_LargeDocument tests that documents under 10MB are accepted.
+func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_LargeDocument() {
+	faker := gofakeit.New(0)
+
+	// Get a valid signed agreement ID
+	signedAgreementID, err := s.EnsureSignedAgreement()
+	s.Require().NoError(err, "EnsureSignedAgreement should succeed")
+
+	// Create a 9MB file (under the 10MB limit)
+	largeData := make([]byte, 9*1024*1024)
+	for i := range largeData {
+		largeData[i] = byte(i % 256)
+	}
+	largeFile := customer.EncodeBase64ToDataURI(largeData, customer.ImageFormatPng)
+
+	// Get base documents and replace the first one with the large file
+	docs := FakeCustomerDocuments()
+	docs[0].File = largeFile
+	docs[0].Description = "Large document test (9MB)"
+
+	req := &customer.CreateCustomerRequest{
+		BusinessLegalName:          faker.Company(),
+		BusinessDescription:        faker.JobDescriptor(),
+		BusinessRegistrationNumber: fmt.Sprintf("%s-%d", faker.LetterN(3), faker.Number(100000, 999999)),
+		Email:                      faker.Email(),
+		BusinessType:               customer.BusinessTypeCorporation,
+		BusinessIndustry:           "332999",
+		RegisteredAddress: &customer.Address{
+			StreetLine1: faker.Street(),
+			City:        faker.City(),
+			State:       RandomUSState(faker),
+			Country:     CountryUSA,
+			PostalCode:  faker.Zip(),
+			Subdivision: RandomUSState(faker),
+		},
+		DateOfIncorporation: faker.Date().Format("2006-01-02"),
+		SignedAgreementID:   signedAgreementID,
+		AssociatedPersons: []customer.AssociatedPerson{
+			FakeAssociatedPerson(faker),
+		},
+		SourceOfFunds:                  []customer.SourceOfFunds{customer.SourceOfFundsSalesOfGoodsAndServices},
+		SourceOfWealth:                 []customer.SourceOfWealth{customer.SourceOfWealthBusinessDividendsOrProfits},
+		Documents:                      docs,
+		AccountPurpose:                 customer.AccountPurposeTreasuryManagement,
+		EstimatedAnnualRevenueUSD:      customer.MoneyRange099999,
+		ExpectedMonthlyFiatDeposits:    customer.MoneyRange099999,
+		ExpectedMonthlyFiatWithdrawals: customer.MoneyRange099999,
+		TaxID:                          fmt.Sprintf("%d-%d", faker.Number(10, 99), faker.Number(1000000, 9999999)),
+		TaxType:                        customer.TaxIDTypeEIN,
+		TaxCountry:                     CountryUSA,
+	}
+
+	resp, err := s.Client.Customer.CreateCustomer(s.Ctx, req)
+	s.Require().NoError(err, "CreateCustomer should succeed for 9MB document (under 10MB limit)")
+	s.Require().NotNil(resp, "Response should not be nil")
+	s.NotEmpty(resp.CustomerID, "Customer ID should not be empty")
+	s.T().Logf("Created customer with 9MB document: %s", resp.CustomerID)
 }
 
 // TestCustomerService_ListCustomers tests listing customers.
@@ -330,11 +423,11 @@ func (s *CustomerTestSuite) TestCustomerService_ListCustomers() {
 
 // TestCustomerService_GetCustomer tests getting a specific customer.
 func (s *CustomerTestSuite) TestCustomerService_GetCustomer() {
-	resp, err := s.Client.Customer.GetCustomer(s.Ctx, testCustomerID)
+	resp, err := s.Client.Customer.GetCustomer(s.Ctx, s.CustomerID)
 
 	s.Require().NoError(err, "GetCustomer should not return error")
 	s.Require().NotNil(resp, "Response should not be nil")
-	s.Equal(testCustomerID, resp.CustomerID, "Customer ID should match")
+	s.Equal(s.CustomerID, resp.CustomerID, "Customer ID should match")
 	s.NotEmpty(resp.BusinessLegalName, "Business name should not be empty")
 	s.NotEmpty(resp.Email, "Email should not be empty")
 	s.NotEmpty(resp.BusinessType, "Business type should not be empty")
@@ -350,7 +443,7 @@ func (s *CustomerTestSuite) TestCustomerService_UpdateCustomer() {
 	faker := gofakeit.New(0)
 
 	updateReq := &customer.UpdateCustomerRequest{
-		BusinessIndustry: utils.AsPtr("541519"),
+		BusinessIndustry: utils.AsPtr("332999"),
 		AccountPurpose:   utils.AsPtr(customer.AccountPurposeTreasuryManagement),
 		AssociatedPersons: []customer.AssociatedPerson{
 			FakeAssociatedPerson(faker),
@@ -359,11 +452,11 @@ func (s *CustomerTestSuite) TestCustomerService_UpdateCustomer() {
 		},
 	}
 
-	updateResp, err := s.Client.Customer.UpdateCustomer(s.Ctx, testCustomerID, updateReq)
+	updateResp, err := s.Client.Customer.UpdateCustomer(s.Ctx, s.CustomerID, updateReq)
 
 	s.Require().NoError(err, "UpdateCustomer should not return error")
 	s.Require().NotNil(updateResp, "Update response should not be nil")
-	s.Equal(testCustomerID, updateResp.CustomerID, "Customer ID should match")
+	s.Equal(s.CustomerID, updateResp.CustomerID, "Customer ID should match")
 	s.NotEmpty(updateResp.Status, "Status should not be empty")
 
 	s.T().Logf("Update response:\n%s", PrettyJSON(updateResp))

@@ -34,14 +34,14 @@
 //	})
 //
 //	// Create an external bank account
-//	account, err := client.ExternalAccounts.CreateExternalAccount(ctx, "customer-id", &external_accounts.CreateExternalAccountRequest{
-//	    IdempotencyKey:       "unique-key",
-//	    BankNetworkName:      external_accounts.BankNetworkNameUSACH,
-//	    Currency:             external_accounts.CurrencyUSD,
-//	    BankName:             "Bank of America",
-//	    BankAccountOwnerName: "John Doe",
-//	    BankAccountNumber:    "123456789",
-//	    BankRoutingNumber:    "021000021",
+//	account, err := client.ExternalAccounts.CreateExternalAccount(ctx, "customer-id", &external_accounts.CreateReq{
+//	    IdempotencyKey:  "unique-key",
+//	    Network:         external_accounts.BankNetworkNameUSACH,
+//	    Currency:        external_accounts.CurrencyUSD,
+//	    CountryCode:     external_accounts.CountryCodeUSA,
+//	    AccountNumber:   "123456789",
+//	    InstitutionID:   "021000021",
+//	    InstitutionName: "Bank of America",
 //	})
 package external_accounts
 
@@ -49,6 +49,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/1Money-Co/1money-go-sdk/internal/transport"
 	svc "github.com/1Money-Co/1money-go-sdk/pkg/service"
@@ -58,88 +59,97 @@ import (
 type Service interface {
 	// CreateExternalAccount creates a new external bank account for a customer.
 	// The IdempotencyKey in the request is used to ensure idempotent creation.
-	CreateExternalAccount(ctx context.Context, customerID string, req *CreateExternalAccountRequest) (*ExternalAccountResponse, error)
+	CreateExternalAccount(ctx context.Context, id svc.CustomerID, req *CreateReq) (*Resp, error)
 	// GetExternalAccount retrieves a specific external account by ID.
-	GetExternalAccount(ctx context.Context, customerID, externalAccountID string) (*ExternalAccountResponse, error)
+	GetExternalAccount(ctx context.Context, id svc.CustomerID, externalAccountID string) (*Resp, error)
 	// GetExternalAccountByIdempotencyKey retrieves an external account by its idempotency key.
-	GetExternalAccountByIdempotencyKey(ctx context.Context, customerID, idempotencyKey string) (*ExternalAccountResponse, error)
+	GetExternalAccountByIdempotencyKey(ctx context.Context, id svc.CustomerID, idempotencyKey string) (*Resp, error)
 	// ListExternalAccounts retrieves all external accounts for a customer.
-	ListExternalAccounts(ctx context.Context, customerID string, req *ListExternalAccountsRequest) ([]ExternalAccountResponse, error)
-	// DeleteExternalAccount deletes an external bank account.
-	DeleteExternalAccount(ctx context.Context, customerID, externalAccountID string) error
+	ListExternalAccounts(ctx context.Context, id svc.CustomerID, req *ListReq) ([]Resp, error)
+	// RemoveExternalAccount deletes an external bank account.
+	RemoveExternalAccount(ctx context.Context, id svc.CustomerID, externalAccountID string) error
 }
 
-// IntermediaryBank represents intermediary bank details for SWIFT transfers.
+// IntermediaryBank represents intermediary bank details for international wire transfers.
 type IntermediaryBank struct {
-	// BankName is the name of the intermediary bank.
-	BankName string `json:"bank_name"`
-	// SwiftCode is the SWIFT/BIC code of the intermediary bank.
-	SwiftCode string `json:"swift_code"`
-	// BankAddress is the address of the intermediary bank.
-	BankAddress string `json:"bank_address,omitempty"`
+	// InstitutionID is the intermediary institution identifier (SWIFT code or ABA routing number).
+	InstitutionID string `json:"institution_id"`
+	// InstitutionName is the full legal name of the intermediary bank (optional).
+	InstitutionName *string `json:"institution_name,omitempty"`
 }
 
-// CreateExternalAccountRequest represents the request body for creating an external bank account.
-type CreateExternalAccountRequest struct {
-	// IdempotencyKey is a unique key to ensure idempotent creation.
-	// This is sent as a header, not in the body.
-	IdempotencyKey string `json:"-"`
-	// BankNetworkName is the bank network type (US_ACH, SWIFT, US_FEDWIRE).
-	BankNetworkName BankNetworkName `json:"bank_network_name"`
-	// Currency is the currency of the account (USD).
-	Currency Currency `json:"currency"`
-	// BankName is the name of the bank.
-	BankName string `json:"bank_name"`
-	// BankAccountOwnerName is the name of the account holder.
-	BankAccountOwnerName string `json:"bank_account_owner_name"`
-	// BankAccountNumber is the bank account number.
-	BankAccountNumber string `json:"bank_account_number"`
-	// BankRoutingNumber is the bank routing number (required for US_ACH and US_FEDWIRE).
-	BankRoutingNumber string `json:"bank_routing_number,omitempty"`
-	// BankAddress is the address of the bank.
-	BankAddress string `json:"bank_address,omitempty"`
-	// SwiftCode is the SWIFT/BIC code (required for SWIFT transfers).
-	SwiftCode string `json:"swift_code,omitempty"`
-	// IntermediaryBank contains intermediary bank details for SWIFT transfers.
-	IntermediaryBank *IntermediaryBank `json:"intermediary_bank,omitempty"`
-}
+// CreateExternalAccount request and response types.
+type (
+	// CreateReq represents the request body for creating an external bank account.
+	CreateReq struct {
+		// IdempotencyKey is a unique key to ensure idempotent creation.
+		// This is sent as a header, not in the body.
+		IdempotencyKey string `json:"-"`
+		// Network is the bank network type (US_ACH, SWIFT, US_FEDWIRE).
+		Network BankNetworkName `json:"network"`
+		// Currency is the currency of the account (USD).
+		Currency Currency `json:"currency"`
+		// CountryCode is the ISO 3166-1 alpha-3 country code where the bank account is held.
+		CountryCode CountryCode `json:"country_code"`
+		// AccountNumber is the bank account number or IBAN.
+		AccountNumber string `json:"account_number"`
+		// InstitutionID is the routing identifier (ABA routing number or SWIFT/BIC code).
+		InstitutionID string `json:"institution_id"`
+		// InstitutionName is the full legal name of the bank.
+		InstitutionName string `json:"institution_name"`
+		// Nickname is a user-defined label for the account (optional).
+		Nickname *string `json:"nickname,omitempty"`
+		// InstitutionClearingCode is additional local routing code (optional).
+		InstitutionClearingCode *string `json:"institution_clearing_code,omitempty"`
+		// IntermediaryBank contains intermediary bank details for international transfers (optional).
+		IntermediaryBank *IntermediaryBank `json:"intermediary_bank,omitempty"`
+	}
 
-// ExternalAccountResponse represents the response data for an external bank account.
-type ExternalAccountResponse struct {
-	// ExternalAccountID is the unique identifier for the external account.
-	ExternalAccountID string `json:"external_account_id"`
-	// CustomerID is the ID of the customer who owns this account.
-	CustomerID string `json:"customer_id"`
-	// BankNetworkName is the bank network type.
-	BankNetworkName string `json:"bank_network_name"`
-	// Currency is the currency of the account.
-	Currency string `json:"currency"`
-	// BankName is the name of the bank.
-	BankName string `json:"bank_name"`
-	// BankAccountOwnerName is the name of the account holder.
-	BankAccountOwnerName string `json:"bank_account_owner_name"`
-	// BankAccountNumberMasked is the masked bank account number (last 4 digits visible).
-	BankAccountNumberMasked string `json:"bank_account_number_masked"`
-	// BankRoutingNumber is the bank routing number.
-	BankRoutingNumber string `json:"bank_routing_number,omitempty"`
-	// BankAddress is the address of the bank.
-	BankAddress string `json:"bank_address,omitempty"`
-	// SwiftCode is the SWIFT/BIC code.
-	SwiftCode string `json:"swift_code,omitempty"`
-	// IntermediaryBank contains intermediary bank details.
-	IntermediaryBank *IntermediaryBank `json:"intermediary_bank,omitempty"`
-	// Status is the current status of the external account.
-	Status string `json:"status"`
-	// CreatedAt is the timestamp when the account was created (ISO 8601 format).
-	CreatedAt string `json:"created_at"`
-	// ModifiedAt is the timestamp when the account was last modified (ISO 8601 format).
-	ModifiedAt string `json:"modified_at"`
-}
+	// Resp represents the response data for an external bank account.
+	Resp struct {
+		// ExternalAccountID is the unique identifier for the external account.
+		ExternalAccountID string `json:"external_account_id"`
+		// IdempotencyKey is the idempotency key associated with the account creation.
+		IdempotencyKey string `json:"idempotency_key"`
+		// CustomerID is the ID of the customer who owns this account.
+		CustomerID string `json:"customer_id"`
+		// Status is the current status of the external account.
+		Status string `json:"status"`
+		// Network is the bank network type.
+		Network string `json:"network"`
+		// Nickname is a user-defined label for the account (optional).
+		Nickname *string `json:"nickname,omitempty"`
+		// AccountHolderName is the full legal name of the account holder.
+		AccountHolderName string `json:"account_holder_name"`
+		// Currency is the currency of the account.
+		Currency string `json:"currency"`
+		// CountryCode is the ISO 3166-1 alpha-3 country code.
+		CountryCode string `json:"country_code"`
+		// AccountNumber is the bank account number.
+		AccountNumber string `json:"account_number"`
+		// InstitutionID is the routing identifier (ABA or SWIFT/BIC).
+		InstitutionID string `json:"institution_id"`
+		// InstitutionName is the full legal name of the bank.
+		InstitutionName string `json:"institution_name"`
+		// InstitutionClearingCode is additional local routing code (optional).
+		InstitutionClearingCode *string `json:"institution_clearing_code,omitempty"`
+		// IntermediaryBank contains intermediary bank details (optional).
+		IntermediaryBank *IntermediaryBank `json:"intermediary_bank,omitempty"`
+		// ReferenceCode is a reference code for wire transfers (optional).
+		ReferenceCode *string `json:"reference_code,omitempty"`
+		// CreatedAt is the timestamp when the account was created (ISO 8601 format).
+		CreatedAt string `json:"created_at"`
+		// ModifiedAt is the timestamp when the account was last modified (ISO 8601 format).
+		ModifiedAt string `json:"modified_at"`
+	}
+)
 
-// ListExternalAccountsRequest represents optional query parameters for listing external accounts.
-type ListExternalAccountsRequest struct {
-	// Status filters by account status (PENDING, APPROVED, FAILED).
-	Status BankAccountStatus `json:"status,omitempty"`
+// ListReq represents optional query parameters for listing external accounts.
+type ListReq struct {
+	// Currency filters by currency code (e.g., USD).
+	Currency Currency `json:"currency,omitempty"`
+	// Network filters by bank network type (US_ACH, SWIFT, US_FEDWIRE).
+	Network BankNetworkName `json:"network,omitempty"`
 }
 
 type serviceImpl struct {
@@ -156,10 +166,10 @@ func NewService(base *svc.BaseService) Service {
 // CreateExternalAccount creates a new external bank account for a customer.
 func (s *serviceImpl) CreateExternalAccount(
 	ctx context.Context,
-	customerID string,
-	req *CreateExternalAccountRequest,
-) (*ExternalAccountResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/external-accounts", customerID)
+	id svc.CustomerID,
+	req *CreateReq,
+) (*Resp, error) {
+	path := fmt.Sprintf("/v1/customers/%s/external-accounts", id)
 
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -172,7 +182,7 @@ func (s *serviceImpl) CreateExternalAccount(
 	}
 
 	resp, err := s.Do(ctx, &transport.Request{
-		Method:  "POST",
+		Method:  http.MethodPost,
 		Path:    path,
 		Body:    body,
 		Headers: headers,
@@ -181,7 +191,7 @@ func (s *serviceImpl) CreateExternalAccount(
 		return nil, err
 	}
 
-	var result ExternalAccountResponse
+	var result Resp
 	if err := json.Unmarshal(resp.Body, &result); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
@@ -192,50 +202,58 @@ func (s *serviceImpl) CreateExternalAccount(
 // GetExternalAccount retrieves a specific external account by ID.
 func (s *serviceImpl) GetExternalAccount(
 	ctx context.Context,
-	customerID, externalAccountID string,
-) (*ExternalAccountResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/external-accounts/%s", customerID, externalAccountID)
-	return svc.GetJSON[ExternalAccountResponse](ctx, s.BaseService, path)
+	id svc.CustomerID,
+	externalAccountID string,
+) (*Resp, error) {
+	path := fmt.Sprintf("/v1/customers/%s/external-accounts/%s", id, externalAccountID)
+	return svc.GetJSON[Resp](ctx, s.BaseService, path)
 }
 
 // GetExternalAccountByIdempotencyKey retrieves an external account by its idempotency key.
 func (s *serviceImpl) GetExternalAccountByIdempotencyKey(
 	ctx context.Context,
-	customerID, idempotencyKey string,
-) (*ExternalAccountResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/external-accounts", customerID)
+	id svc.CustomerID,
+	idempotencyKey string,
+) (*Resp, error) {
+	path := fmt.Sprintf("/v1/customers/%s/external-accounts", id)
 	params := map[string]string{
 		"idempotency_key": idempotencyKey,
 	}
-	return svc.GetJSONWithParams[ExternalAccountResponse](ctx, s.BaseService, path, params)
+	return svc.GetJSONWithParams[Resp](ctx, s.BaseService, path, params)
 }
 
 // ListExternalAccounts retrieves all external accounts for a customer.
 func (s *serviceImpl) ListExternalAccounts(
 	ctx context.Context,
-	customerID string,
-	req *ListExternalAccountsRequest,
-) ([]ExternalAccountResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/external-accounts/list", customerID)
+	id svc.CustomerID,
+	req *ListReq,
+) ([]Resp, error) {
+	path := fmt.Sprintf("/v1/customers/%s/external-accounts/list", id)
 
 	params := make(map[string]string)
-	if req != nil && req.Status != "" {
-		params["status"] = string(req.Status)
+	if req != nil {
+		if req.Currency != "" {
+			params["currency"] = string(req.Currency)
+		}
+		if req.Network != "" {
+			params["network"] = string(req.Network)
+		}
 	}
 
-	result, err := svc.GetJSONWithParams[[]ExternalAccountResponse](ctx, s.BaseService, path, params)
+	result, err := svc.GetJSONWithParams[[]Resp](ctx, s.BaseService, path, params)
 	if err != nil {
 		return nil, err
 	}
 	return *result, nil
 }
 
-// DeleteExternalAccount deletes an external bank account.
-func (s *serviceImpl) DeleteExternalAccount(
+// RemoveExternalAccount deletes an external bank account.
+func (s *serviceImpl) RemoveExternalAccount(
 	ctx context.Context,
-	customerID, externalAccountID string,
+	id svc.CustomerID,
+	externalAccountID string,
 ) error {
-	path := fmt.Sprintf("/v1/customers/%s/external-accounts/%s", customerID, externalAccountID)
+	path := fmt.Sprintf("/v1/customers/%s/external-accounts/%s", id, externalAccountID)
 	_, err := svc.DeleteJSON[any](ctx, s.BaseService, path)
 	return err
 }

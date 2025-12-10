@@ -26,7 +26,7 @@ import (
 
 // AssetsTestSuite tests assets service operations.
 type AssetsTestSuite struct {
-	E2ETestSuite
+	CustomerDependentTestSuite
 }
 
 // TestAssets_ListAssets tests listing assets with various filters.
@@ -61,20 +61,40 @@ func (s *AssetsTestSuite) TestAssets_ListAssets() {
 		{
 			name: "FilterByNetwork",
 			req:  &assets.ListAssetsRequest{Network: assets.NetworkNameETHEREUM},
+			checkFn: func(resp []assets.AssetResponse) {
+				for _, asset := range resp {
+					s.Require().NotNil(asset.Network, "Network should not be nil")
+					s.Equal(string(assets.NetworkNameETHEREUM), *asset.Network, "Network should be ETHEREUM")
+				}
+			},
 		},
 		{
 			name: "WithSortOrderDesc",
 			req:  &assets.ListAssetsRequest{SortOrder: assets.SortOrderDESC},
+			checkFn: func(resp []assets.AssetResponse) {
+				// Verify descending order by CreatedAt
+				for i := 1; i < len(resp); i++ {
+					s.GreaterOrEqual(resp[i-1].CreatedAt, resp[i].CreatedAt,
+						"Assets should be sorted in descending order by CreatedAt")
+				}
+			},
 		},
 		{
 			name: "WithSortOrderAsc",
 			req:  &assets.ListAssetsRequest{SortOrder: assets.SortOrderASC},
+			checkFn: func(resp []assets.AssetResponse) {
+				// Verify ascending order by CreatedAt
+				for i := 1; i < len(resp); i++ {
+					s.LessOrEqual(resp[i-1].CreatedAt, resp[i].CreatedAt,
+						"Assets should be sorted in ascending order by CreatedAt")
+				}
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			resp, err := s.Client.Assets.ListAssets(s.Ctx, testCustomerID, tc.req)
+			resp, err := s.Client.Assets.ListAssets(s.Ctx, s.CustomerID, tc.req)
 			s.Require().NoError(err, "ListAssets should succeed")
 			s.Require().NotNil(resp, "Response should not be nil")
 			s.T().Logf("%s response:\n%s", tc.name, PrettyJSON(resp))

@@ -65,6 +65,7 @@ type Transport struct {
 	baseURL       string
 	httpClient    *http.Client
 	authenticator auth.Authenticator
+	retryer       *retryer
 }
 
 // Config holds transport configuration.
@@ -72,6 +73,7 @@ type Config struct {
 	BaseURL    string
 	HTTPClient *http.Client
 	Timeout    time.Duration
+	Retry      *RetryConfig
 }
 
 // NewTransport creates a new HTTP transport with the given configuration.
@@ -86,18 +88,103 @@ func NewTransport(cfg *Config, authenticator auth.Authenticator) *Transport {
 		}
 	}
 
+	// Initialize retryer with config or defaults
+	retryConfig := cfg.Retry
+	if retryConfig == nil {
+		retryConfig = DefaultRetryConfig()
+	}
+
 	return &Transport{
 		baseURL:       cfg.BaseURL,
 		httpClient:    httpClient,
 		authenticator: authenticator,
+		retryer:       newRetryer(retryConfig),
 	}
 }
 
-// Do executes an HTTP request with automatic authentication.
+// Do executes an HTTP request with automatic authentication and retry support.
 func (t *Transport) Do(ctx context.Context, req *Request) (*Response, error) {
 	log := getLogger()
 
-	// Generate authentication headers
+	var lastErr error
+	maxAttempts := t.retryer.config.MaxRetries + 1 // +1 for the initial attempt
+
+	for attempt := range maxAttempts {
+		// Check context cancellation before each attempt
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
+		// Wait before retry (skip for first attempt)
+		if attempt > 0 {
+			log.Info("retrying request",
+				zap.Int("attempt", attempt+1),
+				zap.Int("max_attempts", maxAttempts),
+				zap.String("method", req.Method),
+				zap.String("path", req.Path),
+			)
+
+			// Check if we have Retry-After information from the last error
+			var waitDuration time.Duration
+			if apiErr, ok := IsAPIError(lastErr); ok && apiErr.Detail != "" {
+				if retryAfter := parseRetryAfter(apiErr.Detail); retryAfter > 0 {
+					waitDuration = retryAfter
+				}
+			}
+
+			// Use Retry-After if available, otherwise use exponential backoff
+			if waitDuration > 0 {
+				log.Debug("using Retry-After duration",
+					zap.Duration("wait", waitDuration),
+				)
+				select {
+				case <-ctx.Done():
+					return nil, ctx.Err()
+				case <-time.After(waitDuration):
+				}
+			} else {
+				if err := t.retryer.wait(ctx, attempt-1); err != nil {
+					return nil, err
+				}
+			}
+		}
+
+		resp, err := t.doOnce(ctx, req)
+		if err == nil {
+			if attempt > 0 {
+				log.Info("request succeeded after retry",
+					zap.Int("attempts", attempt+1),
+					zap.String("method", req.Method),
+					zap.String("path", req.Path),
+				)
+			}
+			return resp, nil
+		}
+
+		lastErr = err
+
+		// Check if we should retry
+		if !t.retryer.shouldRetry(err, attempt) {
+			break
+		}
+
+		log.Warn("request failed, will retry",
+			zap.Int("attempt", attempt+1),
+			zap.Int("max_attempts", maxAttempts),
+			zap.String("method", req.Method),
+			zap.String("path", req.Path),
+			zap.Error(err),
+		)
+	}
+
+	return nil, lastErr
+}
+
+// doOnce executes a single HTTP request attempt.
+func (t *Transport) doOnce(ctx context.Context, req *Request) (*Response, error) {
+	log := getLogger()
+
+	// Generate authentication headers (regenerate for each attempt as timestamp changes)
 	sigResult, err := t.authenticator.Authenticate(req.Method, req.Path, req.Body)
 	if err != nil {
 		log.Error("failed to sign request",
@@ -127,7 +214,8 @@ func (t *Transport) Do(ctx context.Context, req *Request) (*Response, error) {
 	)
 
 	// Print curl command separately for easy copy-paste
-	if os.Getenv("ONEMONEY_DEBUG_CURL") == "1" {
+	// Skip if body is too large (> 4KB) to avoid cluttering output
+	if debugCurlEnabled {
 		fmt.Fprintln(os.Stderr, buildCurlCommand(httpReq, req.Body))
 	}
 
@@ -206,6 +294,7 @@ func (t *Transport) Do(ctx context.Context, req *Request) (*Response, error) {
 	log.Debug("request completed successfully",
 		zap.Int("status_code", httpResp.StatusCode),
 		zap.Int("response_size", len(respBody)),
+		zap.String("request_id", httpResp.Header.Get("x-request-id")),
 		zap.String("resp", string(respBody)),
 	)
 
@@ -261,7 +350,7 @@ func (t *Transport) buildHTTPRequest(ctx context.Context, req *Request, sigResul
 	}
 
 	// Add X-Forwarded-For header in debug mode for testing rate limiting
-	if os.Getenv("ONEMONEY_DEBUG") == "1" {
+	if debugEnabled {
 		if localIP := getLocalIP(); localIP != "" {
 			httpReq.Header.Set("X-Forwarded-For", localIP)
 		}
@@ -314,30 +403,47 @@ func joinStrings(strs []string, sep string) string {
 	return result
 }
 
-// buildCurlCommand generates a curl command string from an HTTP request for debugging.
+// buildCurlCommand generates a single-line curl command for easy copy-paste.
 func buildCurlCommand(req *http.Request, body []byte) string {
-	var lines []string
-	lines = append(lines, "curl -v")
+	var parts []string
+	parts = append(parts, "curl")
 
 	// Add method
 	if req.Method != http.MethodGet {
-		lines = append(lines, fmt.Sprintf("  -X %s", req.Method))
+		parts = append(parts, fmt.Sprintf("-X %s", req.Method))
 	}
 
 	// Add headers
 	for key, values := range req.Header {
 		for _, value := range values {
-			lines = append(lines, fmt.Sprintf("  -H '%s: %s'", key, value))
+			escapedValue := escapeShellString(value)
+			parts = append(parts, fmt.Sprintf("-H '%s: %s'", key, escapedValue))
 		}
 	}
 
 	// Add body
 	if len(body) > 0 {
-		lines = append(lines, fmt.Sprintf("  -d '%s'", string(body)))
+		escapedBody := escapeShellString(string(body))
+		parts = append(parts, fmt.Sprintf("-d '%s'", escapedBody))
 	}
 
 	// Add URL
-	lines = append(lines, fmt.Sprintf("  '%s'", req.URL.String()))
+	parts = append(parts, fmt.Sprintf("'%s'", req.URL.String()))
 
-	return joinStrings(lines, " \\\n")
+	return joinStrings(parts, " ")
+}
+
+// escapeShellString escapes single quotes for safe use in shell single-quoted strings.
+// In shell, single-quoted strings don't support escape sequences, so we need to
+// end the string, add an escaped quote, and start a new string: ' -> '\”
+func escapeShellString(s string) string {
+	result := ""
+	for _, c := range s {
+		if c == '\'' {
+			result += `'\''`
+		} else {
+			result += string(c)
+		}
+	}
+	return result
 }

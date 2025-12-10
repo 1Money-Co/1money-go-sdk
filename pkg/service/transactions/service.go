@@ -51,76 +51,82 @@ import (
 // Service defines the transactions service interface for retrieving transaction history.
 type Service interface {
 	// ListTransactions retrieves a list of transactions for a customer.
-	ListTransactions(ctx context.Context, customerID string, req *ListTransactionsRequest) (*ListTransactionsResponse, error)
+	ListTransactions(ctx context.Context, id svc.CustomerID, req *ListTransactionsRequest) (*ListTransactionsResponse, error)
 	// GetTransaction retrieves a specific transaction by ID.
-	GetTransaction(ctx context.Context, customerID, transactionID string) (*TransactionResponse, error)
+	GetTransaction(ctx context.Context, id svc.CustomerID, transactionID string) (*TransactionResponse, error)
 }
 
-// TransactionEndpoint represents the source or destination of a transaction.
-type TransactionEndpoint struct {
-	// Amount is the amount at this endpoint.
-	Amount string `json:"amount,omitempty"`
-	// Asset is the asset at this endpoint.
-	Asset string `json:"asset,omitempty"`
-	// Network is the network at this endpoint.
-	Network string `json:"network,omitempty"`
-	// AddressID is the address identifier (Platform, External Account ID, Wallet Address ID, or Wallet Address).
-	AddressID string `json:"address_id"`
-}
+// Common types for transaction operations.
+type (
+	// TransactionEndpoint represents the source or destination of a transaction.
+	TransactionEndpoint struct {
+		// Amount is the amount at this endpoint.
+		Amount string `json:"amount,omitempty"`
+		// Asset is the asset at this endpoint.
+		Asset string `json:"asset,omitempty"`
+		// Network is the network at this endpoint.
+		Network string `json:"network,omitempty"`
+		// AddressID is the address identifier (Platform, External Account ID, Wallet Address ID, or Wallet Address).
+		AddressID string `json:"address_id"`
+	}
 
-// TransactionResponse represents a transaction.
-type TransactionResponse struct {
-	// CustomerID is the customer ID.
-	CustomerID string `json:"customer_id"`
-	// TransactionID is the unique transaction identifier.
-	TransactionID string `json:"transaction_id"`
-	// IdempotencyKey is the external transaction identifier.
-	IdempotencyKey string `json:"idempotency_key"`
-	// TransactionAction is the transaction type (DEPOSIT, WITHDRAWAL, CONVERSION).
-	TransactionAction string `json:"transaction_action"`
-	// Amount is the transaction amount.
-	Amount string `json:"amount"`
-	// Asset is the transaction asset.
-	Asset string `json:"asset,omitempty"`
-	// Network is the transaction network.
-	Network string `json:"network,omitempty"`
-	// TransactionFee is the transaction fee amount.
-	TransactionFee string `json:"transaction_fee"`
-	// Source contains the transaction source details.
-	Source TransactionEndpoint `json:"source"`
-	// Destination contains the transaction destination details.
-	Destination TransactionEndpoint `json:"destination"`
-	// Status is the current transaction status.
-	Status string `json:"status"`
-	// CreatedAt is the transaction creation timestamp.
-	CreatedAt string `json:"created_at"`
-	// ModifiedAt is the transaction last modification timestamp.
-	ModifiedAt string `json:"modified_at"`
-}
+	// TransactionResponse represents a transaction.
+	TransactionResponse struct {
+		// CustomerID is the customer ID.
+		CustomerID string `json:"customer_id"`
+		// TransactionID is the unique transaction identifier.
+		TransactionID string `json:"transaction_id"`
+		// IdempotencyKey is the external transaction identifier.
+		IdempotencyKey string `json:"idempotency_key"`
+		// TransactionAction is the transaction type (DEPOSIT, WITHDRAWAL, CONVERSION).
+		TransactionAction string `json:"transaction_action"`
+		// Amount is the transaction amount.
+		Amount string `json:"amount"`
+		// Asset is the transaction asset.
+		Asset string `json:"asset,omitempty"`
+		// Network is the transaction network.
+		Network string `json:"network,omitempty"`
+		// TransactionFee is the transaction fee amount.
+		TransactionFee string `json:"transaction_fee"`
+		// Source contains the transaction source details.
+		Source TransactionEndpoint `json:"source"`
+		// Destination contains the transaction destination details.
+		Destination TransactionEndpoint `json:"destination"`
+		// Status is the current transaction status.
+		Status string `json:"status"`
+		// CreatedAt is the transaction creation timestamp.
+		CreatedAt string `json:"created_at"`
+		// ModifiedAt is the transaction last modification timestamp.
+		ModifiedAt string `json:"modified_at"`
+	}
+)
 
-// ListTransactionsRequest represents optional query parameters for listing transactions.
-type ListTransactionsRequest struct {
-	// TransactionID filters by specific transaction ID.
-	TransactionID string `json:"transaction_id,omitempty"`
-	// Asset filters by asset name.
-	Asset assets.AssetName `json:"asset,omitempty"`
-	// CreatedAfter filters transactions created after this timestamp (RFC3339/ISO 8601 format).
-	CreatedAfter string `json:"created_after,omitempty"`
-	// CreatedBefore filters transactions created before this timestamp (RFC3339/ISO 8601 format).
-	CreatedBefore string `json:"created_before,omitempty"`
-	// Page is the page number (starts from 1).
-	Page int `json:"page,omitempty"`
-	// Size is the number of items per page (1-100).
-	Size int `json:"size,omitempty"`
-}
+// ListTransactions request and response types.
+type (
+	// ListTransactionsRequest represents optional query parameters for listing transactions.
+	ListTransactionsRequest struct {
+		// TransactionID filters by specific transaction ID.
+		TransactionID string `json:"transaction_id,omitempty"`
+		// Asset filters by asset name.
+		Asset assets.AssetName `json:"asset,omitempty"`
+		// CreatedAfter filters transactions created after this timestamp (RFC3339/ISO 8601 format).
+		CreatedAfter string `json:"created_after,omitempty"`
+		// CreatedBefore filters transactions created before this timestamp (RFC3339/ISO 8601 format).
+		CreatedBefore string `json:"created_before,omitempty"`
+		// Page is the page number (starts from 1).
+		Page int `json:"page,omitempty"`
+		// Size is the number of items per page (1-100).
+		Size int `json:"size,omitempty"`
+	}
 
-// ListTransactionsResponse represents the response for listing transactions.
-type ListTransactionsResponse struct {
-	// List contains the list of transactions.
-	List []TransactionResponse `json:"list"`
-	// Total is the total number of transactions.
-	Total int `json:"total,omitempty"`
-}
+	// ListTransactionsResponse represents the response for listing transactions.
+	ListTransactionsResponse struct {
+		// List contains the list of transactions.
+		List []TransactionResponse `json:"list"`
+		// Total is the total number of transactions.
+		Total int `json:"total,omitempty"`
+	}
+)
 
 type serviceImpl struct {
 	*svc.BaseService
@@ -136,10 +142,10 @@ func NewService(base *svc.BaseService) Service {
 // ListTransactions retrieves a list of transactions for a customer.
 func (s *serviceImpl) ListTransactions(
 	ctx context.Context,
-	customerID string,
+	id svc.CustomerID,
 	req *ListTransactionsRequest,
 ) (*ListTransactionsResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/transactions", customerID)
+	path := fmt.Sprintf("/v1/customers/%s/transactions", id)
 
 	params := make(map[string]string)
 	if req != nil {
@@ -169,8 +175,9 @@ func (s *serviceImpl) ListTransactions(
 // GetTransaction retrieves a specific transaction by ID.
 func (s *serviceImpl) GetTransaction(
 	ctx context.Context,
-	customerID, transactionID string,
+	id svc.CustomerID,
+	transactionID string,
 ) (*TransactionResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/transactions/%s", customerID, transactionID)
+	path := fmt.Sprintf("/v1/customers/%s/transactions/%s", id, transactionID)
 	return svc.GetJSON[TransactionResponse](ctx, s.BaseService, path)
 }

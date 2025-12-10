@@ -57,11 +57,11 @@ import (
 // Service defines the conversions service interface for managing asset conversions.
 type Service interface {
 	// CreateQuote creates a quote for converting between assets.
-	CreateQuote(ctx context.Context, customerID string, req *CreateQuoteRequest) (*QuoteResponse, error)
+	CreateQuote(ctx context.Context, id svc.CustomerID, req *CreateQuoteRequest) (*QuoteResponse, error)
 	// CreateHedge executes a hedge for a conversion quote.
-	CreateHedge(ctx context.Context, customerID string, req *CreateHedgeRequest) (*OrderResponse, error)
+	CreateHedge(ctx context.Context, id svc.CustomerID, req *CreateHedgeRequest) (*OrderResponse, error)
 	// GetOrder retrieves a conversion order by ID.
-	GetOrder(ctx context.Context, customerID, orderID string) (*OrderResponse, error)
+	GetOrder(ctx context.Context, id svc.CustomerID, orderID string) (*OrderResponse, error)
 }
 
 // AssetInfo represents asset information for conversion quotes.
@@ -74,71 +74,77 @@ type AssetInfo struct {
 	Network WalletNetworkName `json:"network,omitempty"`
 }
 
-// CreateQuoteRequest represents the request body for creating a conversion quote.
-type CreateQuoteRequest struct {
-	// FromAsset is the source asset information.
-	FromAsset AssetInfo `json:"from_asset"`
-	// ToAsset is the destination asset information.
-	ToAsset AssetInfo `json:"to_asset"`
-}
+// CreateQuote request and response types.
+type (
+	// CreateQuoteRequest represents the request body for creating a conversion quote.
+	CreateQuoteRequest struct {
+		// FromAsset is the source asset information.
+		FromAsset AssetInfo `json:"from_asset"`
+		// ToAsset is the destination asset information.
+		ToAsset AssetInfo `json:"to_asset"`
+	}
 
-// QuoteResponse represents the response for a conversion quote.
-type QuoteResponse struct {
-	// QuoteID is the unique quote identifier.
-	QuoteID string `json:"quote_id"`
-	// UserPayAmount is the amount the user will pay.
-	UserPayAmount string `json:"user_pay_amount"`
-	// UserPayAsset is the asset the user will pay.
-	UserPayAsset string `json:"user_pay_asset"`
-	// UserPayNetwork is the network for the payment asset.
-	UserPayNetwork string `json:"user_pay_network"`
-	// UserObtainAmount is the amount the user will receive.
-	UserObtainAmount string `json:"user_obtain_amount"`
-	// UserObtainAsset is the asset the user will receive.
-	UserObtainAsset string `json:"user_obtain_asset"`
-	// UserObtainNetwork is the network for the received asset.
-	UserObtainNetwork string `json:"user_obtain_network"`
-	// Rate is the conversion rate.
-	Rate string `json:"rate"`
-	// ExpireTime is the quote expiration time in seconds.
-	ExpireTime int `json:"expire_time"`
-	// ValidUntilTimestamp is the timestamp until which the quote is valid.
-	ValidUntilTimestamp string `json:"valid_until_timestamp"`
-}
+	// QuoteResponse represents the response for a conversion quote.
+	QuoteResponse struct {
+		// QuoteID is the unique quote identifier.
+		QuoteID string `json:"quote_id"`
+		// UserPayAmount is the amount the user will pay.
+		UserPayAmount string `json:"user_pay_amount"`
+		// UserPayAsset is the asset the user will pay.
+		UserPayAsset string `json:"user_pay_asset"`
+		// UserPayNetwork is the network for the payment asset.
+		UserPayNetwork string `json:"user_pay_network"`
+		// UserObtainAmount is the amount the user will receive.
+		UserObtainAmount string `json:"user_obtain_amount"`
+		// UserObtainAsset is the asset the user will receive.
+		UserObtainAsset string `json:"user_obtain_asset"`
+		// UserObtainNetwork is the network for the received asset.
+		UserObtainNetwork string `json:"user_obtain_network"`
+		// Rate is the conversion rate.
+		Rate string `json:"rate"`
+		// ExpireTime is the quote expiration time in seconds.
+		ExpireTime int `json:"expire_time"`
+		// ValidUntilTimestamp is the timestamp until which the quote is valid.
+		ValidUntilTimestamp string `json:"valid_until_timestamp"`
+	}
+)
 
-// CreateHedgeRequest represents the request body for executing a conversion hedge.
-type CreateHedgeRequest struct {
-	// QuoteID is the quote ID to execute.
-	QuoteID string `json:"quote_id"`
-}
+// CreateHedge request and response types.
+type (
+	// CreateHedgeRequest represents the request body for executing a conversion hedge.
+	CreateHedgeRequest struct {
+		// QuoteID is the quote ID to execute.
+		QuoteID string `json:"quote_id"`
+	}
 
-// OrderResponse represents the response for a conversion order.
-type OrderResponse struct {
-	// OrderID is the unique order identifier.
-	OrderID string `json:"order_id"`
-	// OrderStatus is the current order status.
-	OrderStatus string `json:"order_status"`
-	// QuoteID is the quote ID used for the order.
-	QuoteID string `json:"quote_id"`
-	// UserPayAmount is the amount the user paid.
-	UserPayAmount string `json:"user_pay_amount"`
-	// UserPayAsset is the asset the user paid.
-	UserPayAsset string `json:"user_pay_asset"`
-	// UserPayNetwork is the network for the payment asset.
-	UserPayNetwork string `json:"user_pay_network"`
-	// UserObtainAmount is the amount the user received.
-	UserObtainAmount string `json:"user_obtain_amount"`
-	// UserObtainAsset is the asset the user received.
-	UserObtainAsset string `json:"user_obtain_asset"`
-	// UserObtainNetwork is the network for the received asset.
-	UserObtainNetwork string `json:"user_obtain_network"`
-	// Rate is the conversion rate.
-	Rate string `json:"rate"`
-	// Fee is the fee amount.
-	Fee string `json:"fee"`
-	// FeeCurrency is the fee currency.
-	FeeCurrency string `json:"fee_currency"`
-}
+	// OrderResponse represents the response for a conversion order.
+	OrderResponse struct {
+		// OrderID is the unique order identifier.
+		OrderID string `json:"order_id"`
+		// OrderStatus is the current order status.
+		OrderStatus string `json:"order_status"`
+		// QuoteID is the quote ID used for the order.
+		QuoteID string `json:"quote_id"`
+		// UserPayAmount is the amount the user paid.
+		UserPayAmount string `json:"user_pay_amount"`
+		// UserPayAsset is the asset the user paid.
+		UserPayAsset string `json:"user_pay_asset"`
+		// UserPayNetwork is the network for the payment asset.
+		UserPayNetwork string `json:"user_pay_network"`
+		// UserObtainAmount is the amount the user received.
+		UserObtainAmount string `json:"user_obtain_amount"`
+		// UserObtainAsset is the asset the user received.
+		UserObtainAsset string `json:"user_obtain_asset"`
+		// UserObtainNetwork is the network for the received asset.
+		UserObtainNetwork string `json:"user_obtain_network"`
+		// Rate is the conversion rate.
+		Rate string `json:"rate"`
+		// Fee is the fee amount.
+		Fee string `json:"fee"`
+		// FeeCurrency is the fee currency.
+		FeeCurrency string `json:"fee_currency"`
+	}
+)
 
 type serviceImpl struct {
 	*svc.BaseService
@@ -154,29 +160,30 @@ func NewService(base *svc.BaseService) Service {
 // CreateQuote creates a quote for converting between assets.
 func (s *serviceImpl) CreateQuote(
 	ctx context.Context,
-	customerID string,
+	id svc.CustomerID,
 	req *CreateQuoteRequest,
 ) (*QuoteResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/conversions/quote", customerID)
+	path := fmt.Sprintf("/v1/customers/%s/conversions/quote", id)
 	return svc.PostJSON[CreateQuoteRequest, QuoteResponse](ctx, s.BaseService, path, *req)
 }
 
 // CreateHedge executes a hedge for a conversion quote.
 func (s *serviceImpl) CreateHedge(
 	ctx context.Context,
-	customerID string,
+	id svc.CustomerID,
 	req *CreateHedgeRequest,
 ) (*OrderResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/conversions/hedge", customerID)
+	path := fmt.Sprintf("/v1/customers/%s/conversions/hedge", id)
 	return svc.PostJSON[CreateHedgeRequest, OrderResponse](ctx, s.BaseService, path, *req)
 }
 
 // GetOrder retrieves a conversion order by ID.
 func (s *serviceImpl) GetOrder(
 	ctx context.Context,
-	customerID, orderID string,
+	id svc.CustomerID,
+	orderID string,
 ) (*OrderResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/conversions/order", customerID)
+	path := fmt.Sprintf("/v1/customers/%s/conversions/order", id)
 	params := map[string]string{
 		"order_id": orderID,
 	}

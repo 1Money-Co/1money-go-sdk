@@ -126,6 +126,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/1Money-Co/1money-go-sdk/internal/transport"
 )
@@ -144,7 +145,7 @@ func NewBaseService(t *transport.Transport) *BaseService {
 // Get performs a GET request.
 func (s *BaseService) Get(ctx context.Context, path string) (*transport.Response, error) {
 	req := &transport.Request{
-		Method: "GET",
+		Method: http.MethodGet,
 		Path:   path,
 	}
 	return s.transport.Do(ctx, req)
@@ -153,7 +154,7 @@ func (s *BaseService) Get(ctx context.Context, path string) (*transport.Response
 // Post performs a POST request with the given body.
 func (s *BaseService) Post(ctx context.Context, path string, body []byte) (*transport.Response, error) {
 	req := &transport.Request{
-		Method: "POST",
+		Method: http.MethodPost,
 		Path:   path,
 		Body:   body,
 	}
@@ -163,7 +164,7 @@ func (s *BaseService) Post(ctx context.Context, path string, body []byte) (*tran
 // Put performs a PUT request with the given body.
 func (s *BaseService) Put(ctx context.Context, path string, body []byte) (*transport.Response, error) {
 	req := &transport.Request{
-		Method: "PUT",
+		Method: http.MethodPut,
 		Path:   path,
 		Body:   body,
 	}
@@ -173,7 +174,7 @@ func (s *BaseService) Put(ctx context.Context, path string, body []byte) (*trans
 // Delete performs a DELETE request.
 func (s *BaseService) Delete(ctx context.Context, path string) (*transport.Response, error) {
 	req := &transport.Request{
-		Method: "DELETE",
+		Method: http.MethodDelete,
 		Path:   path,
 	}
 	return s.transport.Do(ctx, req)
@@ -182,7 +183,7 @@ func (s *BaseService) Delete(ctx context.Context, path string) (*transport.Respo
 // Patch performs a PATCH request with the given body.
 func (s *BaseService) Patch(ctx context.Context, path string, body []byte) (*transport.Response, error) {
 	req := &transport.Request{
-		Method: "PATCH",
+		Method: http.MethodPatch,
 		Path:   path,
 		Body:   body,
 	}
@@ -216,7 +217,7 @@ func GetJSONWithParams[T any](ctx context.Context,
 	params map[string]string,
 ) (*T, error) {
 	req := &transport.Request{
-		Method:      "GET",
+		Method:      http.MethodGet,
 		Path:        path,
 		QueryParams: params,
 	}
@@ -264,6 +265,37 @@ func PostJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, r
 	return sendJSONRequest[Req, Resp](ctx, path, req, s.Post)
 }
 
+// PostJSONWithHeaders performs a POST request with custom headers and automatic JSON marshaling/unmarshaling.
+// It marshals the request body, sends it with custom headers, and unmarshals the response directly into Resp.
+func PostJSONWithHeaders[Req, Resp any](ctx context.Context,
+	s *BaseService,
+	path string,
+	req Req,
+	headers map[string]string,
+) (*Resp, error) {
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	resp, err := s.Do(ctx, &transport.Request{
+		Method:  http.MethodPost,
+		Path:    path,
+		Body:    body,
+		Headers: headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var result Resp
+	if err := json.Unmarshal(resp.Body, &result); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return &result, nil
+}
+
 // PutJSON performs a PUT request with automatic JSON marshaling/unmarshaling.
 // It marshals the request body and unmarshals the response directly into Resp.
 func PutJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, req Req) (*Resp, error) {
@@ -279,7 +311,7 @@ func PatchJSON[Req, Resp any](ctx context.Context, s *BaseService, path string, 
 // DeleteJSON performs a DELETE request and unmarshals the response directly into T.
 func DeleteJSON[T any](ctx context.Context, s *BaseService, path string) (*T, error) {
 	resp, err := s.Do(ctx, &transport.Request{
-		Method:  "DELETE",
+		Method:  http.MethodDelete,
 		Path:    path,
 		Headers: map[string]string{"Accept": "application/json"},
 	})
