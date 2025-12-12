@@ -26,6 +26,7 @@ import (
 	"image/png"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
@@ -273,27 +274,62 @@ func (s *CustomerDependentTestSuite) CreateTestCustomer() (
 	return customerID, associatedPersonIDs, nil
 }
 
-// EnsureExternalAccount ensures an external account exists for the customer.
-// If no external account exists, it creates one and returns the ID.
+// EnsureExternalAccount ensures an approved external account exists for the customer.
+// If no external account exists, it creates one and polls until it reaches APPROVED status.
+// Returns the external account ID or an error if the account fails approval or times out.
 func (s *CustomerDependentTestSuite) EnsureExternalAccount() (string, error) {
+	const (
+		pollInterval = 2 * time.Second
+		maxWaitTime  = 10 * time.Second
+	)
+
 	// Try to get existing external accounts
 	accounts, err := s.Client.ExternalAccounts.ListExternalAccounts(s.Ctx, s.CustomerID, nil)
 	if err != nil {
 		return "", fmt.Errorf("ListExternalAccounts failed: %w", err)
 	}
 
-	// If we have an account, return the first one
-	if len(accounts) > 0 {
-		return accounts[0].ExternalAccountID, nil
+	var accountID string
+
+	// If we have an approved account, return it
+	for _, acc := range accounts {
+		if acc.Status == string(external_accounts.BankAccountStatusAPPROVED) {
+			return acc.ExternalAccountID, nil
+		}
+		// Remember a pending account to poll
+		if acc.Status == string(external_accounts.BankAccountStatusPENDING) && accountID == "" {
+			accountID = acc.ExternalAccountID
+		}
 	}
 
-	// Create a new external account using fake data
-	createResp, err := s.Client.ExternalAccounts.CreateExternalAccount(s.Ctx, s.CustomerID, FakeExternalAccountRequest())
-	if err != nil {
-		return "", fmt.Errorf("CreateExternalAccount failed: %w", err)
+	// Create a new external account if none exists
+	if accountID == "" {
+		createResp, err := s.Client.ExternalAccounts.CreateExternalAccount(s.Ctx, s.CustomerID, FakeExternalAccountRequest())
+		if err != nil {
+			return "", fmt.Errorf("CreateExternalAccount failed: %w", err)
+		}
+		accountID = createResp.ExternalAccountID
 	}
 
-	return createResp.ExternalAccountID, nil
+	// Poll until approved or failed
+	deadline := time.Now().Add(maxWaitTime)
+	for time.Now().Before(deadline) {
+		acc, err := s.Client.ExternalAccounts.GetExternalAccount(s.Ctx, s.CustomerID, accountID)
+		if err != nil {
+			return "", fmt.Errorf("GetExternalAccount failed: %w", err)
+		}
+
+		switch acc.Status {
+		case string(external_accounts.BankAccountStatusAPPROVED):
+			return accountID, nil
+		case string(external_accounts.BankAccountStatusFAILED):
+			return "", fmt.Errorf("external account %s approval failed", accountID)
+		}
+
+		time.Sleep(pollInterval)
+	}
+
+	return "", fmt.Errorf("external account %s approval timed out after %v", accountID, maxWaitTime)
 }
 
 // EnsureTransaction ensures at least one transaction exists for the customer.
@@ -361,7 +397,9 @@ func (s *CustomerDependentTestSuite) EnsureAutoConversionRule() (string, error) 
 // EnsureSignedAgreement creates a TOS link and signs it, returning the SignedAgreementID.
 func (s *CustomerDependentTestSuite) EnsureSignedAgreement() (string, error) {
 	// Create TOS link
-	tosResp, err := s.Client.Customer.CreateTOSLink(s.Ctx, nil)
+	tosResp, err := s.Client.Customer.CreateTOSLink(s.Ctx, &customer.CreateTOSLinkRequest{
+		RedirectUri: "https://example.com/redirect",
+	})
 	if err != nil {
 		return "", fmt.Errorf("CreateTOSLink failed: %w", err)
 	}
@@ -379,12 +417,13 @@ func (s *CustomerDependentTestSuite) EnsureSignedAgreement() (string, error) {
 // Uses uuid.New() for IdempotencyKey to ensure uniqueness across test runs.
 func FakeExternalAccountRequest() *external_accounts.CreateReq {
 	return &external_accounts.CreateReq{
-		IdempotencyKey:  uuid.New().String(),
-		Network:         external_accounts.BankNetworkNameUSACH,
-		Currency:        external_accounts.CurrencyUSD,
-		CountryCode:     external_accounts.CountryCodeUSA,
-		AccountNumber:   gofakeit.DigitN(9),
-		InstitutionID:   gofakeit.DigitN(9),
+		IdempotencyKey: uuid.New().String(),
+		Network:        external_accounts.BankNetworkNameUSACH,
+		Currency:       external_accounts.CurrencyUSD,
+		CountryCode:    external_accounts.CountryCodeUSA,
+		// https://qodex.ai/all-tools/routing-number-generator
+		AccountNumber:   "5097935393",
+		InstitutionID:   "327984566",
 		InstitutionName: gofakeit.Company() + " Bank",
 	}
 }
@@ -528,7 +567,7 @@ func FakeAutoConversionRuleRequest() *auto_conversion_rules.CreateRuleRequest {
 		IdempotencyKey: uuid.New().String(),
 		Source: auto_conversion_rules.SourceAssetInfo{
 			Asset:   "USD",
-			Network: "US_ACH",
+			Network: "ACH",
 		},
 		Destination: auto_conversion_rules.DestinationAssetInfo{
 			Asset:   "USDC",

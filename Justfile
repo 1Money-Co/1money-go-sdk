@@ -201,6 +201,14 @@ build:
     {{ GO }} build -v ./...
     @echo "Done: Build completed!"
 
+[doc("build CLI tool for linux/amd64")]
+[group("Build")]
+build-linux:
+    @echo "Building CLI tool for linux/amd64 (v{{ VERSION }})..."
+    mkdir -p {{ BIN_DIR }}
+    just build-platform linux amd64
+    @echo "Done: Linux binary created at: {{ BIN_DIR }}/{{ CLI_NAME }}-linux-amd64"
+
 [doc("build CLI tool with version information")]
 [group("Build")]
 build-cli:
@@ -424,7 +432,7 @@ run-cli access-key secret-key:
 [group("Tools")]
 example:
     @echo "Running example..."
-    {{ GO }} run examples/complete_workflow/main.go
+    {{ GO }} run ./examples/complete_workflow
 
 [doc("Count lines of code")]
 [group("Tools")]

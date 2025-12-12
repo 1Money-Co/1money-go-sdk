@@ -18,6 +18,7 @@ package e2e
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 
@@ -84,8 +85,14 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_List() {
 }
 
 // TestExternalAccounts_CreateAndGet tests creating and retrieving an external account.
-// Validates all response fields and verifies request fields are reflected in response.
+// Validates all response fields, verifies request fields are reflected in response,
+// and polls until the account reaches APPROVED status.
 func (s *ExternalAccountsTestSuite) TestExternalAccounts_CreateAndGet() {
+	const (
+		pollInterval = 2 * time.Second
+		maxWaitTime  = 10 * time.Second
+	)
+
 	createReq := FakeExternalAccountRequest()
 
 	// Create external account
@@ -106,26 +113,51 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_CreateAndGet() {
 	s.Equal(createReq.InstitutionName, createResp.InstitutionName, "InstitutionName should match request")
 	s.Equal(string(createReq.CountryCode), createResp.CountryCode, "CountryCode should match request")
 
-	s.T().Logf("Created external account:\n%s", PrettyJSON(createResp))
+	s.T().Logf("Created external account: %s (status: %s)", createResp.ExternalAccountID, createResp.Status)
 
+	// Poll until approved or failed
+	accountID := createResp.ExternalAccountID
+	deadline := time.Now().Add(maxWaitTime)
+	var finalStatus string
+
+	for time.Now().Before(deadline) {
+		acc, err := s.Client.ExternalAccounts.GetExternalAccount(s.Ctx, s.CustomerID, accountID)
+		s.Require().NoError(err, "GetExternalAccount should succeed during polling")
+
+		finalStatus = acc.Status
+		s.T().Logf("Polling external account %s: status=%s", accountID, finalStatus)
+
+		switch finalStatus {
+		case string(external_accounts.BankAccountStatusAPPROVED):
+			s.T().Logf("External account approved after polling")
+			goto approved
+		case string(external_accounts.BankAccountStatusFAILED):
+			s.Require().Fail("External account approval failed")
+		}
+
+		time.Sleep(pollInterval)
+	}
+	s.Require().Fail("External account approval timed out after %v (final status: %s)", maxWaitTime, finalStatus)
+
+approved:
 	// List
 	resp, err := s.Client.ExternalAccounts.ListExternalAccounts(s.Ctx, s.CustomerID, nil)
-	s.Require().NoError(err, "ListExternalAccounts should succeed even with no accounts")
+	s.Require().NoError(err, "ListExternalAccounts should succeed")
 	s.Require().NotNil(resp, "Response should not be nil")
 	s.Require().NotEmpty(resp, "Should have at least one external account")
-	s.T().Logf("External accounts list: %v accounts", resp)
+	s.T().Logf("External accounts list count: %d", len(resp))
 
 	// Get external account by ID
-	getResp, err := s.Client.ExternalAccounts.GetExternalAccount(s.Ctx, s.CustomerID, createResp.ExternalAccountID)
+	getResp, err := s.Client.ExternalAccounts.GetExternalAccount(s.Ctx, s.CustomerID, accountID)
 	s.Require().NoError(err, "GetExternalAccount should succeed")
 
 	// Validate retrieved account matches created one
 	s.Require().NotNil(getResp, "Get response should not be nil")
-	s.Equal(createResp.ExternalAccountID, getResp.ExternalAccountID, "External account IDs should match")
+	s.Equal(accountID, getResp.ExternalAccountID, "External account IDs should match")
 	s.Equal(createResp.Network, getResp.Network, "Network should match")
 	s.Equal(createResp.Currency, getResp.Currency, "Currency should match")
 	s.Equal(createResp.InstitutionName, getResp.InstitutionName, "InstitutionName should match")
-	s.Equal(createResp.Status, getResp.Status, "Status should match")
+	s.Equal(string(external_accounts.BankAccountStatusAPPROVED), getResp.Status, "Status should be APPROVED")
 
 	s.T().Logf("Retrieved external account:\n%s", PrettyJSON(getResp))
 
@@ -135,7 +167,7 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_CreateAndGet() {
 
 	// Validate retrieved account matches created one
 	s.Require().NotNil(getByKeyResp, "Get by key response should not be nil")
-	s.Equal(createResp.ExternalAccountID, getByKeyResp.ExternalAccountID, "External account IDs should match")
+	s.Equal(accountID, getByKeyResp.ExternalAccountID, "External account IDs should match")
 	s.Equal(createResp.Network, getByKeyResp.Network, "Network should match")
 	s.Equal(createResp.Currency, getByKeyResp.Currency, "Currency should match")
 
