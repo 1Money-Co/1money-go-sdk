@@ -43,6 +43,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
@@ -92,60 +93,8 @@ func main() {
 		logger.Fatal("failed to create client", zap.Error(err))
 	}
 
-	// Phase 1: Customer Setup
-	checkContext(ctx)
-	logSection("Phase 1: Customer Setup")
-	customerID := getOrCreateCustomer(ctx, client)
-
-	// Phase 2: View Initial State
-	checkContext(ctx)
-	logSection("Phase 2: Initial Asset Balances")
-	viewAssetBalances(ctx, client, customerID)
-
-	// Phase 3: Deposit Instructions
-	checkContext(ctx)
-	logSection("Phase 3: Deposit Instructions")
-	getDepositInstructions(ctx, client, customerID)
-
-	// Phase 4: Simulate Deposits (Sandbox)
-	checkContext(ctx)
-	logSection("Phase 4: Simulate Deposits (Sandbox)")
-	simulateDeposits(ctx, client, customerID)
-
-	// Phase 5: View Updated Balances
-	checkContext(ctx)
-	logSection("Phase 5: Updated Asset Balances")
-	viewAssetBalances(ctx, client, customerID)
-
-	// Phase 6: External Accounts
-	checkContext(ctx)
-	logSection("Phase 6: External Bank Accounts")
-	externalAccountID := createExternalAccount(ctx, client, customerID)
-
-	// Phase 7: Auto Conversion Rules
-	checkContext(ctx)
-	logSection("Phase 7: Auto Conversion Rules")
-	manageAutoConversionRules(ctx, client, customerID, externalAccountID)
-
-	// Phase 8: Manual Conversions
-	checkContext(ctx)
-	logSection("Phase 8: Manual Conversions")
-	performConversions(ctx, client, customerID)
-
-	// Phase 9: View Balances After Conversion
-	checkContext(ctx)
-	logSection("Phase 9: Balances After Conversion")
-	viewAssetBalances(ctx, client, customerID)
-
-	// Phase 10: Withdrawals
-	checkContext(ctx)
-	logSection("Phase 10: Withdrawals")
-	performWithdrawals(ctx, client, customerID, externalAccountID)
-
-	// Phase 11: Transaction History
-	checkContext(ctx)
-	logSection("Phase 11: Transaction History")
-	viewTransactionHistory(ctx, client, customerID)
+	// Execute workflow phases
+	customerID := runWorkflowPhases(ctx, client)
 
 	// Summary
 	logSection("Workflow Complete")
@@ -169,6 +118,63 @@ func checkContext(ctx context.Context) {
 		os.Exit(0)
 	default:
 	}
+}
+
+// runWorkflowPhases executes all workflow phases and returns the customer ID.
+func runWorkflowPhases(ctx context.Context, client *onemoney.Client) string {
+	// Shared state across phases
+	var customerID string
+	var externalAccountID string
+
+	// workflowPhase defines a single phase in the workflow.
+	type workflowPhase struct {
+		name string
+		fn   func()
+	}
+
+	phases := []workflowPhase{
+		{"Phase 1: Customer Setup", func() {
+			customerID = getOrCreateCustomer(ctx, client)
+		}},
+		// {"Phase 2: External Bank Accounts", func() {
+		// 	externalAccountID = createExternalAccount(ctx, client, customerID)
+		// }},
+		{"Phase 3: Simulate Deposits (Sandbox)", func() {
+			simulateDeposits(ctx, client, customerID)
+		}},
+		{"Phase 4: Initial Asset Balances", func() {
+			viewAssetBalances(ctx, client, customerID)
+		}},
+		{"Phase 5: Deposit Instructions", func() {
+			getDepositInstructions(ctx, client, customerID)
+		}},
+		{"Phase 6: Updated Asset Balances", func() {
+			viewAssetBalances(ctx, client, customerID)
+		}},
+		{"Phase 7: Auto Conversion Rules", func() {
+			manageAutoConversionRules(ctx, client, customerID, externalAccountID)
+		}},
+		{"Phase 8: Manual Conversions", func() {
+			performConversions(ctx, client, customerID)
+		}},
+		{"Phase 9: Balances After Conversion", func() {
+			viewAssetBalances(ctx, client, customerID)
+		}},
+		{"Phase 10: Withdrawals", func() {
+			performWithdrawals(ctx, client, customerID, externalAccountID)
+		}},
+		{"Phase 11: Transaction History", func() {
+			viewTransactionHistory(ctx, client, customerID)
+		}},
+	}
+
+	for _, p := range phases {
+		checkContext(ctx)
+		logSection(p.name)
+		p.fn()
+	}
+
+	return customerID
 }
 
 const imageSize = 100
@@ -364,34 +370,86 @@ func viewAssetBalances(ctx context.Context, client *onemoney.Client, customerID 
 	}
 }
 
+// depositInstructionCase defines a deposit instruction test case.
+type depositInstructionCase struct {
+	asset   assets.AssetName
+	network assets.NetworkName
+	label   string
+}
+
+// depositInstructionCases contains all deposit instruction test cases.
+var depositInstructionCases = []depositInstructionCase{
+	// Fiat deposit instructions
+	{assets.AssetNameUSD, assets.NetworkNameUSACH, "USD via ACH"},
+	{assets.AssetNameUSD, assets.NetworkNameUSFEDWIRE, "USD via Fedwire"},
+	// Crypto deposit instructions
+	{assets.AssetNameUSDT, assets.NetworkNameETHEREUM, "USDT on Ethereum"},
+	{assets.AssetNameUSDC, assets.NetworkNamePOLYGON, "USDC on Polygon"},
+	{assets.AssetNameUSDC, assets.NetworkNameETHEREUM, "USDC on Ethereum"},
+}
+
+// simulateDepositCase defines a deposit simulation test case.
+type simulateDepositCase struct {
+	asset   assets.AssetName
+	network simulations.WalletNetworkName
+	amount  string
+	label   string
+}
+
+// simulateDepositCases contains all deposit simulation test cases.
+var simulateDepositCases = []simulateDepositCase{
+	// Fiat deposit
+	{assets.AssetNameUSD, "", "500.00", "USD Fiat"},
+	// Crypto deposits on various networks
+	{assets.AssetNameUSDT, simulations.WalletNetworkNameETHEREUM, "100.00", "USDT on Ethereum"},
+	{assets.AssetNameUSDC, simulations.WalletNetworkNamePOLYGON, "200.00", "USDC on Polygon"},
+	{assets.AssetNameUSDC, simulations.WalletNetworkNameETHEREUM, "100.00", "USDC on Ethereum"},
+}
+
+// conversionCase defines a conversion test case.
+type conversionCase struct {
+	fromAsset   assets.AssetName
+	fromNetwork conversions.WalletNetworkName
+	fromAmount  string
+	toAsset     assets.AssetName
+	toNetwork   conversions.WalletNetworkName
+	label       string
+}
+
+// conversionCases contains all conversion test cases.
+var conversionCases = []conversionCase{
+	// Crypto to Fiat
+	{
+		fromAsset:   assets.AssetNameUSDC,
+		fromNetwork: conversions.WalletNetworkNamePOLYGON,
+		fromAmount:  "50.00",
+		toAsset:     assets.AssetNameUSD,
+		toNetwork:   "",
+		label:       "USDC Polygon → USD",
+	},
+	// Fiat to Crypto
+	{
+		fromAsset:   assets.AssetNameUSD,
+		fromNetwork: "",
+		fromAmount:  "50.00",
+		toAsset:     assets.AssetNameUSDC,
+		toNetwork:   conversions.WalletNetworkNameETHEREUM,
+		label:       "USD → USDC Ethereum",
+	},
+}
+
 // getDepositInstructions demonstrates getting deposit instructions for various asset/network combinations.
 func getDepositInstructions(ctx context.Context, client *onemoney.Client, customerID string) {
-	// Define instructions to fetch - covers fiat and crypto networks
-	instructionTypes := []struct {
-		asset   assets.AssetName
-		network assets.NetworkName
-		label   string
-	}{
-		// Fiat deposit instructions
-		{assets.AssetNameUSD, assets.NetworkNameUSACH, "USD via ACH"},
-		{assets.AssetNameUSD, assets.NetworkNameUSFEDWIRE, "USD via Fedwire"},
-		// Crypto deposit instructions
-		{assets.AssetNameUSDT, assets.NetworkNameETHEREUM, "USDT on Ethereum"},
-		{assets.AssetNameUSDC, assets.NetworkNamePOLYGON, "USDC on Polygon"},
-		{assets.AssetNameUSDC, assets.NetworkNameETHEREUM, "USDC on Ethereum"},
-	}
-
-	for _, instr := range instructionTypes {
-		logger.Info("getting deposit instruction", zap.String("type", instr.label))
-		resp, err := client.Instructions.GetDepositInstruction(ctx, customerID, instr.asset, instr.network)
+	for _, tc := range depositInstructionCases {
+		logger.Info("getting deposit instruction", zap.String("type", tc.label))
+		resp, err := client.Instructions.GetDepositInstruction(ctx, customerID, tc.asset, tc.network)
 		if err != nil {
-			logger.Warn("failed to get instruction (may require verified account)",
-				zap.String("type", instr.label),
+			logger.Fatal("failed to get instruction",
+				zap.String("type", tc.label),
 				zap.Error(err),
 			)
-			continue
 		}
-		logInstruction(instr.label, resp)
+		logInstruction(tc.label, resp)
 	}
 }
 
@@ -415,46 +473,30 @@ func logInstruction(label string, instr *instructions.InstructionResponse) {
 
 // simulateDeposits demonstrates simulating deposits for various assets (sandbox only).
 func simulateDeposits(ctx context.Context, client *onemoney.Client, customerID string) {
-	// Define deposits to simulate - covers fiat and multiple crypto networks
-	deposits := []struct {
-		asset   assets.AssetName
-		network simulations.WalletNetworkName
-		amount  string
-		label   string
-	}{
-		// Fiat deposit
-		{assets.AssetNameUSD, "", "500.00", "USD Fiat"},
-		// Crypto deposits on various networks
-		{assets.AssetNameUSDT, simulations.WalletNetworkNameETHEREUM, "100.00", "USDT on Ethereum"},
-		{assets.AssetNameUSDC, simulations.WalletNetworkNamePOLYGON, "200.00", "USDC on Polygon"},
-		{assets.AssetNameUSDC, simulations.WalletNetworkNameETHEREUM, "100.00", "USDC on Ethereum"},
-	}
-
-	for _, dep := range deposits {
+	for _, tc := range simulateDepositCases {
 		logger.Info("simulating deposit",
-			zap.String("type", dep.label),
-			zap.String("amount", dep.amount),
+			zap.String("type", tc.label),
+			zap.String("amount", tc.amount),
 		)
 
 		req := &simulations.SimulateDepositRequest{
-			Asset:  dep.asset,
-			Amount: dep.amount,
+			Asset:  tc.asset,
+			Amount: tc.amount,
 		}
-		if dep.network != "" {
-			req.Network = dep.network
+		if tc.network != "" {
+			req.Network = tc.network
 		}
 
 		resp, err := client.Simulations.SimulateDeposit(ctx, customerID, req)
 		if err != nil {
-			logger.Warn("failed to simulate deposit",
-				zap.String("type", dep.label),
+			logger.Fatal("failed to simulate deposit",
+				zap.String("type", tc.label),
 				zap.Error(err),
 			)
-			continue
 		}
 
 		logger.Info("deposit simulated",
-			zap.String("type", dep.label),
+			zap.String("type", tc.label),
 			zap.String("simulation_id", resp.SimulationID),
 			zap.String("status", resp.Status),
 		)
@@ -467,15 +509,15 @@ func createExternalAccount(ctx context.Context, client *onemoney.Client, custome
 		maxWaitTime  = 10 * time.Second
 	)
 
-	idempotencyKey := uuid.New().String()
 	createReq := &external_accounts.CreateReq{
-		IdempotencyKey:  idempotencyKey,
-		Network:         external_accounts.BankNetworkNameUSACH,
-		Currency:        external_accounts.CurrencyUSD,
-		CountryCode:     external_accounts.CountryCodeUSA,
-		AccountNumber:   "79308791878",
-		InstitutionID:   "072704185",
-		InstitutionName: "Example Bank",
+		IdempotencyKey: uuid.New().String(),
+		Network:        external_accounts.BankNetworkNameUSACH,
+		Currency:       external_accounts.CurrencyUSD,
+		CountryCode:    external_accounts.CountryCodeUSA,
+		// https://qodex.ai/all-tools/routing-number-generator
+		AccountNumber:   "5097935393",
+		InstitutionID:   "327984566",
+		InstitutionName: gofakeit.Company() + " Bank",
 	}
 
 	logger.Info("creating external bank account")
@@ -552,6 +594,11 @@ func manageAutoConversionRules(ctx context.Context, client *onemoney.Client, cus
 }
 
 func createFiatToCryptoRule(ctx context.Context, client *onemoney.Client, customerID string) string {
+	const (
+		pollInterval = 2 * time.Second
+		maxWaitTime  = 10 * time.Second
+	)
+
 	destNetwork := "POLYGON"
 	req := &auto_conversion_rules.CreateRuleRequest{
 		IdempotencyKey: uuid.New().String(),
@@ -578,10 +625,43 @@ func createFiatToCryptoRule(ctx context.Context, client *onemoney.Client, custom
 		zap.String("nickname", created.Nickname),
 		zap.String("status", created.Status),
 	)
+
+	// Poll until ACTIVE
+	if created.Status != "ACTIVE" {
+		logger.Info("waiting for auto conversion rule to become active")
+		deadline := time.Now().Add(maxWaitTime)
+
+		for time.Now().Before(deadline) {
+			rule, err := client.AutoConversionRules.GetRule(ctx, customerID, created.AutoConversionRuleID)
+			if err != nil {
+				logger.Fatal("failed to get auto conversion rule status", zap.Error(err))
+			}
+
+			logger.Debug("polling auto conversion rule",
+				zap.String("rule_id", created.AutoConversionRuleID),
+				zap.String("status", rule.Status),
+			)
+
+			if rule.Status == "ACTIVE" {
+				logger.Info("auto conversion rule is now active")
+				return created.AutoConversionRuleID
+			}
+
+			time.Sleep(pollInterval)
+		}
+
+		logger.Fatal("auto conversion rule activation timed out", zap.Duration("timeout", maxWaitTime))
+	}
+
 	return created.AutoConversionRuleID
 }
 
 func createCryptoToFiatRule(ctx context.Context, client *onemoney.Client, customerID, externalAccountID string) string {
+	const (
+		pollInterval = 2 * time.Second
+		maxWaitTime  = 10 * time.Second
+	)
+
 	if externalAccountID == "" {
 		logger.Warn("skipping crypto→fiat rule creation (no external account)")
 		return ""
@@ -613,6 +693,34 @@ func createCryptoToFiatRule(ctx context.Context, client *onemoney.Client, custom
 		zap.String("status", created.Status),
 		zap.String("external_account_id", externalAccountID),
 	)
+
+	// Poll until ACTIVE
+	if created.Status != "ACTIVE" {
+		logger.Info("waiting for auto conversion rule to become active")
+		deadline := time.Now().Add(maxWaitTime)
+
+		for time.Now().Before(deadline) {
+			rule, err := client.AutoConversionRules.GetRule(ctx, customerID, created.AutoConversionRuleID)
+			if err != nil {
+				logger.Fatal("failed to get auto conversion rule status", zap.Error(err))
+			}
+
+			logger.Debug("polling auto conversion rule",
+				zap.String("rule_id", created.AutoConversionRuleID),
+				zap.String("status", rule.Status),
+			)
+
+			if rule.Status == "ACTIVE" {
+				logger.Info("auto conversion rule is now active")
+				return created.AutoConversionRuleID
+			}
+
+			time.Sleep(pollInterval)
+		}
+
+		logger.Fatal("auto conversion rule activation timed out", zap.Duration("timeout", maxWaitTime))
+	}
+
 	return created.AutoConversionRuleID
 }
 
@@ -721,58 +829,28 @@ func deleteAutoConversionRule(ctx context.Context, client *onemoney.Client, cust
 
 // performConversions demonstrates manual asset conversions with network validation.
 func performConversions(ctx context.Context, client *onemoney.Client, customerID string) {
-	// Define conversions to perform - covers crypto↔fiat scenarios
-	conversionTypes := []struct {
-		fromAsset   assets.AssetName
-		fromNetwork conversions.WalletNetworkName
-		fromAmount  string
-		toAsset     assets.AssetName
-		toNetwork   conversions.WalletNetworkName
-		label       string
-	}{
-		// Crypto to Fiat
-		{
-			fromAsset:   assets.AssetNameUSDC,
-			fromNetwork: conversions.WalletNetworkNamePOLYGON,
-			fromAmount:  "50.00",
-			toAsset:     assets.AssetNameUSD,
-			toNetwork:   "",
-			label:       "USDC Polygon → USD",
-		},
-		// Fiat to Crypto
-		{
-			fromAsset:   assets.AssetNameUSD,
-			fromNetwork: "",
-			fromAmount:  "50.00",
-			toAsset:     assets.AssetNameUSDC,
-			toNetwork:   conversions.WalletNetworkNameETHEREUM,
-			label:       "USD → USDC Ethereum",
-		},
-	}
-
-	for _, conv := range conversionTypes {
-		logger.Info("performing conversion", zap.String("type", conv.label))
+	for _, tc := range conversionCases {
+		logger.Info("performing conversion", zap.String("type", tc.label))
 
 		// Create quote
 		quoteReq := &conversions.CreateQuoteRequest{
 			FromAsset: conversions.AssetInfo{
-				Asset:   conv.fromAsset,
-				Amount:  conv.fromAmount,
-				Network: conv.fromNetwork,
+				Asset:   tc.fromAsset,
+				Amount:  tc.fromAmount,
+				Network: tc.fromNetwork,
 			},
 			ToAsset: conversions.AssetInfo{
-				Asset:   conv.toAsset,
-				Network: conv.toNetwork,
+				Asset:   tc.toAsset,
+				Network: tc.toNetwork,
 			},
 		}
 
 		quote, err := client.Conversions.CreateQuote(ctx, customerID, quoteReq)
 		if err != nil {
-			logger.Warn("failed to create quote (may require sufficient balance)",
-				zap.String("type", conv.label),
+			logger.Fatal("failed to create quote",
+				zap.String("type", tc.label),
 				zap.Error(err),
 			)
-			continue
 		}
 
 		// Log quote with network fields for verification
@@ -791,11 +869,10 @@ func performConversions(ctx context.Context, client *onemoney.Client, customerID
 			QuoteID: quote.QuoteID,
 		})
 		if err != nil {
-			logger.Warn("failed to execute hedge",
-				zap.String("type", conv.label),
+			logger.Fatal("failed to execute hedge",
+				zap.String("type", tc.label),
 				zap.Error(err),
 			)
-			continue
 		}
 
 		logger.Info("hedge executed",
@@ -808,8 +885,10 @@ func performConversions(ctx context.Context, client *onemoney.Client, customerID
 		// Get order details
 		order, err := client.Conversions.GetOrder(ctx, customerID, hedge.OrderID)
 		if err != nil {
-			logger.Warn("failed to get order details", zap.Error(err))
-			continue
+			logger.Fatal("failed to get order details",
+				zap.String("type", tc.label),
+				zap.Error(err),
+			)
 		}
 
 		logger.Info("order details",
