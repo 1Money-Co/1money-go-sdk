@@ -113,6 +113,11 @@ func (e *APIError) IsNotFoundError() bool {
 	return e.StatusCode == http.StatusNotFound
 }
 
+// IsConflictError returns true if this is a conflict error (409).
+func (e *APIError) IsConflictError() bool {
+	return e.StatusCode == http.StatusConflict
+}
+
 // IsUnprocessableError returns true if this is an unprocessable entity error (422).
 func (e *APIError) IsUnprocessableError() bool {
 	return e.StatusCode == http.StatusUnprocessableEntity

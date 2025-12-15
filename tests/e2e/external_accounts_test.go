@@ -17,11 +17,14 @@
 package e2e
 
 import (
+	"errors"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/1Money-Co/1money-go-sdk/internal/transport"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/external_accounts"
 )
 
@@ -43,6 +46,9 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_List() {
 	s.Run("WithData", func() {
 		// Ensure we have at least one external account
 		_, err := s.EnsureExternalAccount()
+		if err != nil && strings.Contains(err.Error(), "verified fiat account") {
+			s.T().Skip("Skipping: customer doesn't have a verified fiat account yet")
+		}
 		s.Require().NoError(err, "EnsureExternalAccount should succeed")
 
 		resp, err := s.Client.ExternalAccounts.ListExternalAccounts(s.Ctx, s.CustomerID, nil)
@@ -87,6 +93,7 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_List() {
 // TestExternalAccounts_CreateAndGet tests creating and retrieving an external account.
 // Validates all response fields, verifies request fields are reflected in response,
 // and polls until the account reaches APPROVED status.
+// Note: This test may be skipped if the customer doesn't have a verified fiat account yet.
 func (s *ExternalAccountsTestSuite) TestExternalAccounts_CreateAndGet() {
 	const (
 		pollInterval = 2 * time.Second
@@ -97,6 +104,15 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_CreateAndGet() {
 
 	// Create external account
 	createResp, err := s.Client.ExternalAccounts.CreateExternalAccount(s.Ctx, s.CustomerID, createReq)
+
+	// Skip test if fiat account is not yet verified (400 error)
+	if err != nil {
+		var apiErr *transport.APIError
+		if errors.As(err, &apiErr) && apiErr.StatusCode == 400 &&
+			strings.Contains(apiErr.Detail, "verified fiat account is required") {
+			s.T().Skip("Skipping: customer doesn't have a verified fiat account yet")
+		}
+	}
 	s.Require().NoError(err, "CreateExternalAccount should succeed")
 
 	// Validate create response structure

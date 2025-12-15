@@ -32,12 +32,8 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"image"
-	"image/color"
-	"image/png"
 	"os"
 	"os/signal"
 	"syscall"
@@ -48,6 +44,7 @@ import (
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 
+	"github.com/1Money-Co/1money-go-sdk/internal/testdata"
 	"github.com/1Money-Co/1money-go-sdk/pkg/onemoney"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/assets"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/auto_conversion_rules"
@@ -177,27 +174,6 @@ func runWorkflowPhases(ctx context.Context, client *onemoney.Client) string {
 	return customerID
 }
 
-const imageSize = 100
-
-// generateSampleImage generates a valid PNG image for testing purposes.
-// In production, you should use real document images.
-func generateSampleImage() []byte {
-	img := image.NewRGBA(image.Rect(0, 0, imageSize, imageSize))
-	// Fill with a light gray color
-	c := color.RGBA{R: 200, G: 200, B: 200, A: 255}
-	for y := range imageSize {
-		for x := range imageSize {
-			img.Set(x, y, c)
-		}
-	}
-
-	var buf bytes.Buffer
-	if err := png.Encode(&buf, img); err != nil {
-		panic(fmt.Sprintf("failed to encode PNG: %v", err))
-	}
-	return buf.Bytes()
-}
-
 func getOrCreateCustomer(ctx context.Context, client *onemoney.Client) string {
 	// Try to use existing customer ID from environment
 	customerID := os.Getenv("EXAMPLE_CUSTOMER_ID")
@@ -269,56 +245,56 @@ func getOrCreateCustomer(ctx context.Context, client *onemoney.Client) string {
 					{
 						Type:                   customer.IDTypeDriversLicense,
 						IssuingCountry:         "USA",
-						ImageFront:             customer.EncodeBase64ToDataURI(generateSampleImage(), customer.ImageFormatPng),
-						ImageBack:              customer.EncodeBase64ToDataURI(generateSampleImage(), customer.ImageFormatPng),
+						ImageFront:             testdata.IDFront(),
+						ImageBack:              testdata.IDBack(),
 						NationalIdentityNumber: "D1234567",
 					},
 				},
 				CountryOfTax: "USA",
 				TaxType:      customer.TaxIDTypeSSN,
 				TaxID:        "123-45-6789",
-				POA:          customer.EncodeBase64ToDataURI(generateSampleImage(), customer.ImageFormatPng),
+				POA:          testdata.POA(),
 				POAType:      "utility_bill",
 			},
 		},
 		SourceOfFunds:  []customer.SourceOfFunds{customer.SourceOfFundsSalesOfGoodsAndServices},
 		SourceOfWealth: []customer.SourceOfWealth{customer.SourceOfWealthBusinessDividendsOrProfits},
 		// Required documents for Corporation in US region
-		// Note: In production, use real document files
+		// Uses embedded test images from internal/testdata
 		Documents: []customer.Document{
 			{
 				DocType:     customer.DocumentTypeFlowOfFunds,
-				File:        customer.EncodeDocumentToDataURI(generateSampleImage(), customer.FileFormatPng),
+				File:        testdata.POAAsDocument(),
 				Description: "Proof of Funds",
 			},
 			{
 				DocType:     customer.DocumentTypeRegistrationDocument,
-				File:        customer.EncodeDocumentToDataURI(generateSampleImage(), customer.FileFormatPng),
+				File:        testdata.POAAsDocument(),
 				Description: "Certificate of Incorporation",
 			},
 			{
 				DocType:     customer.DocumentTypeProofOfTaxIdentification,
-				File:        customer.EncodeDocumentToDataURI(generateSampleImage(), customer.FileFormatPng),
+				File:        testdata.POAAsDocument(),
 				Description: "W9 Form",
 			},
 			{
 				DocType:     customer.DocumentTypeShareholderRegister,
-				File:        customer.EncodeDocumentToDataURI(generateSampleImage(), customer.FileFormatPng),
+				File:        testdata.POAAsDocument(),
 				Description: "Ownership Structure",
 			},
 			{
 				DocType:     customer.DocumentTypeESignatureCertificate,
-				File:        customer.EncodeDocumentToDataURI(generateSampleImage(), customer.FileFormatPng),
+				File:        testdata.POAAsDocument(),
 				Description: "Authorized Representative List",
 			},
 			{
 				DocType:     customer.DocumentTypeEvidenceOfGoodStanding,
-				File:        customer.EncodeDocumentToDataURI(generateSampleImage(), customer.FileFormatPng),
+				File:        testdata.POAAsDocument(),
 				Description: "Evidence of Good Standing",
 			},
 			{
 				DocType:     customer.DocumentTypeProofOfAddress,
-				File:        customer.EncodeDocumentToDataURI(generateSampleImage(), customer.FileFormatPng),
+				File:        testdata.POAAsDocument(),
 				Description: "Proof of Address",
 			},
 		},
@@ -340,7 +316,47 @@ func getOrCreateCustomer(ctx context.Context, client *onemoney.Client) string {
 		zap.String("customer_id", resp.CustomerID),
 		zap.String("status", string(resp.Status)),
 	)
-	return resp.CustomerID
+
+	// Poll until KYB status becomes approved or rejected
+	return waitForKybApproval(ctx, client, resp.CustomerID)
+}
+
+// waitForKybApproval polls the customer status until KYB is approved or rejected.
+func waitForKybApproval(ctx context.Context, client *onemoney.Client, customerID string) string {
+	const pollInterval = 1 * time.Second
+
+	logger.Info("waiting for KYB approval", zap.String("customer_id", customerID))
+
+	for {
+		select {
+		case <-ctx.Done():
+			logger.Info("context cancelled while waiting for KYB approval")
+			return customerID
+		default:
+		}
+
+		cust, err := client.Customer.GetCustomer(ctx, customerID)
+		if err != nil {
+			logger.Warn("failed to get customer status, retrying...", zap.Error(err))
+			time.Sleep(pollInterval)
+			continue
+		}
+
+		logger.Info("current KYB status",
+			zap.String("customer_id", customerID),
+			zap.String("status", string(cust.Status)),
+		)
+
+		switch cust.Status {
+		case customer.KybStatusApproved:
+			logger.Info("KYB approved!", zap.String("customer_id", customerID))
+			return customerID
+		case customer.KybStatusRejected:
+			logger.Fatal("KYB rejected", zap.String("customer_id", customerID))
+		}
+
+		time.Sleep(pollInterval)
+	}
 }
 
 func viewAssetBalances(ctx context.Context, client *onemoney.Client, customerID string) {
@@ -1042,7 +1058,7 @@ func viewTransactionHistory(ctx context.Context, client *onemoney.Client, custom
 			zap.String("amount", tx.Amount),
 			zap.String("asset", tx.Asset),
 			zap.String("network", tx.Network),
-			zap.String("fee", tx.TransactionFee),
+			zap.String("fee", tx.TransactionFee.Value+" "+tx.TransactionFee.Asset),
 			zap.String("status", tx.Status),
 			zap.String("source", tx.Source.AddressID),
 			zap.String("destination", tx.Destination.AddressID),

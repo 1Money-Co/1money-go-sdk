@@ -58,6 +58,14 @@ type Service interface {
 
 // Common types for transaction operations.
 type (
+	// TransactionFee represents fee information for a transaction.
+	TransactionFee struct {
+		// Value is the fee amount.
+		Value string `json:"value"`
+		// Asset is the fee asset (fiat currency or crypto token).
+		Asset string `json:"asset"`
+	}
+
 	// TransactionEndpoint represents the source or destination of a transaction.
 	TransactionEndpoint struct {
 		// Amount is the amount at this endpoint.
@@ -86,8 +94,8 @@ type (
 		Asset string `json:"asset,omitempty"`
 		// Network is the transaction network.
 		Network string `json:"network,omitempty"`
-		// TransactionFee is the transaction fee amount.
-		TransactionFee string `json:"transaction_fee"`
+		// TransactionFee contains the fee information.
+		TransactionFee TransactionFee `json:"transaction_fee"`
 		// Source contains the transaction source details.
 		Source TransactionEndpoint `json:"source"`
 		// Destination contains the transaction destination details.

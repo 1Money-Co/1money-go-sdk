@@ -20,11 +20,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -34,6 +36,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/xuri/excelize/v2"
 
+	"github.com/1Money-Co/1money-go-sdk/internal/testdata"
+	"github.com/1Money-Co/1money-go-sdk/internal/transport"
 	"github.com/1Money-Co/1money-go-sdk/internal/utils"
 	"github.com/1Money-Co/1money-go-sdk/pkg/onemoney"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/assets"
@@ -125,19 +129,29 @@ func (s *CustomerDependentTestSuite) SetupSuite() {
 	s.AssociatedPersonIDs = associatedPersonIDs
 }
 
-// GetOrCreateTestCustomer returns an existing customer if available, otherwise creates a new one.
+// GetOrCreateTestCustomer returns an approved customer if available, otherwise creates a new one
+// and waits for KYB approval.
 func (s *CustomerDependentTestSuite) GetOrCreateTestCustomer() (
 	customerID string,
 	associatedPersonIDs []string,
 	err error,
 ) {
-	// Try to find an existing customer
+	// Try to find an existing approved customer (prefer the most recently created one)
 	listResp, err := s.Client.Customer.ListCustomers(s.Ctx, &customer.ListCustomersRequest{
-		PageSize: 1,
+		PageSize:  100,
+		KybStatus: string(customer.KybStatusApproved),
 	})
 	if err == nil && listResp != nil && len(listResp.Customers) > 0 {
-		existingCustomer := listResp.Customers[0]
-		s.T().Logf("Reusing existing customer: %s (%s)", existingCustomer.CustomerID, existingCustomer.BusinessLegalName)
+		// Find the customer with the latest CreatedAt timestamp
+		latestIdx := 0
+		for i := 1; i < len(listResp.Customers); i++ {
+			if listResp.Customers[i].CreatedAt > listResp.Customers[latestIdx].CreatedAt {
+				latestIdx = i
+			}
+		}
+		existingCustomer := listResp.Customers[latestIdx]
+		s.T().Logf("Reusing existing approved customer: %s (%s, created: %s)",
+			existingCustomer.CustomerID, existingCustomer.BusinessLegalName, existingCustomer.CreatedAt)
 
 		// Get associated persons for the existing customer
 		associatedPersonsResp, err := s.Client.Customer.ListAssociatedPersons(s.Ctx, existingCustomer.CustomerID)
@@ -152,8 +166,8 @@ func (s *CustomerDependentTestSuite) GetOrCreateTestCustomer() (
 		return existingCustomer.CustomerID, associatedPersonIDs, nil
 	}
 
-	// No existing customer found, create a new one
-	s.T().Log("No existing customer found, creating new test customer...")
+	// No approved customer found, create a new one
+	s.T().Log("No approved customer found, creating new test customer...")
 	return s.CreateTestCustomer()
 }
 
@@ -205,7 +219,9 @@ func (s *CustomerDependentTestSuite) CreateTestCustomer() (
 	faker := gofakeit.New(0)
 
 	// Step 1: Create TOS link
-	tosResp, err := s.Client.Customer.CreateTOSLink(s.Ctx, nil)
+	tosResp, err := s.Client.Customer.CreateTOSLink(s.Ctx, &customer.CreateTOSLinkRequest{
+		RedirectUri: "https://example.com/redirect",
+	})
 	if err != nil {
 		return "", nil, fmt.Errorf("CreateTOSLink failed: %w", err)
 	}
@@ -260,6 +276,13 @@ func (s *CustomerDependentTestSuite) CreateTestCustomer() (
 		return "", nil, fmt.Errorf("CreateCustomer failed: %w", err)
 	}
 
+	s.T().Logf("Customer created: %s, waiting for KYB approval...", resp.CustomerID)
+
+	// Wait for KYB approval
+	if err := s.waitForKybApproval(resp.CustomerID); err != nil {
+		return "", nil, err
+	}
+
 	// Get associated person IDs from the created customer
 	associatedPersonsResp, err := s.Client.Customer.ListAssociatedPersons(s.Ctx, resp.CustomerID)
 	if err != nil {
@@ -272,6 +295,38 @@ func (s *CustomerDependentTestSuite) CreateTestCustomer() (
 
 	customerID = resp.CustomerID
 	return customerID, associatedPersonIDs, nil
+}
+
+// waitForKybApproval polls the customer status until KYB is approved or rejected.
+func (s *CustomerDependentTestSuite) waitForKybApproval(customerID string) error {
+	const pollInterval = 5 * time.Second
+
+	for {
+		select {
+		case <-s.Ctx.Done():
+			return fmt.Errorf("context cancelled while waiting for KYB approval")
+		default:
+		}
+
+		cust, err := s.Client.Customer.GetCustomer(s.Ctx, customerID)
+		if err != nil {
+			s.T().Logf("Failed to get customer status, retrying: %v", err)
+			time.Sleep(pollInterval)
+			continue
+		}
+
+		s.T().Logf("Current KYB status for %s: %s", customerID, cust.Status)
+
+		switch cust.Status {
+		case customer.KybStatusApproved:
+			s.T().Logf("KYB approved for customer: %s", customerID)
+			return nil
+		case customer.KybStatusRejected:
+			return fmt.Errorf("KYB rejected for customer: %s", customerID)
+		}
+
+		time.Sleep(pollInterval)
+	}
 }
 
 // EnsureExternalAccount ensures an approved external account exists for the customer.
@@ -306,6 +361,12 @@ func (s *CustomerDependentTestSuite) EnsureExternalAccount() (string, error) {
 	if accountID == "" {
 		createResp, err := s.Client.ExternalAccounts.CreateExternalAccount(s.Ctx, s.CustomerID, FakeExternalAccountRequest())
 		if err != nil {
+			// Check if fiat account is not yet verified (400 error)
+			var apiErr *transport.APIError
+			if errors.As(err, &apiErr) && apiErr.StatusCode == 400 &&
+				strings.Contains(apiErr.Detail, "verified fiat account is required") {
+				return "", fmt.Errorf("customer doesn't have a verified fiat account yet: %w", err)
+			}
 			return "", fmt.Errorf("CreateExternalAccount failed: %w", err)
 		}
 		accountID = createResp.ExternalAccountID
@@ -471,42 +532,46 @@ func FakeImagePNG(width, height int) []byte {
 	return buf.Bytes()
 }
 
-// FakeCustomerDocuments generates fake documents required for customer creation.
+// FakeCustomerDocuments generates documents required for customer creation.
+// Uses embedded real images from testdata directory.
 func FakeCustomerDocuments() []customer.Document {
+	// Use POA image as a generic document image for all document types
+	docImage := testdata.POA()
+
 	return []customer.Document{
 		{
 			DocType:     customer.DocumentTypeFlowOfFunds,
-			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+			File:        docImage,
 			Description: "Proof of Funds",
 		},
 		{
 			DocType:     customer.DocumentTypeRegistrationDocument,
-			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+			File:        docImage,
 			Description: "Certificate of Incorporation",
 		},
 		{
 			DocType:     customer.DocumentTypeProofOfTaxIdentification,
-			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+			File:        docImage,
 			Description: "W9 Form",
 		},
 		{
 			DocType:     customer.DocumentTypeShareholderRegister,
-			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+			File:        docImage,
 			Description: "Ownership Structure",
 		},
 		{
 			DocType:     customer.DocumentTypeESignatureCertificate,
-			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+			File:        docImage,
 			Description: "Authorized Representative List",
 		},
 		{
 			DocType:     customer.DocumentTypeEvidenceOfGoodStanding,
-			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+			File:        docImage,
 			Description: "Evidence of Good Standing",
 		},
 		{
 			DocType:     customer.DocumentTypeProofOfAddress,
-			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+			File:        docImage,
 			Description: "Proof of Address",
 		},
 	}
@@ -577,6 +642,7 @@ func FakeAutoConversionRuleRequest() *auto_conversion_rules.CreateRuleRequest {
 }
 
 // FakeAssociatedPerson generates a fake associated person for testing.
+// Uses embedded real images from testdata directory.
 func FakeAssociatedPerson(faker *gofakeit.Faker) customer.AssociatedPerson {
 	// Randomly select gender
 	gender := customer.GenderMale
@@ -607,17 +673,17 @@ func FakeAssociatedPerson(faker *gofakeit.Faker) customer.AssociatedPerson {
 		IsDirector:          true,
 		IdentifyingInformation: []customer.IdentifyingInformation{
 			{
-				Type:                   customer.IDTypeDriversLicense,
-				IssuingCountry:         CountryUSA,
-				ImageFront:             customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
-				ImageBack:              customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+				Type:                   customer.IDTypeNationalId,
+				IssuingCountry:         external_accounts.CountryCodeDEU.String(),
+				ImageFront:             testdata.IDFront(),
+				ImageBack:              testdata.IDBack(),
 				NationalIdentityNumber: faker.LetterN(8) + faker.DigitN(4),
 			},
 		},
 		CountryOfTax: CountryUSA,
 		TaxType:      customer.TaxIDTypeSSN,
 		TaxID:        faker.SSN(),
-		POA:          customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+		POA:          testdata.POA(),
 		POAType:      "utility_bill",
 	}
 }
