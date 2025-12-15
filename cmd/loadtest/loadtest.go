@@ -30,16 +30,19 @@ import (
 	"github.com/1Money-Co/1money-go-sdk/pkg/onemoney"
 )
 
-var log *zap.SugaredLogger
+// accessKeyDisplayLen is the number of characters to show when logging the access key.
+const accessKeyDisplayLen = 8
 
-func init() {
+var log = newLogger()
+
+func newLogger() *zap.SugaredLogger {
 	var logger *zap.Logger
 	if os.Getenv("ONEMONEY_DEBUG") == "1" {
 		logger, _ = zap.NewDevelopment()
 	} else {
 		logger, _ = zap.NewProduction()
 	}
-	log = logger.Sugar()
+	return logger.Sugar()
 }
 
 // Command returns the loadtest CLI command.
@@ -115,7 +118,7 @@ func runLoadtest(c *cli.Context) error {
 	// Debug: print config
 	fmt.Fprintf(os.Stderr, "Config: BaseURL=%s, AccessKey=%s..., Sandbox=%v\n",
 		client.Config.BaseURL,
-		client.Config.AccessKey[:min(8, len(client.Config.AccessKey))],
+		client.Config.AccessKey[:min(accessKeyDisplayLen, len(client.Config.AccessKey))],
 		client.Config.Sandbox)
 
 	if client.Config.AccessKey == "" {

@@ -48,23 +48,19 @@ import (
 )
 
 const (
-	// CountryUSA is the country code for United States.
-	CountryUSA = "USA"
+	// CountryDEU is the country code for Germany.
+	CountryDEU = "DEU"
 )
 
-// ValidUSStates contains valid US state codes for API validation.
-var ValidUSStates = []string{
-	"AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-	"HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-	"MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-	"NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-	"SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
-	"DC",
+// ValidGermanStates contains valid German federal state codes (Bundesländer).
+var ValidGermanStates = []string{
+	"BW", "BY", "BE", "BB", "HB", "HH", "HE", "MV",
+	"NI", "NW", "RP", "SL", "SN", "ST", "SH", "TH",
 }
 
-// RandomUSState returns a random valid US state code.
-func RandomUSState(faker *gofakeit.Faker) string {
-	return ValidUSStates[faker.Number(0, len(ValidUSStates)-1)]
+// RandomGermanState returns a random valid German state code.
+func RandomGermanState(faker *gofakeit.Faker) string {
+	return ValidGermanStates[faker.Number(0, len(ValidGermanStates)-1)]
 }
 
 // E2ETestSuite defines the integration test suite for the OneMoney client.
@@ -249,10 +245,10 @@ func (s *CustomerDependentTestSuite) CreateTestCustomer() (
 			StreetLine1: faker.Street(),
 			StreetLine2: fmt.Sprintf("Suite %d", faker.Number(100, 999)),
 			City:        faker.City(),
-			State:       RandomUSState(faker),
-			Country:     CountryUSA,
+			State:       RandomGermanState(faker),
+			Country:     CountryDEU,
 			PostalCode:  faker.Zip(),
-			Subdivision: RandomUSState(faker),
+			Subdivision: RandomGermanState(faker),
 		},
 		DateOfIncorporation:            faker.Date().Format("2006-01-02"),
 		SignedAgreementID:              signResp.SignedAgreementID,
@@ -268,7 +264,7 @@ func (s *CustomerDependentTestSuite) CreateTestCustomer() (
 		ExpectedMonthlyFiatWithdrawals: customer.MoneyRange099999,
 		TaxID:                          fmt.Sprintf("%d-%d", faker.Number(10, 99), faker.Number(1000000, 9999999)),
 		TaxType:                        customer.TaxIDTypeEIN,
-		TaxCountry:                     CountryUSA,
+		TaxCountry:                     CountryDEU,
 	}
 
 	resp, err := s.Client.Customer.CreateCustomer(s.Ctx, req)
@@ -279,8 +275,11 @@ func (s *CustomerDependentTestSuite) CreateTestCustomer() (
 	s.T().Logf("Customer created: %s, waiting for KYB approval...", resp.CustomerID)
 
 	// Wait for KYB approval
-	if err := s.waitForKybApproval(resp.CustomerID); err != nil {
-		return "", nil, err
+	if resp.Status != customer.KybStatusApproved {
+		resp, err = customer.WaitForKybApproved(s.Ctx, s.Client.Customer, resp.CustomerID, nil)
+		if err != nil {
+			return "", nil, err
+		}
 	}
 
 	// Get associated person IDs from the created customer
@@ -295,38 +294,6 @@ func (s *CustomerDependentTestSuite) CreateTestCustomer() (
 
 	customerID = resp.CustomerID
 	return customerID, associatedPersonIDs, nil
-}
-
-// waitForKybApproval polls the customer status until KYB is approved or rejected.
-func (s *CustomerDependentTestSuite) waitForKybApproval(customerID string) error {
-	const pollInterval = 5 * time.Second
-
-	for {
-		select {
-		case <-s.Ctx.Done():
-			return fmt.Errorf("context cancelled while waiting for KYB approval")
-		default:
-		}
-
-		cust, err := s.Client.Customer.GetCustomer(s.Ctx, customerID)
-		if err != nil {
-			s.T().Logf("Failed to get customer status, retrying: %v", err)
-			time.Sleep(pollInterval)
-			continue
-		}
-
-		s.T().Logf("Current KYB status for %s: %s", customerID, cust.Status)
-
-		switch cust.Status {
-		case customer.KybStatusApproved:
-			s.T().Logf("KYB approved for customer: %s", customerID)
-			return nil
-		case customer.KybStatusRejected:
-			return fmt.Errorf("KYB rejected for customer: %s", customerID)
-		}
-
-		time.Sleep(pollInterval)
-	}
 }
 
 // EnsureExternalAccount ensures an approved external account exists for the customer.
@@ -347,7 +314,8 @@ func (s *CustomerDependentTestSuite) EnsureExternalAccount() (string, error) {
 	var accountID string
 
 	// If we have an approved account, return it
-	for _, acc := range accounts {
+	for i := range accounts {
+		acc := &accounts[i]
 		if acc.Status == string(external_accounts.BankAccountStatusAPPROVED) {
 			return acc.ExternalAccountID, nil
 		}
@@ -658,14 +626,14 @@ func FakeAssociatedPerson(faker *gofakeit.Faker) customer.AssociatedPerson {
 		ResidentialAddress: &customer.Address{
 			StreetLine1: faker.Street(),
 			City:        faker.City(),
-			State:       RandomUSState(faker),
-			Country:     CountryUSA,
+			State:       RandomGermanState(faker),
+			Country:     CountryDEU,
 			PostalCode:  faker.Zip(),
-			Subdivision: RandomUSState(faker),
+			Subdivision: RandomGermanState(faker),
 		},
 		BirthDate:           faker.Date().Format("2006-01-02"),
-		CountryOfBirth:      CountryUSA,
-		PrimaryNationality:  CountryUSA,
+		CountryOfBirth:      CountryDEU,
+		PrimaryNationality:  CountryDEU,
 		HasOwnership:        true,
 		OwnershipPercentage: 100,
 		HasControl:          true,
@@ -680,7 +648,7 @@ func FakeAssociatedPerson(faker *gofakeit.Faker) customer.AssociatedPerson {
 				NationalIdentityNumber: faker.LetterN(8) + faker.DigitN(4),
 			},
 		},
-		CountryOfTax: CountryUSA,
+		CountryOfTax: CountryDEU,
 		TaxType:      customer.TaxIDTypeSSN,
 		TaxID:        faker.SSN(),
 		POA:          testdata.POA(),

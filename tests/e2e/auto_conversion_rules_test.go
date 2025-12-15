@@ -159,9 +159,9 @@ func (s *AutoConversionRulesTestSuite) TestAutoConversionRules_CreateCryptoToFia
 	s.Equal("USD", createResp.Destination.Asset, "Destination asset should be USD")
 	s.T().Logf("Created crypto-to-fiat auto conversion rule:\n%s", PrettyJSON(createResp))
 
-	// Verify source deposit info is crypto wallet
-	getResp, err := s.Client.AutoConversionRules.GetRule(s.Ctx, s.CustomerID, createResp.AutoConversionRuleID)
-	s.Require().NoError(err, "GetRule should succeed")
+	// Wait for deposit info to become ready
+	getResp, err := auto_conversion_rules.WaitForDepositInfoReady(s.Ctx, s.Client.AutoConversionRules, s.CustomerID, createResp.AutoConversionRuleID, nil)
+	s.Require().NoError(err, "Deposit info should become ready")
 	s.NotNil(getResp.SourceDepositInfo, "SourceDepositInfo should be present")
 	s.NotNil(getResp.SourceDepositInfo.Crypto, "Crypto deposit info should be present")
 	s.NotEmpty(getResp.SourceDepositInfo.Crypto.WalletAddress, "Wallet address should not be empty")

@@ -90,6 +90,34 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_List() {
 	})
 }
 
+// pollExternalAccountStatus polls until the external account reaches the expected status.
+func (s *ExternalAccountsTestSuite) pollExternalAccountStatus(
+	accountID string, pollInterval, maxWaitTime time.Duration,
+) string {
+	deadline := time.Now().Add(maxWaitTime)
+	var finalStatus string
+
+	for time.Now().Before(deadline) {
+		acc, err := s.Client.ExternalAccounts.GetExternalAccount(s.Ctx, s.CustomerID, accountID)
+		s.Require().NoError(err, "GetExternalAccount should succeed during polling")
+
+		finalStatus = acc.Status
+		s.T().Logf("Polling external account %s: status=%s", accountID, finalStatus)
+
+		switch finalStatus {
+		case string(external_accounts.BankAccountStatusAPPROVED):
+			s.T().Logf("External account approved after polling")
+			return finalStatus
+		case string(external_accounts.BankAccountStatusFAILED):
+			s.Require().Fail("External account approval failed")
+		}
+
+		time.Sleep(pollInterval)
+	}
+	s.T().Fatalf("External account approval timed out after %v (final status: %s)", maxWaitTime, finalStatus)
+	return finalStatus
+}
+
 // TestExternalAccounts_CreateAndGet tests creating and retrieving an external account.
 // Validates all response fields, verifies request fields are reflected in response,
 // and polls until the account reaches APPROVED status.
@@ -133,29 +161,8 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_CreateAndGet() {
 
 	// Poll until approved or failed
 	accountID := createResp.ExternalAccountID
-	deadline := time.Now().Add(maxWaitTime)
-	var finalStatus string
+	s.pollExternalAccountStatus(accountID, pollInterval, maxWaitTime)
 
-	for time.Now().Before(deadline) {
-		acc, err := s.Client.ExternalAccounts.GetExternalAccount(s.Ctx, s.CustomerID, accountID)
-		s.Require().NoError(err, "GetExternalAccount should succeed during polling")
-
-		finalStatus = acc.Status
-		s.T().Logf("Polling external account %s: status=%s", accountID, finalStatus)
-
-		switch finalStatus {
-		case string(external_accounts.BankAccountStatusAPPROVED):
-			s.T().Logf("External account approved after polling")
-			goto approved
-		case string(external_accounts.BankAccountStatusFAILED):
-			s.Require().Fail("External account approval failed")
-		}
-
-		time.Sleep(pollInterval)
-	}
-	s.Require().Fail("External account approval timed out after %v (final status: %s)", maxWaitTime, finalStatus)
-
-approved:
 	// List
 	resp, err := s.Client.ExternalAccounts.ListExternalAccounts(s.Ctx, s.CustomerID, nil)
 	s.Require().NoError(err, "ListExternalAccounts should succeed")

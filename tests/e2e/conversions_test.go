@@ -125,7 +125,8 @@ func (s *ConversionsTestSuite) TestConversions_Flow() {
 		// },
 	}
 
-	for _, tc := range testCases {
+	for i := range testCases {
+		tc := testCases[i]
 		s.Run(tc.name, func() {
 			// Step 1: Create Quote
 			quoteResp, err := s.Client.Conversions.CreateQuote(s.Ctx, s.CustomerID, &conversions.CreateQuoteRequest{
@@ -192,7 +193,7 @@ func (s *ConversionsTestSuite) TestConversions_Flow() {
 			txResp, err := s.Client.Transactions.ListTransactions(s.Ctx, s.CustomerID, nil)
 			s.Require().NoError(err, "ListTransactions should succeed")
 			s.Require().NotNil(txResp)
-			s.Greater(txResp.Total, 0, "Should have at least one transaction")
+			s.Positive(txResp.Total, "Should have at least one transaction")
 			s.NotEmpty(txResp.List, "Transaction list should not be empty")
 			s.T().Logf("Transactions: total=%d, returned=%d", txResp.Total, len(txResp.List))
 		})

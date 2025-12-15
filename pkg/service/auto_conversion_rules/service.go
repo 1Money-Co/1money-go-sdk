@@ -244,6 +244,8 @@ type (
 		Source SourceAssetInfo `json:"source"`
 		// Destination is the destination asset, network, and withdrawal configuration.
 		Destination DestinationAssetInfo `json:"destination"`
+		// DepositInfoStatus indicates the status of the deposit info (e.g., PENDING, ACTIVE).
+		DepositInfoStatus string `json:"deposit_info_status,omitempty"`
 		// SourceDepositInfo contains deposit info (bank or wallet). Only included in retrieve responses.
 		SourceDepositInfo *SourceDepositInfo `json:"source_deposit_info,omitempty"`
 		// CreatedAt is the rule creation timestamp (ISO 8601).

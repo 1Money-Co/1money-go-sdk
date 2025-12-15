@@ -155,8 +155,6 @@ func (s *WithdrawalsTestSuite) TestWithdrawals_Flow() {
 			txResp, err := s.Client.Transactions.ListTransactions(s.Ctx, s.CustomerID, nil)
 			s.Require().NoError(err, "ListTransactions should succeed")
 			s.Require().NotNil(txResp)
-			// s.Greater(txResp.Total, 0, "Should have at least one transaction")
-			// s.NotEmpty(txResp.List, "Transaction list should not be empty")
 
 			s.T().Logf("Transactions: total=%d, returned=%d", txResp.Total, len(txResp.List))
 		})

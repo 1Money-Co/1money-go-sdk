@@ -34,6 +34,24 @@ import (
 // CountryUSA is the country code for United States.
 const CountryUSA = "USA"
 
+// Fake data generation constants.
+const (
+	maxUint8Value       = 255
+	fakeImageSize       = 100
+	idLetterCount       = 8
+	idDigitCount        = 4
+	accountNumberDigits = 9
+	regNumMin           = 100000
+	regNumMax           = 999999
+	suiteNumMin         = 100
+	suiteNumMax         = 999
+	taxIDPrefixMin      = 10
+	taxIDPrefixMax      = 99
+	taxIDSuffixMin      = 1000000
+	taxIDSuffixMax      = 9999999
+	regLetterCount      = 3
+)
+
 // ValidUSStates contains valid US state codes for API validation.
 var ValidUSStates = []string{
 	"AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
@@ -54,8 +72,8 @@ func safeUint8(n int) uint8 {
 	if n < 0 {
 		return 0
 	}
-	if n > 255 {
-		return 255
+	if n > maxUint8Value {
+		return maxUint8Value
 	}
 	return uint8(n)
 }
@@ -64,10 +82,10 @@ func safeUint8(n int) uint8 {
 func FakeImagePNG(width, height int) []byte {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	c := color.RGBA{
-		R: safeUint8(gofakeit.Number(0, 255)),
-		G: safeUint8(gofakeit.Number(0, 255)),
-		B: safeUint8(gofakeit.Number(0, 255)),
-		A: 255,
+		R: safeUint8(gofakeit.Number(0, maxUint8Value)),
+		G: safeUint8(gofakeit.Number(0, maxUint8Value)),
+		B: safeUint8(gofakeit.Number(0, maxUint8Value)),
+		A: maxUint8Value,
 	}
 	for y := range height {
 		for x := range width {
@@ -82,40 +100,43 @@ func FakeImagePNG(width, height int) []byte {
 
 // FakeCustomerDocuments generates fake documents required for customer creation.
 func FakeCustomerDocuments() []customer.Document {
+	fakeImage := func() string {
+		return customer.EncodeBase64ToDataURI(FakeImagePNG(fakeImageSize, fakeImageSize), customer.ImageFormatPng)
+	}
 	return []customer.Document{
 		{
 			DocType:     customer.DocumentTypeFlowOfFunds,
-			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+			File:        fakeImage(),
 			Description: "Proof of Funds",
 		},
 		{
 			DocType:     customer.DocumentTypeRegistrationDocument,
-			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+			File:        fakeImage(),
 			Description: "Certificate of Incorporation",
 		},
 		{
 			DocType:     customer.DocumentTypeProofOfTaxIdentification,
-			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+			File:        fakeImage(),
 			Description: "W9 Form",
 		},
 		{
 			DocType:     customer.DocumentTypeShareholderRegister,
-			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+			File:        fakeImage(),
 			Description: "Ownership Structure",
 		},
 		{
 			DocType:     customer.DocumentTypeESignatureCertificate,
-			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+			File:        fakeImage(),
 			Description: "Authorized Representative List",
 		},
 		{
 			DocType:     customer.DocumentTypeEvidenceOfGoodStanding,
-			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+			File:        fakeImage(),
 			Description: "Evidence of Good Standing",
 		},
 		{
 			DocType:     customer.DocumentTypeProofOfAddress,
-			File:        customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+			File:        fakeImage(),
 			Description: "Proof of Address",
 		},
 	}
@@ -153,15 +174,15 @@ func FakeAssociatedPerson(faker *gofakeit.Faker) customer.AssociatedPerson {
 			{
 				Type:                   customer.IDTypeDriversLicense,
 				IssuingCountry:         CountryUSA,
-				ImageFront:             customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
-				ImageBack:              customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
-				NationalIdentityNumber: faker.LetterN(8) + faker.DigitN(4),
+				ImageFront:             customer.EncodeBase64ToDataURI(FakeImagePNG(fakeImageSize, fakeImageSize), customer.ImageFormatPng),
+				ImageBack:              customer.EncodeBase64ToDataURI(FakeImagePNG(fakeImageSize, fakeImageSize), customer.ImageFormatPng),
+				NationalIdentityNumber: faker.LetterN(idLetterCount) + faker.DigitN(idDigitCount),
 			},
 		},
 		CountryOfTax: CountryUSA,
 		TaxType:      customer.TaxIDTypeSSN,
 		TaxID:        faker.SSN(),
-		POA:          customer.EncodeBase64ToDataURI(FakeImagePNG(100, 100), customer.ImageFormatPng),
+		POA:          customer.EncodeBase64ToDataURI(FakeImagePNG(fakeImageSize, fakeImageSize), customer.ImageFormatPng),
 		POAType:      "utility_bill",
 	}
 }
@@ -171,13 +192,13 @@ func FakeCreateCustomerRequest(faker *gofakeit.Faker, signedAgreementID string) 
 	return &customer.CreateCustomerRequest{
 		BusinessLegalName:          faker.Company(),
 		BusinessDescription:        faker.JobDescriptor() + " " + faker.BS(),
-		BusinessRegistrationNumber: fmt.Sprintf("%s-%d", faker.LetterN(3), faker.Number(100000, 999999)),
+		BusinessRegistrationNumber: fmt.Sprintf("%s-%d", faker.LetterN(regLetterCount), faker.Number(regNumMin, regNumMax)),
 		Email:                      faker.Email(),
 		BusinessType:               customer.BusinessTypeCorporation,
 		BusinessIndustry:           "332999",
 		RegisteredAddress: &customer.Address{
 			StreetLine1: faker.Street(),
-			StreetLine2: fmt.Sprintf("Suite %d", faker.Number(100, 999)),
+			StreetLine2: fmt.Sprintf("Suite %d", faker.Number(suiteNumMin, suiteNumMax)),
 			City:        faker.City(),
 			State:       RandomUSState(faker),
 			Country:     CountryUSA,
@@ -199,9 +220,11 @@ func FakeCreateCustomerRequest(faker *gofakeit.Faker, signedAgreementID string) 
 		EstimatedAnnualRevenueUSD:      customer.MoneyRange099999,
 		ExpectedMonthlyFiatDeposits:    customer.MoneyRange099999,
 		ExpectedMonthlyFiatWithdrawals: customer.MoneyRange099999,
-		TaxID:                          fmt.Sprintf("%d-%d", faker.Number(10, 99), faker.Number(1000000, 9999999)),
-		TaxType:                        customer.TaxIDTypeEIN,
-		TaxCountry:                     CountryUSA,
+		TaxID: fmt.Sprintf("%d-%d",
+			faker.Number(taxIDPrefixMin, taxIDPrefixMax),
+			faker.Number(taxIDSuffixMin, taxIDSuffixMax)),
+		TaxType:    customer.TaxIDTypeEIN,
+		TaxCountry: CountryUSA,
 	}
 }
 
@@ -212,8 +235,8 @@ func FakeExternalAccountRequest(faker *gofakeit.Faker) *external_accounts.Create
 		Network:         external_accounts.BankNetworkNameUSACH,
 		Currency:        external_accounts.CurrencyUSD,
 		CountryCode:     external_accounts.CountryCodeUSA,
-		AccountNumber:   faker.DigitN(9),
-		InstitutionID:   faker.DigitN(9),
+		AccountNumber:   faker.DigitN(accountNumberDigits),
+		InstitutionID:   faker.DigitN(accountNumberDigits),
 		InstitutionName: faker.Company() + " Bank",
 	}
 }

@@ -83,8 +83,6 @@ func main() {
 		cancel()
 	}()
 
-	startWebhookServer()
-
 	client, err := onemoney.NewClient(&onemoney.Config{})
 	if err != nil {
 		logger.Fatal("failed to create client", zap.Error(err))
@@ -107,7 +105,7 @@ func logSection(name string) {
 	logger.Info("════════════════════════════════════════")
 }
 
-// checkContext checks if the context has been cancelled and exits if so.
+// checkContext checks if the context has been canceled and exits if so.
 func checkContext(ctx context.Context) {
 	select {
 	case <-ctx.Done():
@@ -133,9 +131,9 @@ func runWorkflowPhases(ctx context.Context, client *onemoney.Client) string {
 		{"Phase 1: Customer Setup", func() {
 			customerID = getOrCreateCustomer(ctx, client)
 		}},
-		// {"Phase 2: External Bank Accounts", func() {
-		// 	externalAccountID = createExternalAccount(ctx, client, customerID)
-		// }},
+		{"Phase 2: External Bank Accounts", func() {
+			externalAccountID = createExternalAccount(ctx, client, customerID)
+		}},
 		{"Phase 3: Simulate Deposits (Sandbox)", func() {
 			simulateDeposits(ctx, client, customerID)
 		}},
@@ -175,6 +173,9 @@ func runWorkflowPhases(ctx context.Context, client *onemoney.Client) string {
 }
 
 func getOrCreateCustomer(ctx context.Context, client *onemoney.Client) string {
+	// nationalIDLength is the length of the generated national identity number.
+	const nationalIDLength = 12
+
 	// Try to use existing customer ID from environment
 	customerID := os.Getenv("EXAMPLE_CUSTOMER_ID")
 	if customerID != "" {
@@ -211,11 +212,11 @@ func getOrCreateCustomer(ctx context.Context, client *onemoney.Client) string {
 		BusinessIndustry:           "332999",
 		RegisteredAddress: &customer.Address{
 			StreetLine1: "123 Example St",
-			City:        "San Francisco",
-			State:       "CA",
-			Country:     "USA",
-			PostalCode:  "94102",
-			Subdivision: "CA",
+			City:        "Munich",
+			State:       "BY",
+			Country:     "DEU",
+			PostalCode:  "80331",
+			Subdivision: "BY",
 		},
 		DateOfIncorporation: "2020-01-15",
 		SignedAgreementID:   signResp.SignedAgreementID,
@@ -227,15 +228,15 @@ func getOrCreateCustomer(ctx context.Context, client *onemoney.Client) string {
 				Gender:    customer.GenderMale,
 				ResidentialAddress: &customer.Address{
 					StreetLine1: "456 Residential St",
-					City:        "San Francisco",
-					State:       "CA",
-					Country:     "USA",
-					PostalCode:  "94103",
-					Subdivision: "CA",
+					City:        "Munich",
+					State:       "BY",
+					Country:     "DEU",
+					PostalCode:  "80333",
+					Subdivision: "BY",
 				},
 				BirthDate:           "1985-06-15",
-				CountryOfBirth:      "USA",
-				PrimaryNationality:  "USA",
+				CountryOfBirth:      string(external_accounts.CountryCodeDEU),
+				PrimaryNationality:  string(external_accounts.CountryCodeDEU),
 				HasOwnership:        true,
 				OwnershipPercentage: 100,
 				HasControl:          true,
@@ -243,14 +244,14 @@ func getOrCreateCustomer(ctx context.Context, client *onemoney.Client) string {
 				IsDirector:          true,
 				IdentifyingInformation: []customer.IdentifyingInformation{
 					{
-						Type:                   customer.IDTypeDriversLicense,
-						IssuingCountry:         "USA",
+						Type:                   customer.IDTypeNationalId,
+						IssuingCountry:         string(external_accounts.CountryCodeDEU),
 						ImageFront:             testdata.IDFront(),
 						ImageBack:              testdata.IDBack(),
-						NationalIdentityNumber: "D1234567",
+						NationalIdentityNumber: gofakeit.LetterN(nationalIDLength),
 					},
 				},
-				CountryOfTax: "USA",
+				CountryOfTax: string(external_accounts.CountryCodeDEU),
 				TaxType:      customer.TaxIDTypeSSN,
 				TaxID:        "123-45-6789",
 				POA:          testdata.POA(),
@@ -304,7 +305,7 @@ func getOrCreateCustomer(ctx context.Context, client *onemoney.Client) string {
 		ExpectedMonthlyFiatWithdrawals: customer.MoneyRange099999,
 		TaxID:                          "12-3456789",
 		TaxType:                        customer.TaxIDTypeEIN,
-		TaxCountry:                     "USA",
+		TaxCountry:                     "DEU",
 	}
 
 	resp, err := client.Customer.CreateCustomer(ctx, req)
@@ -318,45 +319,12 @@ func getOrCreateCustomer(ctx context.Context, client *onemoney.Client) string {
 	)
 
 	// Poll until KYB status becomes approved or rejected
-	return waitForKybApproval(ctx, client, resp.CustomerID)
-}
-
-// waitForKybApproval polls the customer status until KYB is approved or rejected.
-func waitForKybApproval(ctx context.Context, client *onemoney.Client, customerID string) string {
-	const pollInterval = 1 * time.Second
-
-	logger.Info("waiting for KYB approval", zap.String("customer_id", customerID))
-
-	for {
-		select {
-		case <-ctx.Done():
-			logger.Info("context cancelled while waiting for KYB approval")
-			return customerID
-		default:
-		}
-
-		cust, err := client.Customer.GetCustomer(ctx, customerID)
-		if err != nil {
-			logger.Warn("failed to get customer status, retrying...", zap.Error(err))
-			time.Sleep(pollInterval)
-			continue
-		}
-
-		logger.Info("current KYB status",
-			zap.String("customer_id", customerID),
-			zap.String("status", string(cust.Status)),
-		)
-
-		switch cust.Status {
-		case customer.KybStatusApproved:
-			logger.Info("KYB approved!", zap.String("customer_id", customerID))
-			return customerID
-		case customer.KybStatusRejected:
-			logger.Fatal("KYB rejected", zap.String("customer_id", customerID))
-		}
-
-		time.Sleep(pollInterval)
+	if _, err = customer.WaitForKybApproved(ctx, client.Customer, resp.CustomerID, nil); err != nil {
+		logger.Fatal("KYB approval failed", zap.Error(err))
 	}
+	customer.WaitForFaitAccount()
+
+	return resp.CustomerID
 }
 
 func viewAssetBalances(ctx context.Context, client *onemoney.Client, customerID string) {
@@ -610,11 +578,6 @@ func manageAutoConversionRules(ctx context.Context, client *onemoney.Client, cus
 }
 
 func createFiatToCryptoRule(ctx context.Context, client *onemoney.Client, customerID string) string {
-	const (
-		pollInterval = 2 * time.Second
-		maxWaitTime  = 10 * time.Second
-	)
-
 	destNetwork := "POLYGON"
 	req := &auto_conversion_rules.CreateRuleRequest{
 		IdempotencyKey: uuid.New().String(),
@@ -642,42 +605,20 @@ func createFiatToCryptoRule(ctx context.Context, client *onemoney.Client, custom
 		zap.String("status", created.Status),
 	)
 
-	// Poll until ACTIVE
+	// Wait until ACTIVE
 	if created.Status != "ACTIVE" {
 		logger.Info("waiting for auto conversion rule to become active")
-		deadline := time.Now().Add(maxWaitTime)
-
-		for time.Now().Before(deadline) {
-			rule, err := client.AutoConversionRules.GetRule(ctx, customerID, created.AutoConversionRuleID)
-			if err != nil {
-				logger.Fatal("failed to get auto conversion rule status", zap.Error(err))
-			}
-
-			logger.Debug("polling auto conversion rule",
-				zap.String("rule_id", created.AutoConversionRuleID),
-				zap.String("status", rule.Status),
-			)
-
-			if rule.Status == "ACTIVE" {
-				logger.Info("auto conversion rule is now active")
-				return created.AutoConversionRuleID
-			}
-
-			time.Sleep(pollInterval)
+		_, err := auto_conversion_rules.WaitForActive(ctx, client.AutoConversionRules, customerID, created.AutoConversionRuleID, nil)
+		if err != nil {
+			logger.Fatal("auto conversion rule activation failed", zap.Error(err))
 		}
-
-		logger.Fatal("auto conversion rule activation timed out", zap.Duration("timeout", maxWaitTime))
+		logger.Info("auto conversion rule is now active")
 	}
 
 	return created.AutoConversionRuleID
 }
 
 func createCryptoToFiatRule(ctx context.Context, client *onemoney.Client, customerID, externalAccountID string) string {
-	const (
-		pollInterval = 2 * time.Second
-		maxWaitTime  = 10 * time.Second
-	)
-
 	if externalAccountID == "" {
 		logger.Warn("skipping crypto→fiat rule creation (no external account)")
 		return ""
@@ -710,31 +651,14 @@ func createCryptoToFiatRule(ctx context.Context, client *onemoney.Client, custom
 		zap.String("external_account_id", externalAccountID),
 	)
 
-	// Poll until ACTIVE
+	// Wait until ACTIVE
 	if created.Status != "ACTIVE" {
 		logger.Info("waiting for auto conversion rule to become active")
-		deadline := time.Now().Add(maxWaitTime)
-
-		for time.Now().Before(deadline) {
-			rule, err := client.AutoConversionRules.GetRule(ctx, customerID, created.AutoConversionRuleID)
-			if err != nil {
-				logger.Fatal("failed to get auto conversion rule status", zap.Error(err))
-			}
-
-			logger.Debug("polling auto conversion rule",
-				zap.String("rule_id", created.AutoConversionRuleID),
-				zap.String("status", rule.Status),
-			)
-
-			if rule.Status == "ACTIVE" {
-				logger.Info("auto conversion rule is now active")
-				return created.AutoConversionRuleID
-			}
-
-			time.Sleep(pollInterval)
+		_, err := auto_conversion_rules.WaitForActive(ctx, client.AutoConversionRules, customerID, created.AutoConversionRuleID, nil)
+		if err != nil {
+			logger.Fatal("auto conversion rule activation failed", zap.Error(err))
 		}
-
-		logger.Fatal("auto conversion rule activation timed out", zap.Duration("timeout", maxWaitTime))
+		logger.Info("auto conversion rule is now active")
 	}
 
 	return created.AutoConversionRuleID
@@ -755,7 +679,8 @@ func listAutoConversionRules(ctx context.Context, client *onemoney.Client, custo
 		zap.Int("returned", len(resp.Items)),
 	)
 
-	for _, rule := range resp.Items {
+	for i := range resp.Items {
+		rule := &resp.Items[i]
 		logger.Info("rule",
 			zap.String("rule_id", rule.AutoConversionRuleID),
 			zap.String("nickname", rule.Nickname),
@@ -811,7 +736,8 @@ func listAutoConversionOrders(ctx context.Context, client *onemoney.Client, cust
 		zap.Int("returned", len(resp.Items)),
 	)
 
-	for _, order := range resp.Items {
+	for i := range resp.Items {
+		order := &resp.Items[i]
 		logger.Info("order",
 			zap.String("order_id", order.AutoConversionOrderID),
 			zap.String("status", order.Status),
@@ -1000,7 +926,8 @@ func viewTransactionHistory(ctx context.Context, client *onemoney.Client, custom
 		zap.Int("total", listResp.Total),
 	)
 
-	for _, tx := range listResp.List {
+	for i := range listResp.List {
+		tx := &listResp.List[i]
 		logger.Info("transaction",
 			zap.String("id", tx.TransactionID),
 			zap.String("action", tx.TransactionAction),

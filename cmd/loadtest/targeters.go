@@ -86,9 +86,8 @@ func createCustomerTargeter(ctx *loadtestContext) vegeta.Targeter {
 
 // prepareSignedAgreements generates signed agreements concurrently (max 10 TPS)
 func prepareSignedAgreements(ctx *loadtestContext, count int) error {
-	log.Infow("preparing signed agreements", "count", count, "maxTPS", 10)
-
 	const maxTPS = 10
+	log.Infow("preparing signed agreements", "count", count, "maxTPS", maxTPS)
 	results := make(chan string, count)
 	errs := make(chan error, 1)
 	ticker := time.NewTicker(time.Second / maxTPS)
@@ -97,7 +96,7 @@ func prepareSignedAgreements(ctx *loadtestContext, count int) error {
 	var wg sync.WaitGroup
 	var errOnce sync.Once
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		<-ticker.C // rate limit
 		wg.Add(1)
 		go func(idx int) {
