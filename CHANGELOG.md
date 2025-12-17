@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.1-beta.3] - 2025-12-17
+
+### ⚙️ Miscellaneous
+
+- Update go.mod
+
+### 🐛 Bug Fixes
+
+- **ci:** Add base branch for release PR creation
+
+## [0.0.1-beta.2] - 2025-12-17
+
+### ⚙️ Miscellaneous
+
+- Explicitly specify .golangci.yml config in lint step
+- Solve lint issue
+- Support prerelease tags in release workflow
+- Temp work
+- Temp work
+- Make linter happy
+
+### 🐛 Bug Fixes
+
+- **test:** Improve e2e test robustness and fix type issues
+
+### 🔧 Refactor
+
+- Improve retry behavior and add CountryCode enum
+- Improve transport caching and enhance e2e tests
+- Add complete workflow example and refactor examples directory
+
+### 🚀 Features
+
+- Add auto-conversion rules service and retry transport
+- Improve create_customer example and update default BaseURL
+- **customer:** Add redirectUri support to CreateTOSLink
+- Add wait helpers, improve examples, and clean up project structure
+
+## [dev] - 2025-12-05
+
+### ⚙️ Miscellaneous
+
+- Remove debug
+- **ci:** Remove pkg.go.dev update step from release workflow
+- **ci:** Improve release PR body with more context
+
 ## [0.0.0-test-a709ac2] - 2025-12-05
 
 ### ⚙️ Miscellaneous
@@ -19,50 +65,50 @@ All notable changes to this project will be documented in this file.
 
 ### ⚙️ Miscellaneous
 
-- Add header by @ryan1money
-- Add .env.example file and remove outdated documentation files by @ryan1money
-- Update license headers and add new service generation tool by @ryan1money
-- Update ci by @ryan1money
-- Update agent rule by @ryan1money
-- Update format by @ryan1money
-- Update go module by @ryan1money
-- Skip test by @ryan1money
-- Use just commands and exclude e2e tests from CI by @ryan1money
-- Simplify release workflow by removing redundant steps by @ryan1money
-- Remove emojis from Justfile by @ryan1money
-- Update dep by @ryan1money
-- **ci:** Pin Go version to 1.25.4 by @ryan1money
-- Update dep by @ryan1money
+- Add header
+- Add .env.example file and remove outdated documentation files
+- Update license headers and add new service generation tool
+- Update ci
+- Update agent rule
+- Update format
+- Update go module
+- Skip test
+- Use just commands and exclude e2e tests from CI
+- Simplify release workflow by removing redundant steps
+- Remove emojis from Justfile
+- Update dep
+- **ci:** Pin Go version to 1.25.4
+- Update dep
 
 ### 🐛 Bug Fixes
 
-- **test:** Use assertions instead of assignments in update test by @ryan1money
-- Detect rate limit errors embedded in HTTP 200 responses by @ryan1money
-- Validate supported MIME types in IsDataURI by @ryan1money
+- **test:** Use assertions instead of assignments in update test
+- Detect rate limit errors embedded in HTTP 200 responses
+- Validate supported MIME types in IsDataURI
 
 ### 🔧 Refactor
 
-- Improve logger implementation and enhance test setup by @ryan1money
-- Enhance customer service and document handling by @ryan1money
-- Streamline linter configuration and update dependencies by @ryan1money
-- Remove gender field and update tax ID types by @ryan1money
-- Update tax ID field naming and add tax country to customer requests by @ryan1money
-- Convert business industry from enum to NAICS code system by @ryan1money
-- Update customer service to align with API changes by @ryan1money
-- Change SignedAgreementID type from int to string by @ryan1money
-- Remove ValidationErrors and enable TOS signing test by @ryan1money
-- Simplify release workflow with tag-based automation by @ryan1money
+- Improve logger implementation and enhance test setup
+- Enhance customer service and document handling
+- Streamline linter configuration and update dependencies
+- Remove gender field and update tax ID types
+- Update tax ID field naming and add tax country to customer requests
+- Convert business industry from enum to NAICS code system
+- Update customer service to align with API changes
+- Change SignedAgreementID type from int to string
+- Remove ValidationErrors and enable TOS signing test
+- Simplify release workflow with tag-based automation
 
 ### 🚀 Features
 
-- Init repo by @ryan1money
-- Add country codes dependency and enhance customer service functionality by @ryan1money
-- Enhance customer service functionality and add new test case by @ryan1money
-- Enhance debugging capabilities and add TOS signing flow by @ryan1money
-- Update logger to support color output based on terminal capabilities, modify customer service routes, and enhance test cases by @ryan1money
-- Add service modules and E2E test suite by @ryan1money
-- Add support for document file formats (PDF, CSV, XLS, XLSX) by @ryan1money
-- Add new required fields for AssociatedPerson per OpenAPI spec by @ryan1money
-- Add create_customer example and debug curl output by @ryan1money
+- Init repo
+- Add country codes dependency and enhance customer service functionality
+- Enhance customer service functionality and add new test case
+- Enhance debugging capabilities and add TOS signing flow
+- Update logger to support color output based on terminal capabilities, modify customer service routes, and enhance test cases
+- Add service modules and E2E test suite
+- Add support for document file formats (PDF, CSV, XLS, XLSX)
+- Add new required fields for AssociatedPerson per OpenAPI spec
+- Add create_customer example and debug curl output
 
 <!-- generated by git-cliff -->
