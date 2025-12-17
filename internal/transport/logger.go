@@ -31,13 +31,19 @@ var (
 	// loggerValue stores the logger instance using atomic.Value for thread-safe access
 	loggerValue atomic.Value
 	loggerOnce  sync.Once
-
-	// debugCurlEnabled caches the ONEMONEY_DEBUG_CURL environment variable check
-	debugCurlEnabled = os.Getenv("ONEMONEY_DEBUG_CURL") == "1"
-
-	// debugEnabled caches the ONEMONEY_DEBUG environment variable check
-	debugEnabled = os.Getenv("ONEMONEY_DEBUG") == "1"
 )
+
+// debugCurlEnabled returns true if ONEMONEY_DEBUG_CURL is set to "1".
+// Read dynamically to support .env file loading at runtime.
+func debugCurlEnabled() bool {
+	return os.Getenv("ONEMONEY_DEBUG_CURL") == "1"
+}
+
+// debugEnabled returns true if ONEMONEY_DEBUG is set to "1".
+// Read dynamically to support .env file loading at runtime.
+func debugEnabled() bool {
+	return os.Getenv("ONEMONEY_DEBUG") == "1"
+}
 
 // supportsColor checks if the current environment supports color output.
 // It returns false if:

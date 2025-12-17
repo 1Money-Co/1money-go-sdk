@@ -597,7 +597,7 @@ type (
 	CreateTOSLinkRequest struct {
 		// RedirectUri is the URL where the user will be redirected after signing the TOS.
 		// The URL will be appended to the TOS link as a query parameter.
-		RedirectUri string `json:"redirectUri,omitempty"`
+		RedirectUri string `json:"redirect_uri,omitempty"`
 	}
 
 	// TOSLinkResponse represents the response data for creating a TOS signing link.
@@ -606,15 +606,15 @@ type (
 		// If RedirectUri was provided, it will be included as a query parameter.
 		Url string `json:"url"`
 		// SessionToken is the unique token for the TOS signing session.
-		SessionToken string `json:"sessionToken"`
+		SessionToken string `json:"session_token"`
 		// ExpiresIn is the number of seconds until the session token expires.
-		ExpiresIn int `json:"expiresIn"`
+		ExpiresIn int `json:"expires_in"`
 	}
 
 	// SignAgreementResponse represents the response data for signing a TOS agreement.
 	SignAgreementResponse struct {
 		// SignedAgreementID is the unique identifier for the signed agreement.
-		SignedAgreementID string `json:"signedAgreementId"`
+		SignedAgreementID string `json:"signed_agreement_id"`
 	}
 )
 

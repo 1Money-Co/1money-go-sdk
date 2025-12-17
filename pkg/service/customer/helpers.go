@@ -17,11 +17,18 @@
 package customer
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"go.uber.org/zap"
+
+	"github.com/1Money-Co/1money-go-sdk/internal/utils"
+	svc "github.com/1Money-Co/1money-go-sdk/pkg/service"
 )
 
 // EncodeFileToDataURI reads a file and encodes it as a data-uri string.
@@ -193,4 +200,93 @@ func IsDataURI(s string) bool {
 	}
 
 	return false
+}
+
+// WaitOptions configures the polling behavior for wait functions.
+type WaitOptions struct {
+	// PollInterval is the interval between polling attempts. Default: 1s.
+	PollInterval time.Duration
+	// MaxWaitTime is the maximum duration to wait. Default: 60m.
+	MaxWaitTime time.Duration
+	// Logger is an optional zap logger for logging polling progress.
+	Logger *zap.Logger
+	// PrintProgress prints polling progress to stdout using standard log package.
+	// This is useful for examples and debugging when zap logger is not available.
+	PrintProgress bool
+}
+
+// DefaultWaitOptions returns the default wait options.
+func DefaultWaitOptions() WaitOptions {
+	return WaitOptions{
+		PollInterval: 1 * time.Second,
+		MaxWaitTime:  60 * time.Minute,
+	}
+}
+
+// CustomerCondition is a function that checks if a customer meets a condition.
+type CustomerCondition func(*CustomerResponse) bool
+
+// WaitFor polls until the condition returns true.
+// Returns the customer response when condition is met, or an error on timeout/failure.
+func WaitFor(ctx context.Context,
+	service Service,
+	customerID svc.CustomerID,
+	condition CustomerCondition,
+	opts *WaitOptions,
+) (*CustomerResponse, error) {
+	defaults := DefaultWaitOptions()
+	if opts == nil {
+		opts = &defaults
+	}
+
+	utilOpts := &utils.WaitOptions{
+		PollInterval:  opts.PollInterval,
+		MaxWaitTime:   opts.MaxWaitTime,
+		Logger:        opts.Logger,
+		LogMessage:    "polling customer status",
+		PrintProgress: opts.PrintProgress,
+	}
+
+	return utils.WaitFor(
+		ctx,
+		func(ctx context.Context) (*CustomerResponse, error) {
+			return service.GetCustomer(ctx, customerID)
+		},
+		utils.Condition[CustomerResponse](condition),
+		func(c *CustomerResponse) string { return string(c.Status) },
+		"customer",
+		customerID,
+		utilOpts,
+	)
+}
+
+// WaitForKybApproved polls until the customer's KYB status becomes APPROVED.
+func WaitForKybApproved(ctx context.Context, service Service, customerID svc.CustomerID, opts *WaitOptions) (*CustomerResponse, error) {
+	return WaitFor(ctx, service, customerID, func(c *CustomerResponse) bool {
+		return c.Status == KybStatusApproved
+	}, opts)
+}
+
+// WaitForKybDecision polls until the customer's KYB status becomes APPROVED or REJECTED.
+// Returns the customer response and nil error if approved, or an error if rejected or timeout.
+func WaitForKybDecision(ctx context.Context, service Service, customerID svc.CustomerID, opts *WaitOptions) (*CustomerResponse, error) {
+	cust, err := WaitFor(ctx, service, customerID, func(c *CustomerResponse) bool {
+		return c.Status == KybStatusApproved || c.Status == KybStatusRejected
+	}, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if cust.Status == KybStatusRejected {
+		return cust, fmt.Errorf("KYB rejected for customer %s", customerID)
+	}
+
+	return cust, nil
+}
+
+// fiatAccountWaitDuration is the delay for waiting on fiat account setup.
+const fiatAccountWaitDuration = 60 * time.Second
+
+func WaitForFaitAccount() {
+	time.Sleep(fiatAccountWaitDuration)
 }

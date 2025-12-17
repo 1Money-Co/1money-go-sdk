@@ -239,11 +239,13 @@ type (
 		// Nickname is the auto-generated nickname based on source/destination.
 		Nickname string `json:"nickname"`
 		// Status is the rule status: ACTIVE or INACTIVE.
-		Status string `json:"status"`
+		Status RuleStatus `json:"status"`
 		// Source is the source asset and network configuration.
 		Source SourceAssetInfo `json:"source"`
 		// Destination is the destination asset, network, and withdrawal configuration.
 		Destination DestinationAssetInfo `json:"destination"`
+		// DepositInfoStatus indicates the status of the deposit info: PENDING, ACTIVE, or INACTIVE.
+		DepositInfoStatus DepositInfoStatus `json:"deposit_info_status,omitempty"`
 		// SourceDepositInfo contains deposit info (bank or wallet). Only included in retrieve responses.
 		SourceDepositInfo *SourceDepositInfo `json:"source_deposit_info,omitempty"`
 		// CreatedAt is the rule creation timestamp (ISO 8601).
@@ -392,10 +394,10 @@ func (s *serviceImpl) ListRules(
 	params := make(map[string]string)
 	if req != nil {
 		if req.Page > 0 {
-			params["pagination[page]"] = fmt.Sprintf("%d", req.Page)
+			params["page"] = fmt.Sprintf("%d", req.Page)
 		}
 		if req.Size > 0 {
-			params["pagination[size]"] = fmt.Sprintf("%d", req.Size)
+			params["size"] = fmt.Sprintf("%d", req.Size)
 		}
 	}
 

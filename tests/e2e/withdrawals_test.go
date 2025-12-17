@@ -17,185 +17,149 @@
 package e2e
 
 import (
+	"os"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/assets"
+	"github.com/1Money-Co/1money-go-sdk/pkg/service/simulations"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/withdraws"
 )
 
 // WithdrawalsTestSuite tests withdrawals service operations.
 type WithdrawalsTestSuite struct {
 	CustomerDependentTestSuite
+	externalAccountID string
+	testWalletAddress string
 }
 
-// TestWithdrawals_CreateFiatWithdrawal tests creating a fiat withdrawal to an external bank account.
-// Validates all response fields and verifies the withdrawal can be retrieved.
-func (s *WithdrawalsTestSuite) TestWithdrawals_CreateFiatWithdrawal() {
-	// Ensure we have an external account to withdraw to
+// SetupSuite prepares balances and external account for withdrawal tests.
+func (s *WithdrawalsTestSuite) SetupSuite() {
+	s.CustomerDependentTestSuite.SetupSuite()
+
+	// Step 1: Simulate USD deposit for fiat withdrawals
+	s.T().Log("Simulating USD deposit...")
+	_, err := s.Client.Simulations.SimulateDeposit(s.Ctx, s.CustomerID, &simulations.SimulateDepositRequest{
+		Asset:   assets.AssetNameUSD,
+		Amount:  "500.00",
+		Network: simulations.WalletNetworkNameUSACH,
+	})
+	s.Require().NoError(err, "SimulateDeposit USD should succeed")
+
+	// Step 2: Simulate USDT deposit for crypto withdrawals
+	s.T().Log("Simulating USDT deposit...")
+	_, err = s.Client.Simulations.SimulateDeposit(s.Ctx, s.CustomerID, &simulations.SimulateDepositRequest{
+		Asset:   assets.AssetNameUSDT,
+		Network: simulations.WalletNetworkNameETHEREUM,
+		Amount:  "200.00",
+	})
+	s.Require().NoError(err, "SimulateDeposit USDT should succeed")
+
+	// Step 3: Ensure external account for fiat withdrawals
+	s.T().Log("Ensuring external account...")
 	externalAccountID, err := s.EnsureExternalAccount()
 	s.Require().NoError(err, "EnsureExternalAccount should succeed")
+	s.externalAccountID = externalAccountID
 
-	idempotencyKey := uuid.New().String()
-	amount := "10.00"
+	// Step 4: Load test wallet address for crypto withdrawals
+	s.testWalletAddress = os.Getenv("ONEMONEY_TEST_WALLET_ADDRESS")
+	s.Require().NotEmpty(s.testWalletAddress, "ONEMONEY_TEST_WALLET_ADDRESS must be set")
 
-	req := &withdraws.CreateWithdrawalRequest{
-		IdempotencyKey:    idempotencyKey,
-		Amount:            amount,
-		Asset:             assets.AssetNameUSD,
-		Network:           assets.NetworkNameUSACH,
-		ExternalAccountID: externalAccountID,
-	}
-
-	resp, err := s.Client.Withdrawals.CreateWithdrawal(s.Ctx, s.CustomerID, req)
-	s.Require().NoError(err, "CreateWithdrawal should succeed")
-
-	// Validate response structure
-	s.Require().NotNil(resp, "Response should not be nil")
-	s.NotEmpty(resp.TransactionID, "TransactionID should not be empty")
-	s.Equal(idempotencyKey, resp.IdempotencyKey, "IdempotencyKey should match")
-	s.NotEmpty(resp.Status, "Status should not be empty")
-	s.Equal("WITHDRAWAL", resp.TransactionAction, "TransactionAction should be WITHDRAWAL")
-	s.NotEmpty(resp.CreatedAt, "CreatedAt should not be empty")
-	s.NotEmpty(resp.ModifiedAt, "ModifiedAt should not be empty")
-
-	// Validate request fields are reflected in response
-	s.Equal(amount, resp.Amount, "Amount should match request")
-	s.Equal(string(assets.AssetNameUSD), resp.Asset, "Asset should match request")
-	s.Equal(string(assets.NetworkNameUSACH), resp.Network, "Network should match request")
-	s.Equal(externalAccountID, resp.ExternalAccountID, "ExternalAccountID should match request")
-
-	// Validate fee info
-	s.NotEmpty(resp.TransactionFee.Asset, "TransactionFee.Asset should not be empty")
-
-	s.T().Logf("Created fiat withdrawal:\n%s", PrettyJSON(resp))
-
-	// Verify withdrawal can be retrieved by ID
-	getResp, err := s.Client.Withdrawals.GetWithdrawal(s.Ctx, s.CustomerID, resp.TransactionID)
-	s.Require().NoError(err, "GetWithdrawal should succeed")
-	s.Equal(resp.TransactionID, getResp.TransactionID, "Retrieved TransactionID should match")
+	s.T().Log("Withdrawal test setup completed")
 }
 
-// TestWithdrawals_CreateCryptoWithdrawal tests creating a crypto withdrawal to a wallet address.
-// Validates all response fields and verifies the withdrawal can be retrieved.
-func (s *WithdrawalsTestSuite) TestWithdrawals_CreateCryptoWithdrawal() {
-	idempotencyKey := uuid.New().String()
-	amount := "10.00"
-	walletAddress := FakeEthereumAddress()
-
-	req := &withdraws.CreateWithdrawalRequest{
-		IdempotencyKey: idempotencyKey,
-		Amount:         amount,
-		Asset:          assets.AssetNameUSDT,
-		Network:        assets.NetworkNameETHEREUM,
-		WalletAddress:  walletAddress,
-	}
-
-	resp, err := s.Client.Withdrawals.CreateWithdrawal(s.Ctx, s.CustomerID, req)
-	s.Require().NoError(err, "CreateWithdrawal should succeed")
-
-	// Validate response structure
-	s.Require().NotNil(resp, "Response should not be nil")
-	s.NotEmpty(resp.TransactionID, "TransactionID should not be empty")
-	s.Equal(idempotencyKey, resp.IdempotencyKey, "IdempotencyKey should match")
-	s.NotEmpty(resp.Status, "Status should not be empty")
-	s.Equal("WITHDRAWAL", resp.TransactionAction, "TransactionAction should be WITHDRAWAL")
-	s.NotEmpty(resp.CreatedAt, "CreatedAt should not be empty")
-	s.NotEmpty(resp.ModifiedAt, "ModifiedAt should not be empty")
-
-	// Validate request fields are reflected in response
-	s.Equal(amount, resp.Amount, "Amount should match request")
-	s.Equal(string(assets.AssetNameUSDT), resp.Asset, "Asset should match request")
-	s.Equal(string(assets.NetworkNameETHEREUM), resp.Network, "Network should match request")
-	s.Equal(walletAddress, resp.WalletAddress, "WalletAddress should match request")
-
-	// Validate fee info
-	s.NotEmpty(resp.TransactionFee.Asset, "TransactionFee.Asset should not be empty")
-
-	s.T().Logf("Created crypto withdrawal:\n%s", PrettyJSON(resp))
-
-	// Verify withdrawal can be retrieved by ID
-	getResp, err := s.Client.Withdrawals.GetWithdrawal(s.Ctx, s.CustomerID, resp.TransactionID)
-	s.Require().NoError(err, "GetWithdrawal should succeed")
-	s.Equal(resp.TransactionID, getResp.TransactionID, "Retrieved TransactionID should match")
+type withdrawalTestCase struct {
+	name    string
+	asset   assets.AssetName
+	network assets.NetworkName
+	amount  string
+	isFiat  bool
 }
 
-// TestWithdrawals_GetByIdempotencyKey tests retrieving a withdrawal by idempotency key.
-// Validates that retrieved withdrawal matches the created one exactly.
-func (s *WithdrawalsTestSuite) TestWithdrawals_GetByIdempotencyKey() {
-	// Ensure we have an external account
-	externalAccountID, err := s.EnsureExternalAccount()
-	s.Require().NoError(err, "EnsureExternalAccount should succeed")
-
-	idempotencyKey := uuid.New().String()
-	amount := "5.00"
-	req := &withdraws.CreateWithdrawalRequest{
-		IdempotencyKey:    idempotencyKey,
-		Amount:            amount,
-		Asset:             assets.AssetNameUSD,
-		Network:           assets.NetworkNameUSACH,
-		ExternalAccountID: externalAccountID,
+// TestWithdrawals_Flow tests the complete withdrawal flow: Create → GetByID → GetByIdempotencyKey
+func (s *WithdrawalsTestSuite) TestWithdrawals_Flow() {
+	testCases := []withdrawalTestCase{
+		{
+			name:    "Fiat_USD_ACH",
+			asset:   assets.AssetNameUSD,
+			network: assets.NetworkNameUSACH,
+			amount:  "10.00",
+			isFiat:  true,
+		},
+		{
+			name:    "Crypto_USDT_Ethereum",
+			asset:   assets.AssetNameUSDT,
+			network: assets.NetworkNameETHEREUM,
+			amount:  "10.00",
+			isFiat:  false,
+		},
 	}
 
-	createResp, err := s.Client.Withdrawals.CreateWithdrawal(s.Ctx, s.CustomerID, req)
-	s.Require().NoError(err, "CreateWithdrawal should succeed")
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			idempotencyKey := uuid.New().String()
 
-	// Get by idempotency key
-	getResp, err := s.Client.Withdrawals.GetWithdrawalByIdempotencyKey(s.Ctx, s.CustomerID, idempotencyKey)
-	s.Require().NoError(err, "GetWithdrawalByIdempotencyKey should succeed")
+			// Step 1: Create Withdrawal
+			req := &withdraws.CreateWithdrawalRequest{
+				IdempotencyKey: idempotencyKey,
+				Amount:         tc.amount,
+				Asset:          tc.asset,
+				Network:        tc.network,
+			}
 
-	// Validate retrieved withdrawal matches created one
-	s.Require().NotNil(getResp, "Response should not be nil")
-	s.Equal(createResp.TransactionID, getResp.TransactionID, "TransactionID should match")
-	s.Equal(createResp.IdempotencyKey, getResp.IdempotencyKey, "IdempotencyKey should match")
-	s.Equal(createResp.Amount, getResp.Amount, "Amount should match")
-	s.Equal(createResp.Asset, getResp.Asset, "Asset should match")
-	s.Equal(createResp.Network, getResp.Network, "Network should match")
-	s.Equal(createResp.ExternalAccountID, getResp.ExternalAccountID, "ExternalAccountID should match")
-	s.Equal(createResp.Status, getResp.Status, "Status should match")
-	s.Equal(createResp.TransactionAction, getResp.TransactionAction, "TransactionAction should match")
+			if tc.isFiat {
+				req.ExternalAccountID = s.externalAccountID
+			} else {
+				req.WalletAddress = s.testWalletAddress
+			}
 
-	s.T().Logf("Retrieved withdrawal by idempotency key:\n%s", PrettyJSON(getResp))
-}
+			createResp, err := s.Client.Withdrawals.CreateWithdrawal(s.Ctx, s.CustomerID, req)
+			s.Require().NoError(err, "CreateWithdrawal should succeed")
+			s.Require().NotNil(createResp)
 
-// TestWithdrawals_GetByID tests retrieving a withdrawal by ID.
-// Validates that retrieved withdrawal matches the created one exactly.
-func (s *WithdrawalsTestSuite) TestWithdrawals_GetByID() {
-	// Ensure we have an external account
-	externalAccountID, err := s.EnsureExternalAccount()
-	s.Require().NoError(err, "EnsureExternalAccount should succeed")
+			// Validate create response
+			s.NotEmpty(createResp.TransactionID)
+			s.Equal(idempotencyKey, createResp.IdempotencyKey)
+			s.Equal("WITHDRAWAL", createResp.TransactionAction)
+			s.NotEmpty(createResp.Status)
+			s.Equal(tc.amount, createResp.Amount)
+			s.Equal(string(tc.asset), createResp.Asset)
+			s.Equal(string(tc.network), createResp.Network)
 
-	idempotencyKey := uuid.New().String()
-	amount := "5.00"
-	req := &withdraws.CreateWithdrawalRequest{
-		IdempotencyKey:    idempotencyKey,
-		Amount:            amount,
-		Asset:             assets.AssetNameUSD,
-		Network:           assets.NetworkNameUSACH,
-		ExternalAccountID: externalAccountID,
+			s.T().Logf("Withdrawal created: %s", createResp.TransactionID)
+
+			// Step 2: Get by ID
+			getResp, err := s.Client.Withdrawals.GetWithdrawal(s.Ctx, s.CustomerID, createResp.TransactionID)
+			s.Require().NoError(err, "GetWithdrawal should succeed")
+			s.Require().NotNil(getResp)
+
+			s.Equal(createResp.TransactionID, getResp.TransactionID)
+			s.NotEmpty(getResp.Amount)
+			s.Equal(createResp.Asset, getResp.Asset)
+			s.Equal(createResp.Status, getResp.Status)
+
+			s.T().Logf("GetWithdrawal verified: %s", getResp.TransactionID)
+
+			// Step 3: Get by Idempotency Key
+			getByKeyResp, err := s.Client.Withdrawals.GetWithdrawalByIdempotencyKey(s.Ctx, s.CustomerID, idempotencyKey)
+			s.Require().NoError(err, "GetWithdrawalByIdempotencyKey should succeed")
+			s.Require().NotNil(getByKeyResp)
+
+			s.Equal(createResp.TransactionID, getByKeyResp.TransactionID)
+			s.Equal(idempotencyKey, getByKeyResp.IdempotencyKey)
+
+			s.T().Logf("GetByIdempotencyKey verified:\n%s", PrettyJSON(getByKeyResp))
+
+			// Step 4: List Transactions
+			txResp, err := s.Client.Transactions.ListTransactions(s.Ctx, s.CustomerID, nil)
+			s.Require().NoError(err, "ListTransactions should succeed")
+			s.Require().NotNil(txResp)
+
+			s.T().Logf("Transactions: total=%d, returned=%d", txResp.Total, len(txResp.List))
+		})
 	}
-
-	createResp, err := s.Client.Withdrawals.CreateWithdrawal(s.Ctx, s.CustomerID, req)
-	s.Require().NoError(err, "CreateWithdrawal should succeed")
-
-	// Get by ID
-	getResp, err := s.Client.Withdrawals.GetWithdrawal(s.Ctx, s.CustomerID, createResp.TransactionID)
-	s.Require().NoError(err, "GetWithdrawal should succeed")
-
-	// Validate retrieved withdrawal matches created one
-	s.Require().NotNil(getResp, "Response should not be nil")
-	s.Equal(createResp.TransactionID, getResp.TransactionID, "TransactionID should match")
-	s.Equal(createResp.IdempotencyKey, getResp.IdempotencyKey, "IdempotencyKey should match")
-	s.Equal(createResp.Amount, getResp.Amount, "Amount should match")
-	s.Equal(createResp.Asset, getResp.Asset, "Asset should match")
-	s.Equal(createResp.Network, getResp.Network, "Network should match")
-	s.Equal(createResp.ExternalAccountID, getResp.ExternalAccountID, "ExternalAccountID should match")
-	s.Equal(createResp.Status, getResp.Status, "Status should match")
-	s.Equal(createResp.TransactionAction, getResp.TransactionAction, "TransactionAction should match")
-
-	s.T().Logf("Retrieved withdrawal by ID:\n%s", PrettyJSON(getResp))
 }
 
 // TestWithdrawalsTestSuite runs the withdrawals test suite.

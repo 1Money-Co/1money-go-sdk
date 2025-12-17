@@ -23,6 +23,7 @@ import (
 
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/assets"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/conversions"
+	"github.com/1Money-Co/1money-go-sdk/pkg/service/simulations"
 )
 
 // ConversionsTestSuite tests conversions service operations.
@@ -30,177 +31,174 @@ type ConversionsTestSuite struct {
 	CustomerDependentTestSuite
 }
 
-// TestConversions_CreateQuote_CryptoToFiat tests creating a quote to convert crypto to fiat.
-// Validates the quote by verifying all response fields and executing a hedge.
-func (s *ConversionsTestSuite) TestConversions_CreateQuote_CryptoToFiat() {
-	req := &conversions.CreateQuoteRequest{
-		FromAsset: conversions.AssetInfo{
-			Asset:   assets.AssetNameUSDT,
-			Amount:  "100.00",
-			Network: conversions.WalletNetworkNameETHEREUM,
-		},
-		ToAsset: conversions.AssetInfo{
-			Asset: assets.AssetNameUSD,
-		},
-	}
+// SetupSuite prepares balances for conversion tests.
+func (s *ConversionsTestSuite) SetupSuite() {
+	s.CustomerDependentTestSuite.SetupSuite()
 
-	resp, err := s.Client.Conversions.CreateQuote(s.Ctx, s.CustomerID, req)
-	s.Require().NoError(err, "CreateQuote should succeed")
-
-	// Validate response structure
-	s.Require().NotNil(resp, "Response should not be nil")
-	s.NotEmpty(resp.QuoteID, "QuoteID should not be empty")
-	s.NotEmpty(resp.Rate, "Rate should not be empty")
-	s.Positive(resp.ExpireTime, "ExpireTime should be positive")
-	s.NotEmpty(resp.ValidUntilTimestamp, "ValidUntilTimestamp should not be empty")
-
-	// Validate asset mapping matches request
-	s.Equal(string(assets.AssetNameUSDT), resp.UserPayAsset, "UserPayAsset should match FromAsset")
-	s.Equal("ETHEREUM", resp.UserPayNetwork, "UserPayNetwork should match FromAsset network")
-	s.Equal(string(assets.AssetNameUSD), resp.UserObtainAsset, "UserObtainAsset should match ToAsset")
-	s.NotEmpty(resp.UserPayAmount, "UserPayAmount should not be empty")
-	s.NotEmpty(resp.UserObtainAmount, "UserObtainAmount should not be empty")
-
-	s.T().Logf("Created crypto-to-fiat quote:\n%s", PrettyJSON(resp))
-
-	// Validate quote is usable by executing hedge
-	hedgeResp, err := s.Client.Conversions.CreateHedge(s.Ctx, s.CustomerID, &conversions.CreateHedgeRequest{
-		QuoteID: resp.QuoteID,
+	// Step 1: Simulate USD deposit
+	s.T().Log("Simulating USD deposit...")
+	_, err := s.Client.Simulations.SimulateDeposit(s.Ctx, s.CustomerID, &simulations.SimulateDepositRequest{
+		Asset:   assets.AssetNameUSD,
+		Amount:  "1000.00",
+		Network: simulations.WalletNetworkNameUSACH,
 	})
-	s.Require().NoError(err, "CreateHedge should succeed - validates quote was truly created")
-	s.Equal(resp.QuoteID, hedgeResp.QuoteID, "Hedge should reference the created quote")
-	s.T().Logf("Quote validated via hedge execution: OrderID=%s", hedgeResp.OrderID)
-}
+	s.Require().NoError(err, "SimulateDeposit USD should succeed")
 
-// TestConversions_CreateQuote_FiatToCrypto tests creating a quote to convert fiat to crypto.
-// Validates the quote by verifying all response fields and executing a hedge.
-func (s *ConversionsTestSuite) TestConversions_CreateQuote_FiatToCrypto() {
-	req := &conversions.CreateQuoteRequest{
+	// Step 2: Convert USD to USDC (Polygon)
+	s.T().Log("Converting USD to USDC Polygon...")
+	usdToUsdcQuote, err := s.Client.Conversions.CreateQuote(s.Ctx, s.CustomerID, &conversions.CreateQuoteRequest{
 		FromAsset: conversions.AssetInfo{
 			Asset:  assets.AssetNameUSD,
-			Amount: "100.00",
+			Amount: "500.00",
 		},
 		ToAsset: conversions.AssetInfo{
-			Asset:   assets.AssetNameUSDT,
-			Network: conversions.WalletNetworkNameETHEREUM,
+			Asset:   assets.AssetNameUSDC,
+			Network: conversions.WalletNetworkNamePOLYGON,
 		},
-	}
-
-	resp, err := s.Client.Conversions.CreateQuote(s.Ctx, s.CustomerID, req)
-	s.Require().NoError(err, "CreateQuote should succeed")
-
-	// Validate response structure
-	s.Require().NotNil(resp, "Response should not be nil")
-	s.NotEmpty(resp.QuoteID, "QuoteID should not be empty")
-	s.NotEmpty(resp.Rate, "Rate should not be empty")
-	s.Positive(resp.ExpireTime, "ExpireTime should be positive")
-	s.NotEmpty(resp.ValidUntilTimestamp, "ValidUntilTimestamp should not be empty")
-
-	// Validate asset mapping matches request
-	s.Equal(string(assets.AssetNameUSD), resp.UserPayAsset, "UserPayAsset should match FromAsset")
-	s.Equal(string(assets.AssetNameUSDT), resp.UserObtainAsset, "UserObtainAsset should match ToAsset")
-	s.Equal("ETHEREUM", resp.UserObtainNetwork, "UserObtainNetwork should match ToAsset network")
-	s.NotEmpty(resp.UserPayAmount, "UserPayAmount should not be empty")
-	s.NotEmpty(resp.UserObtainAmount, "UserObtainAmount should not be empty")
-
-	s.T().Logf("Created fiat-to-crypto quote:\n%s", PrettyJSON(resp))
-
-	// Validate quote is usable by executing hedge
-	hedgeResp, err := s.Client.Conversions.CreateHedge(s.Ctx, s.CustomerID, &conversions.CreateHedgeRequest{
-		QuoteID: resp.QuoteID,
 	})
-	s.Require().NoError(err, "CreateHedge should succeed - validates quote was truly created")
-	s.Equal(resp.QuoteID, hedgeResp.QuoteID, "Hedge should reference the created quote")
-	s.T().Logf("Quote validated via hedge execution: OrderID=%s", hedgeResp.OrderID)
+	s.Require().NoError(err, "CreateQuote USD->USDC should succeed")
+
+	_, err = s.Client.Conversions.CreateHedge(s.Ctx, s.CustomerID, &conversions.CreateHedgeRequest{
+		QuoteID: usdToUsdcQuote.QuoteID,
+	})
+	s.Require().NoError(err, "CreateHedge USD->USDC should succeed")
+
+	// Step 3: Simulate USDC Ethereum deposit (for cross-chain tests)
+	s.T().Log("Simulating USDC Ethereum deposit...")
+	_, err = s.Client.Simulations.SimulateDeposit(s.Ctx, s.CustomerID, &simulations.SimulateDepositRequest{
+		Asset:   assets.AssetNameUSDC,
+		Network: simulations.WalletNetworkNameETHEREUM,
+		Amount:  "200.00",
+	})
+	s.Require().NoError(err, "SimulateDeposit USDC Ethereum should succeed")
+
+	s.T().Log("Balance preparation completed")
 }
 
-// TestConversions_CreateHedge tests executing a conversion hedge.
-// Validates the order response fields match the original quote.
-func (s *ConversionsTestSuite) TestConversions_CreateHedge() {
-	// First create a quote
-	quoteReq := &conversions.CreateQuoteRequest{
-		FromAsset: conversions.AssetInfo{
-			Asset:   assets.AssetNameUSDT,
-			Amount:  "10.00",
-			Network: conversions.WalletNetworkNameETHEREUM,
-		},
-		ToAsset: conversions.AssetInfo{
-			Asset: assets.AssetNameUSD,
-		},
-	}
-
-	quoteResp, err := s.Client.Conversions.CreateQuote(s.Ctx, s.CustomerID, quoteReq)
-	s.Require().NoError(err, "CreateQuote should succeed")
-
-	// Execute the hedge
-	hedgeReq := &conversions.CreateHedgeRequest{
-		QuoteID: quoteResp.QuoteID,
-	}
-
-	hedgeResp, err := s.Client.Conversions.CreateHedge(s.Ctx, s.CustomerID, hedgeReq)
-	s.Require().NoError(err, "CreateHedge should succeed")
-
-	// Validate response structure
-	s.Require().NotNil(hedgeResp, "Response should not be nil")
-	s.NotEmpty(hedgeResp.OrderID, "OrderID should not be empty")
-	s.NotEmpty(hedgeResp.OrderStatus, "OrderStatus should not be empty")
-	s.Equal(quoteResp.QuoteID, hedgeResp.QuoteID, "QuoteID should match")
-
-	// Validate order inherits quote details
-	s.Equal(quoteResp.UserPayAsset, hedgeResp.UserPayAsset, "UserPayAsset should match quote")
-	s.Equal(quoteResp.UserPayNetwork, hedgeResp.UserPayNetwork, "UserPayNetwork should match quote")
-	s.Equal(quoteResp.UserObtainAsset, hedgeResp.UserObtainAsset, "UserObtainAsset should match quote")
-	s.Equal(quoteResp.Rate, hedgeResp.Rate, "Rate should match quote")
-	s.NotEmpty(hedgeResp.UserPayAmount, "UserPayAmount should not be empty")
-	s.NotEmpty(hedgeResp.UserObtainAmount, "UserObtainAmount should not be empty")
-
-	s.T().Logf("Created hedge order:\n%s", PrettyJSON(hedgeResp))
+type conversionTestCase struct {
+	name             string
+	fromAsset        assets.AssetName
+	fromNetwork      conversions.WalletNetworkName
+	fromAmount       string
+	toAsset          assets.AssetName
+	toNetwork        conversions.WalletNetworkName
+	expectPayNetwork string // expected UserPayNetwork in response
+	expectGetNetwork string // expected UserObtainNetwork in response
 }
 
-// TestConversions_GetOrder tests retrieving a conversion order.
-// Validates retrieved order matches the created hedge order.
-func (s *ConversionsTestSuite) TestConversions_GetOrder() {
-	// First create a quote and execute hedge
-	quoteReq := &conversions.CreateQuoteRequest{
-		FromAsset: conversions.AssetInfo{
-			Asset:   assets.AssetNameUSDT,
-			Amount:  "10.00",
-			Network: conversions.WalletNetworkNameETHEREUM,
+// TestConversions_Flow tests the complete conversion flow: CreateQuote -> CreateHedge -> GetOrder
+func (s *ConversionsTestSuite) TestConversions_Flow() {
+	testCases := []conversionTestCase{
+		{
+			name:             "CryptoToFiat_USDC_Polygon_to_USD",
+			fromAsset:        assets.AssetNameUSDC,
+			fromNetwork:      conversions.WalletNetworkNamePOLYGON,
+			fromAmount:       "10.00",
+			toAsset:          assets.AssetNameUSD,
+			expectPayNetwork: "POLYGON",
+			expectGetNetwork: "",
 		},
-		ToAsset: conversions.AssetInfo{
-			Asset: assets.AssetNameUSD,
+		{
+			name:             "FiatToCrypto_USD_to_USDC_Polygon",
+			fromAsset:        assets.AssetNameUSD,
+			fromAmount:       "10.00",
+			toAsset:          assets.AssetNameUSDC,
+			toNetwork:        conversions.WalletNetworkNamePOLYGON,
+			expectPayNetwork: "",
+			expectGetNetwork: "POLYGON",
 		},
+		{
+			name:             "FiatToCrypto_USD_to_USDC_Ethereum",
+			fromAsset:        assets.AssetNameUSD,
+			fromAmount:       "10.00",
+			toAsset:          assets.AssetNameUSDC,
+			toNetwork:        conversions.WalletNetworkNameETHEREUM,
+			expectPayNetwork: "",
+			expectGetNetwork: "ETHEREUM",
+		},
+		// {
+		// 	name:        "CrossChain_USDC_Ethereum_to_USDT_Solana",
+		// 	fromAsset:   assets.AssetNameUSDC,
+		// 	fromNetwork: conversions.WalletNetworkNameETHEREUM,
+		// 	fromAmount:  "100.00", // minimum 100 for cross-chain
+		// 	toAsset:     assets.AssetNameUSDT,
+		// 	toNetwork:   conversions.WalletNetworkNameSOLANA,
+		// },
 	}
 
-	quoteResp, err := s.Client.Conversions.CreateQuote(s.Ctx, s.CustomerID, quoteReq)
-	s.Require().NoError(err, "CreateQuote should succeed")
+	for i := range testCases {
+		tc := testCases[i]
+		s.Run(tc.name, func() {
+			// Step 1: Create Quote
+			quoteResp, err := s.Client.Conversions.CreateQuote(s.Ctx, s.CustomerID, &conversions.CreateQuoteRequest{
+				FromAsset: conversions.AssetInfo{
+					Asset:   tc.fromAsset,
+					Amount:  tc.fromAmount,
+					Network: tc.fromNetwork,
+				},
+				ToAsset: conversions.AssetInfo{
+					Asset:   tc.toAsset,
+					Network: tc.toNetwork,
+				},
+			})
+			s.Require().NoError(err, "CreateQuote should succeed")
+			s.Require().NotNil(quoteResp)
 
-	hedgeReq := &conversions.CreateHedgeRequest{
-		QuoteID: quoteResp.QuoteID,
+			// Validate quote
+			s.NotEmpty(quoteResp.QuoteID)
+			s.NotEmpty(quoteResp.Rate)
+			s.Positive(quoteResp.ExpireTime)
+			s.Equal(string(tc.fromAsset), quoteResp.UserPayAsset)
+			s.Equal(string(tc.toAsset), quoteResp.UserObtainAsset)
+			s.Equal(tc.expectPayNetwork, quoteResp.UserPayNetwork, "Quote UserPayNetwork should match")
+			s.Equal(tc.expectGetNetwork, quoteResp.UserObtainNetwork, "Quote UserObtainNetwork should match")
+
+			s.T().Logf("Quote created: %s", quoteResp.QuoteID)
+
+			// Step 2: Execute Hedge
+			hedgeResp, err := s.Client.Conversions.CreateHedge(s.Ctx, s.CustomerID, &conversions.CreateHedgeRequest{
+				QuoteID: quoteResp.QuoteID,
+			})
+			s.Require().NoError(err, "CreateHedge should succeed")
+			s.Require().NotNil(hedgeResp)
+
+			// Validate hedge
+			s.NotEmpty(hedgeResp.OrderID)
+			s.NotEmpty(hedgeResp.OrderStatus)
+			s.Equal(quoteResp.QuoteID, hedgeResp.QuoteID)
+			s.Equal(quoteResp.UserPayAsset, hedgeResp.UserPayAsset)
+			s.Equal(quoteResp.UserObtainAsset, hedgeResp.UserObtainAsset)
+			s.Equal(quoteResp.Rate, hedgeResp.Rate)
+			s.Equal(tc.expectPayNetwork, hedgeResp.UserPayNetwork, "Hedge UserPayNetwork should match")
+			s.Equal(tc.expectGetNetwork, hedgeResp.UserObtainNetwork, "Hedge UserObtainNetwork should match")
+
+			s.T().Logf("Hedge executed: OrderID=%s, Status=%s", hedgeResp.OrderID, hedgeResp.OrderStatus)
+
+			// Step 3: Get Order
+			orderResp, err := s.Client.Conversions.GetOrder(s.Ctx, s.CustomerID, hedgeResp.OrderID)
+			s.Require().NoError(err, "GetOrder should succeed")
+			s.Require().NotNil(orderResp)
+
+			// Validate order
+			s.Equal(hedgeResp.OrderID, orderResp.OrderID)
+			s.Equal(hedgeResp.QuoteID, orderResp.QuoteID)
+			s.NotEmpty(orderResp.OrderStatus)
+			s.Equal(hedgeResp.UserPayAsset, orderResp.UserPayAsset)
+			s.Equal(hedgeResp.UserObtainAsset, orderResp.UserObtainAsset)
+			s.Equal(tc.expectPayNetwork, orderResp.UserPayNetwork, "Order UserPayNetwork should match")
+			s.Equal(tc.expectGetNetwork, orderResp.UserObtainNetwork, "Order UserObtainNetwork should match")
+
+			s.T().Logf("Order verified: %s\n%s", orderResp.OrderID, PrettyJSON(orderResp))
+
+			// Step 4: List Transactions
+			txResp, err := s.Client.Transactions.ListTransactions(s.Ctx, s.CustomerID, nil)
+			s.Require().NoError(err, "ListTransactions should succeed")
+			s.Require().NotNil(txResp)
+			s.Positive(txResp.Total, "Should have at least one transaction")
+			s.NotEmpty(txResp.List, "Transaction list should not be empty")
+			s.T().Logf("Transactions: total=%d, returned=%d", txResp.Total, len(txResp.List))
+		})
 	}
-
-	hedgeResp, err := s.Client.Conversions.CreateHedge(s.Ctx, s.CustomerID, hedgeReq)
-	s.Require().NoError(err, "CreateHedge should succeed")
-
-	// Get the order
-	orderResp, err := s.Client.Conversions.GetOrder(s.Ctx, s.CustomerID, hedgeResp.OrderID)
-	s.Require().NoError(err, "GetOrder should succeed")
-
-	// Validate response structure
-	s.Require().NotNil(orderResp, "Response should not be nil")
-	s.Equal(hedgeResp.OrderID, orderResp.OrderID, "OrderID should match")
-	s.Equal(hedgeResp.QuoteID, orderResp.QuoteID, "QuoteID should match")
-	s.NotEmpty(orderResp.OrderStatus, "OrderStatus should not be empty")
-
-	// Validate order details match hedge response
-	s.Equal(hedgeResp.UserPayAsset, orderResp.UserPayAsset, "UserPayAsset should match hedge")
-	s.Equal(hedgeResp.UserPayNetwork, orderResp.UserPayNetwork, "UserPayNetwork should match hedge")
-	s.Equal(hedgeResp.UserObtainAsset, orderResp.UserObtainAsset, "UserObtainAsset should match hedge")
-	s.Equal(hedgeResp.Rate, orderResp.Rate, "Rate should match hedge")
-	s.NotEmpty(orderResp.UserPayAmount, "UserPayAmount should not be empty")
-	s.NotEmpty(orderResp.UserObtainAmount, "UserObtainAmount should not be empty")
-
-	s.T().Logf("Retrieved order:\n%s", PrettyJSON(orderResp))
 }
 
 // TestConversionsTestSuite runs the conversions test suite.

@@ -215,7 +215,7 @@ func (t *Transport) doOnce(ctx context.Context, req *Request) (*Response, error)
 
 	// Print curl command separately for easy copy-paste
 	// Skip if body is too large (> 4KB) to avoid cluttering output
-	if debugCurlEnabled {
+	if debugCurlEnabled() {
 		fmt.Fprintln(os.Stderr, buildCurlCommand(httpReq, req.Body))
 	}
 
@@ -235,6 +235,7 @@ func (t *Transport) doOnce(ctx context.Context, req *Request) (*Response, error)
 	log.Debug("received HTTP response",
 		zap.Int("status_code", httpResp.StatusCode),
 		zap.String("status", httpResp.Status),
+		zap.String("x-request-id", httpResp.Header.Get("X-Request-Id")),
 	)
 
 	// Read response body
@@ -350,7 +351,7 @@ func (t *Transport) buildHTTPRequest(ctx context.Context, req *Request, sigResul
 	}
 
 	// Add X-Forwarded-For header in debug mode for testing rate limiting
-	if debugEnabled {
+	if debugEnabled() {
 		if localIP := getLocalIP(); localIP != "" {
 			httpReq.Header.Set("X-Forwarded-For", localIP)
 		}

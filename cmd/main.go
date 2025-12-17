@@ -24,6 +24,8 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/urfave/cli/v2"
+
+	"github.com/1Money-Co/1money-go-sdk/cmd/loadtest"
 )
 
 const (
@@ -100,6 +102,7 @@ func main() {
 		Commands: []*cli.Command{
 			versionCommand(),
 			echoCommand(),
+			loadtest.Command(),
 		},
 		Before: func(*cli.Context) error {
 			// Credentials validation is now handled by the credential provider chain

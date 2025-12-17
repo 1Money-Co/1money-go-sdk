@@ -58,6 +58,14 @@ type Service interface {
 
 // Common types for transaction operations.
 type (
+	// TransactionFee represents fee information for a transaction.
+	TransactionFee struct {
+		// Value is the fee amount.
+		Value string `json:"value"`
+		// Asset is the fee asset (fiat currency or crypto token).
+		Asset string `json:"asset"`
+	}
+
 	// TransactionEndpoint represents the source or destination of a transaction.
 	TransactionEndpoint struct {
 		// Amount is the amount at this endpoint.
@@ -86,14 +94,14 @@ type (
 		Asset string `json:"asset,omitempty"`
 		// Network is the transaction network.
 		Network string `json:"network,omitempty"`
-		// TransactionFee is the transaction fee amount.
-		TransactionFee string `json:"transaction_fee"`
+		// TransactionFee contains the fee information.
+		TransactionFee TransactionFee `json:"transaction_fee"`
 		// Source contains the transaction source details.
 		Source TransactionEndpoint `json:"source"`
 		// Destination contains the transaction destination details.
 		Destination TransactionEndpoint `json:"destination"`
-		// Status is the current transaction status.
-		Status string `json:"status"`
+		// Status is the current transaction status: PENDING, COMPLETED, FAILED, or REVERSED.
+		Status TransactionStatus `json:"status"`
 		// CreatedAt is the transaction creation timestamp.
 		CreatedAt string `json:"created_at"`
 		// ModifiedAt is the transaction last modification timestamp.
@@ -162,10 +170,10 @@ func (s *serviceImpl) ListTransactions(
 			params["created_before"] = req.CreatedBefore
 		}
 		if req.Page > 0 {
-			params["pagination[page]"] = fmt.Sprintf("%d", req.Page)
+			params["page"] = fmt.Sprintf("%d", req.Page)
 		}
 		if req.Size > 0 {
-			params["pagination[size]"] = fmt.Sprintf("%d", req.Size)
+			params["size"] = fmt.Sprintf("%d", req.Size)
 		}
 	}
 

@@ -201,6 +201,14 @@ build:
     {{ GO }} build -v ./...
     @echo "Done: Build completed!"
 
+[doc("build CLI tool for linux/amd64")]
+[group("Build")]
+build-linux:
+    @echo "Building CLI tool for linux/amd64 (v{{ VERSION }})..."
+    mkdir -p {{ BIN_DIR }}
+    just build-platform linux amd64
+    @echo "Done: Linux binary created at: {{ BIN_DIR }}/{{ CLI_NAME }}-linux-amd64"
+
 [doc("build CLI tool with version information")]
 [group("Build")]
 build-cli:
@@ -421,11 +429,6 @@ run-cli access-key secret-key:
     @echo "Running CLI tool..."
     {{ GO }} run cmd/main.go -access-key {{ access-key }} -secret-key {{ secret-key }} echo
 
-[group("Tools")]
-example:
-    @echo "Running example..."
-    {{ GO }} run examples/complete_workflow/main.go
-
 [doc("Count lines of code")]
 [group("Tools")]
 cloc:
@@ -477,3 +480,27 @@ docs:
         echo "Done: Installed! Starting server..."
         pkgsite -http=:{{ DOCS_PORT }}
     fi
+
+# ========================================================================================
+# Examples
+# ========================================================================================
+
+[group("Examples")]
+example-create-customer:
+    @echo "Create a customer"
+    {{ GO }} run ./examples/create_customer
+
+[group("Examples")]
+example-fiat-to-usdc-withdrawal:
+    @echo "Running fiat to USDC with withdrawal example..."
+    {{ GO }} run ./examples/fiat_to_usdc_withdrawal
+
+[group("Examples")]
+example-usdc-to-fiat-withdrawal:
+    @echo "Running USDC to USD with withdrawal example..."
+    {{ GO }} run ./examples/usdc_to_fiat_withdrawal
+
+[group("Examples")]
+example-auto-conversion:
+    @echo "Running auto conversion example..."
+    {{ GO }} run ./examples/auto_conversion_with_simulation

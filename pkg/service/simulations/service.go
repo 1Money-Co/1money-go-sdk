@@ -55,6 +55,7 @@ import (
 
 	svc "github.com/1Money-Co/1money-go-sdk/pkg/service"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/assets"
+	"github.com/1Money-Co/1money-go-sdk/pkg/service/transactions"
 )
 
 // Service defines the simulations service interface for simulating transactions.
@@ -76,6 +77,8 @@ type (
 		Network WalletNetworkName `json:"network,omitempty"`
 		// Amount is the deposit amount.
 		Amount string `json:"amount"`
+		// ReferenceCode is an optional reference code for the simulated deposit, for triggering specific scenarios(like auto conversional rules).
+		ReferenceCode string `json:"reference_code,omitempty"`
 	}
 
 	// SimulateDepositResponse represents the response for a simulated deposit.
@@ -83,7 +86,7 @@ type (
 		// SimulationID is the unique identifier for the simulation.
 		SimulationID string `json:"simulation_id"`
 		// Status is the transaction status (SUCCESS or REVERSED for simulated deposits).
-		Status string `json:"status"`
+		Status transactions.TransactionStatus `json:"status"`
 		// CreatedAt is the transaction creation timestamp.
 		CreatedAt string `json:"created_at"`
 		// ModifiedAt is the transaction last modification timestamp.

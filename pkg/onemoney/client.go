@@ -44,6 +44,7 @@ import (
 // It provides access to all service modules through a clean interface.
 type Client struct {
 	transport *transport.Transport
+	Config    *Config
 
 	// Service modules
 	Assets              assets.Service
@@ -234,6 +235,11 @@ func NewClient(cfg *Config, opts ...Option) (*Client, error) {
 		cfg.BaseURL = creds.BaseURL
 	}
 
+	// Store resolved credentials back to config
+	cfg.AccessKey = creds.AccessKey
+	cfg.SecretKey = creds.SecretKey
+	cfg.Sandbox = creds.Sandbox
+
 	// Set defaults
 	if cfg.BaseURL == "" {
 		cfg.BaseURL = "https://api.sandbox.1money.com"
@@ -268,6 +274,7 @@ func NewClient(cfg *Config, opts ...Option) (*Client, error) {
 	// Create client with pre-initialized services
 	return &Client{
 		transport:           tr,
+		Config:              cfg,
 		Assets:              assets.NewService(base),
 		AutoConversionRules: auto_conversion_rules.NewService(base),
 		Conversions:         conversions.NewService(base),

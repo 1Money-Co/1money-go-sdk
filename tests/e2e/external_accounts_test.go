@@ -17,10 +17,14 @@
 package e2e
 
 import (
+	"errors"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/1Money-Co/1money-go-sdk/internal/transport"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/external_accounts"
 )
 
@@ -42,6 +46,9 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_List() {
 	s.Run("WithData", func() {
 		// Ensure we have at least one external account
 		_, err := s.EnsureExternalAccount()
+		if err != nil && strings.Contains(err.Error(), "verified fiat account") {
+			s.T().Skip("Skipping: customer doesn't have a verified fiat account yet")
+		}
 		s.Require().NoError(err, "EnsureExternalAccount should succeed")
 
 		resp, err := s.Client.ExternalAccounts.ListExternalAccounts(s.Ctx, s.CustomerID, nil)
@@ -83,13 +90,57 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_List() {
 	})
 }
 
+// pollExternalAccountStatus polls until the external account reaches the expected status.
+func (s *ExternalAccountsTestSuite) pollExternalAccountStatus(
+	accountID string, pollInterval, maxWaitTime time.Duration,
+) string {
+	deadline := time.Now().Add(maxWaitTime)
+	var finalStatus string
+
+	for time.Now().Before(deadline) {
+		acc, err := s.Client.ExternalAccounts.GetExternalAccount(s.Ctx, s.CustomerID, accountID)
+		s.Require().NoError(err, "GetExternalAccount should succeed during polling")
+
+		finalStatus = acc.Status
+		s.T().Logf("Polling external account %s: status=%s", accountID, finalStatus)
+
+		switch finalStatus {
+		case string(external_accounts.BankAccountStatusAPPROVED):
+			s.T().Logf("External account approved after polling")
+			return finalStatus
+		case string(external_accounts.BankAccountStatusFAILED):
+			s.Require().Fail("External account approval failed")
+		}
+
+		time.Sleep(pollInterval)
+	}
+	s.T().Fatalf("External account approval timed out after %v (final status: %s)", maxWaitTime, finalStatus)
+	return finalStatus
+}
+
 // TestExternalAccounts_CreateAndGet tests creating and retrieving an external account.
-// Validates all response fields and verifies request fields are reflected in response.
+// Validates all response fields, verifies request fields are reflected in response,
+// and polls until the account reaches APPROVED status.
+// Note: This test may be skipped if the customer doesn't have a verified fiat account yet.
 func (s *ExternalAccountsTestSuite) TestExternalAccounts_CreateAndGet() {
+	const (
+		pollInterval = 2 * time.Second
+		maxWaitTime  = 10 * time.Second
+	)
+
 	createReq := FakeExternalAccountRequest()
 
 	// Create external account
 	createResp, err := s.Client.ExternalAccounts.CreateExternalAccount(s.Ctx, s.CustomerID, createReq)
+
+	// Skip test if fiat account is not yet verified (400 error)
+	if err != nil {
+		var apiErr *transport.APIError
+		if errors.As(err, &apiErr) && apiErr.StatusCode == 400 &&
+			strings.Contains(apiErr.Detail, "verified fiat account is required") {
+			s.T().Skip("Skipping: customer doesn't have a verified fiat account yet")
+		}
+	}
 	s.Require().NoError(err, "CreateExternalAccount should succeed")
 
 	// Validate create response structure
@@ -106,26 +157,30 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_CreateAndGet() {
 	s.Equal(createReq.InstitutionName, createResp.InstitutionName, "InstitutionName should match request")
 	s.Equal(string(createReq.CountryCode), createResp.CountryCode, "CountryCode should match request")
 
-	s.T().Logf("Created external account:\n%s", PrettyJSON(createResp))
+	s.T().Logf("Created external account: %s (status: %s)", createResp.ExternalAccountID, createResp.Status)
+
+	// Poll until approved or failed
+	accountID := createResp.ExternalAccountID
+	s.pollExternalAccountStatus(accountID, pollInterval, maxWaitTime)
 
 	// List
 	resp, err := s.Client.ExternalAccounts.ListExternalAccounts(s.Ctx, s.CustomerID, nil)
-	s.Require().NoError(err, "ListExternalAccounts should succeed even with no accounts")
+	s.Require().NoError(err, "ListExternalAccounts should succeed")
 	s.Require().NotNil(resp, "Response should not be nil")
 	s.Require().NotEmpty(resp, "Should have at least one external account")
-	s.T().Logf("External accounts list: %v accounts", resp)
+	s.T().Logf("External accounts list count: %d", len(resp))
 
 	// Get external account by ID
-	getResp, err := s.Client.ExternalAccounts.GetExternalAccount(s.Ctx, s.CustomerID, createResp.ExternalAccountID)
+	getResp, err := s.Client.ExternalAccounts.GetExternalAccount(s.Ctx, s.CustomerID, accountID)
 	s.Require().NoError(err, "GetExternalAccount should succeed")
 
 	// Validate retrieved account matches created one
 	s.Require().NotNil(getResp, "Get response should not be nil")
-	s.Equal(createResp.ExternalAccountID, getResp.ExternalAccountID, "External account IDs should match")
+	s.Equal(accountID, getResp.ExternalAccountID, "External account IDs should match")
 	s.Equal(createResp.Network, getResp.Network, "Network should match")
 	s.Equal(createResp.Currency, getResp.Currency, "Currency should match")
 	s.Equal(createResp.InstitutionName, getResp.InstitutionName, "InstitutionName should match")
-	s.Equal(createResp.Status, getResp.Status, "Status should match")
+	s.Equal(string(external_accounts.BankAccountStatusAPPROVED), getResp.Status, "Status should be APPROVED")
 
 	s.T().Logf("Retrieved external account:\n%s", PrettyJSON(getResp))
 
@@ -135,7 +190,7 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_CreateAndGet() {
 
 	// Validate retrieved account matches created one
 	s.Require().NotNil(getByKeyResp, "Get by key response should not be nil")
-	s.Equal(createResp.ExternalAccountID, getByKeyResp.ExternalAccountID, "External account IDs should match")
+	s.Equal(accountID, getByKeyResp.ExternalAccountID, "External account IDs should match")
 	s.Equal(createResp.Network, getByKeyResp.Network, "Network should match")
 	s.Equal(createResp.Currency, getByKeyResp.Currency, "Currency should match")
 
