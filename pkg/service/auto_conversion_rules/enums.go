@@ -14,22 +14,14 @@
  * limitations under the License.
  */
 
-package simulations
+package auto_conversion_rules
 
 //go:generate go tool go-enum -f=$GOFILE --marshal --names --nocase
 
-// WalletNetworkName represents the supported network types for simulations.
-/* ENUM(
-US_ACH
-SWIFT
-US_FEDWIRE
-ARBITRUM
-AVALANCHE
-BASE
-BNBCHAIN
-ETHEREUM
-POLYGON
-SOLANA
-)
-*/
-type WalletNetworkName string
+// RuleStatus represents the status of an auto-conversion rule.
+// ENUM(PENDING, ACTIVE, INACTIVE)
+type RuleStatus string
+
+// DepositInfoStatus represents the status of source deposit info availability.
+// ENUM(PENDING, ACTIVE, INACTIVE)
+type DepositInfoStatus string

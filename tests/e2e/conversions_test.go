@@ -38,8 +38,9 @@ func (s *ConversionsTestSuite) SetupSuite() {
 	// Step 1: Simulate USD deposit
 	s.T().Log("Simulating USD deposit...")
 	_, err := s.Client.Simulations.SimulateDeposit(s.Ctx, s.CustomerID, &simulations.SimulateDepositRequest{
-		Asset:  assets.AssetNameUSD,
-		Amount: "1000.00",
+		Asset:   assets.AssetNameUSD,
+		Amount:  "1000.00",
+		Network: simulations.WalletNetworkNameUSACH,
 	})
 	s.Require().NoError(err, "SimulateDeposit USD should succeed")
 

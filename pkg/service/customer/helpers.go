@@ -25,6 +25,9 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/zap"
+
+	"github.com/1Money-Co/1money-go-sdk/internal/utils"
 	svc "github.com/1Money-Co/1money-go-sdk/pkg/service"
 )
 
@@ -201,10 +204,15 @@ func IsDataURI(s string) bool {
 
 // WaitOptions configures the polling behavior for wait functions.
 type WaitOptions struct {
-	// PollInterval is the interval between polling attempts. Default: 5s.
+	// PollInterval is the interval between polling attempts. Default: 1s.
 	PollInterval time.Duration
-	// MaxWaitTime is the maximum duration to wait. Default: 10m.
+	// MaxWaitTime is the maximum duration to wait. Default: 60m.
 	MaxWaitTime time.Duration
+	// Logger is an optional zap logger for logging polling progress.
+	Logger *zap.Logger
+	// PrintProgress prints polling progress to stdout using standard log package.
+	// This is useful for examples and debugging when zap logger is not available.
+	PrintProgress bool
 }
 
 // DefaultWaitOptions returns the default wait options.
@@ -226,32 +234,30 @@ func WaitFor(ctx context.Context,
 	condition CustomerCondition,
 	opts *WaitOptions,
 ) (*CustomerResponse, error) {
+	defaults := DefaultWaitOptions()
 	if opts == nil {
-		defaults := DefaultWaitOptions()
 		opts = &defaults
 	}
 
-	deadline := time.Now().Add(opts.MaxWaitTime)
-	for time.Now().Before(deadline) {
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		default:
-		}
-
-		cust, err := service.GetCustomer(ctx, customerID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get customer: %w", err)
-		}
-
-		if condition(cust) {
-			return cust, nil
-		}
-
-		time.Sleep(opts.PollInterval)
+	utilOpts := &utils.WaitOptions{
+		PollInterval:  opts.PollInterval,
+		MaxWaitTime:   opts.MaxWaitTime,
+		Logger:        opts.Logger,
+		LogMessage:    "polling customer status",
+		PrintProgress: opts.PrintProgress,
 	}
 
-	return nil, fmt.Errorf("timeout waiting for customer %s after %v", customerID, opts.MaxWaitTime)
+	return utils.WaitFor(
+		ctx,
+		func(ctx context.Context) (*CustomerResponse, error) {
+			return service.GetCustomer(ctx, customerID)
+		},
+		utils.Condition[CustomerResponse](condition),
+		func(c *CustomerResponse) string { return string(c.Status) },
+		"customer",
+		customerID,
+		utilOpts,
+	)
 }
 
 // WaitForKybApproved polls until the customer's KYB status becomes APPROVED.

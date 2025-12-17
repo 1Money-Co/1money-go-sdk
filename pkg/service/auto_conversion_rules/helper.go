@@ -19,6 +19,7 @@ package auto_conversion_rules
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -28,6 +29,9 @@ type WaitOptions struct {
 	PollInterval time.Duration
 	// MaxWaitTime is the maximum duration to wait. Default: 60s.
 	MaxWaitTime time.Duration
+	// PrintProgress prints polling progress to stdout using standard log package.
+	// This is useful for examples and debugging.
+	PrintProgress bool
 }
 
 // DefaultWaitOptions returns the default wait options.
@@ -52,7 +56,8 @@ func WaitFor(
 		opts = &defaults
 	}
 
-	deadline := time.Now().Add(opts.MaxWaitTime)
+	start := time.Now()
+	deadline := start.Add(opts.MaxWaitTime)
 	for time.Now().Before(deadline) {
 		select {
 		case <-ctx.Done():
@@ -65,6 +70,11 @@ func WaitFor(
 			return nil, fmt.Errorf("failed to get rule: %w", err)
 		}
 
+		if opts.PrintProgress {
+			log.Printf("polling rule status: rule=%s elapsed=%.1fs status=%s deposit_info_status=%s",
+				ruleID, time.Since(start).Seconds(), rule.Status, rule.DepositInfoStatus)
+		}
+
 		if condition(rule) {
 			return rule, nil
 		}
@@ -75,16 +85,16 @@ func WaitFor(
 	return nil, fmt.Errorf("timeout waiting for rule %s after %v", ruleID, opts.MaxWaitTime)
 }
 
-// WaitForActive polls until the rule's Status becomes "ACTIVE".
+// WaitForActive polls until the rule's Status becomes ACTIVE.
 func WaitForActive(ctx context.Context, svc Service, customerID, ruleID string, opts *WaitOptions) (*RuleResponse, error) {
 	return WaitFor(ctx, svc, customerID, ruleID, func(r *RuleResponse) bool {
-		return r.Status == "ACTIVE"
+		return r.Status == RuleStatusACTIVE
 	}, opts)
 }
 
-// WaitForDepositInfoReady polls until the rule's DepositInfoStatus is no longer "PENDING".
+// WaitForDepositInfoReady polls until the rule's DepositInfoStatus is no longer PENDING.
 func WaitForDepositInfoReady(ctx context.Context, svc Service, customerID, ruleID string, opts *WaitOptions) (*RuleResponse, error) {
 	return WaitFor(ctx, svc, customerID, ruleID, func(r *RuleResponse) bool {
-		return r.DepositInfoStatus != "PENDING"
+		return r.DepositInfoStatus != DepositInfoStatusPENDING
 	}, opts)
 }

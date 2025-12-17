@@ -42,8 +42,9 @@ func (s *WithdrawalsTestSuite) SetupSuite() {
 	// Step 1: Simulate USD deposit for fiat withdrawals
 	s.T().Log("Simulating USD deposit...")
 	_, err := s.Client.Simulations.SimulateDeposit(s.Ctx, s.CustomerID, &simulations.SimulateDepositRequest{
-		Asset:  assets.AssetNameUSD,
-		Amount: "500.00",
+		Asset:   assets.AssetNameUSD,
+		Amount:  "500.00",
+		Network: simulations.WalletNetworkNameUSACH,
 	})
 	s.Require().NoError(err, "SimulateDeposit USD should succeed")
 

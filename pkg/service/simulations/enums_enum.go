@@ -11,6 +11,12 @@ import (
 )
 
 const (
+	// WalletNetworkNameUSACH is a WalletNetworkName of type US_ACH.
+	WalletNetworkNameUSACH WalletNetworkName = "US_ACH"
+	// WalletNetworkNameSWIFT is a WalletNetworkName of type SWIFT.
+	WalletNetworkNameSWIFT WalletNetworkName = "SWIFT"
+	// WalletNetworkNameUSFEDWIRE is a WalletNetworkName of type US_FEDWIRE.
+	WalletNetworkNameUSFEDWIRE WalletNetworkName = "US_FEDWIRE"
 	// WalletNetworkNameARBITRUM is a WalletNetworkName of type ARBITRUM.
 	WalletNetworkNameARBITRUM WalletNetworkName = "ARBITRUM"
 	// WalletNetworkNameAVALANCHE is a WalletNetworkName of type AVALANCHE.
@@ -30,6 +36,9 @@ const (
 var ErrInvalidWalletNetworkName = fmt.Errorf("not a valid WalletNetworkName, try [%s]", strings.Join(_WalletNetworkNameNames, ", "))
 
 var _WalletNetworkNameNames = []string{
+	string(WalletNetworkNameUSACH),
+	string(WalletNetworkNameSWIFT),
+	string(WalletNetworkNameUSFEDWIRE),
 	string(WalletNetworkNameARBITRUM),
 	string(WalletNetworkNameAVALANCHE),
 	string(WalletNetworkNameBASE),
@@ -59,20 +68,26 @@ func (x WalletNetworkName) IsValid() bool {
 }
 
 var _WalletNetworkNameValue = map[string]WalletNetworkName{
-	"ARBITRUM":  WalletNetworkNameARBITRUM,
-	"arbitrum":  WalletNetworkNameARBITRUM,
-	"AVALANCHE": WalletNetworkNameAVALANCHE,
-	"avalanche": WalletNetworkNameAVALANCHE,
-	"BASE":      WalletNetworkNameBASE,
-	"base":      WalletNetworkNameBASE,
-	"BNBCHAIN":  WalletNetworkNameBNBCHAIN,
-	"bnbchain":  WalletNetworkNameBNBCHAIN,
-	"ETHEREUM":  WalletNetworkNameETHEREUM,
-	"ethereum":  WalletNetworkNameETHEREUM,
-	"POLYGON":   WalletNetworkNamePOLYGON,
-	"polygon":   WalletNetworkNamePOLYGON,
-	"SOLANA":    WalletNetworkNameSOLANA,
-	"solana":    WalletNetworkNameSOLANA,
+	"US_ACH":     WalletNetworkNameUSACH,
+	"us_ach":     WalletNetworkNameUSACH,
+	"SWIFT":      WalletNetworkNameSWIFT,
+	"swift":      WalletNetworkNameSWIFT,
+	"US_FEDWIRE": WalletNetworkNameUSFEDWIRE,
+	"us_fedwire": WalletNetworkNameUSFEDWIRE,
+	"ARBITRUM":   WalletNetworkNameARBITRUM,
+	"arbitrum":   WalletNetworkNameARBITRUM,
+	"AVALANCHE":  WalletNetworkNameAVALANCHE,
+	"avalanche":  WalletNetworkNameAVALANCHE,
+	"BASE":       WalletNetworkNameBASE,
+	"base":       WalletNetworkNameBASE,
+	"BNBCHAIN":   WalletNetworkNameBNBCHAIN,
+	"bnbchain":   WalletNetworkNameBNBCHAIN,
+	"ETHEREUM":   WalletNetworkNameETHEREUM,
+	"ethereum":   WalletNetworkNameETHEREUM,
+	"POLYGON":    WalletNetworkNamePOLYGON,
+	"polygon":    WalletNetworkNamePOLYGON,
+	"SOLANA":     WalletNetworkNameSOLANA,
+	"solana":     WalletNetworkNameSOLANA,
 }
 
 // ParseWalletNetworkName attempts to convert a string to a WalletNetworkName.

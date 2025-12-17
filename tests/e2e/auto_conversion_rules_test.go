@@ -23,6 +23,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/1Money-Co/1money-go-sdk/internal/transport"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/auto_conversion_rules"
 )
 
@@ -87,7 +88,7 @@ func (s *AutoConversionRulesTestSuite) TestAutoConversionRules_CreateAndGet() {
 	s.Require().NotNil(createResp, "Create response should not be nil")
 	s.NotEmpty(createResp.AutoConversionRuleID, "Rule ID should not be empty")
 	s.Equal(createReq.IdempotencyKey, createResp.IdempotencyKey, "Idempotency key should match")
-	s.Equal("ACTIVE", createResp.Status, "Status should be ACTIVE")
+	s.True(createResp.Status == auto_conversion_rules.RuleStatusACTIVE || createResp.Status == auto_conversion_rules.RuleStatusPENDING, "Status should be ACTIVE or PENDING")
 	s.Equal(createReq.Source.Asset, createResp.Source.Asset, "Source asset should match")
 	s.Equal(createReq.Destination.Asset, createResp.Destination.Asset, "Destination asset should match")
 	s.T().Logf("Created auto conversion rule:\n%s", PrettyJSON(createResp))
@@ -185,10 +186,10 @@ func (s *AutoConversionRulesTestSuite) TestAutoConversionRules_Delete() {
 
 	s.T().Logf("Successfully deleted auto conversion rule: %s", createResp.AutoConversionRuleID)
 
-	// Verify the rule is now inactive
-	getResp, err := s.Client.AutoConversionRules.GetRule(s.Ctx, s.CustomerID, createResp.AutoConversionRuleID)
-	s.Require().NoError(err, "GetRule should succeed after deletion")
-	s.Equal("INACTIVE", getResp.Status, "Status should be INACTIVE after deletion")
+	// Verify the rule no longer exists (should return 404)
+	_, err = s.Client.AutoConversionRules.GetRule(s.Ctx, s.CustomerID, createResp.AutoConversionRuleID)
+	s.Require().Error(err, "GetRule should fail after deletion")
+	s.True(transport.IsNotFoundError(err), "GetRule should return 404 Not Found after deletion")
 }
 
 // TestAutoConversionRules_ListOrders tests listing orders for an auto conversion rule.

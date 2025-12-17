@@ -168,41 +168,9 @@ func (s *CustomerDependentTestSuite) GetOrCreateTestCustomer() (
 }
 
 // TearDownSuite cleans up resources created during testing.
-// This method cleans up auto conversion rules and external accounts.
-func (s *CustomerDependentTestSuite) TearDownSuite() {
-	if s.CustomerID == "" {
-		return
-	}
-
-	s.T().Logf("Cleaning up resources for customer: %s", s.CustomerID)
-
-	// Clean up auto conversion rules (soft delete)
-	rules, err := s.Client.AutoConversionRules.ListRules(s.Ctx, s.CustomerID, nil)
-	if err == nil && rules != nil {
-		for i := range rules.Items {
-			if rules.Items[i].Status == "ACTIVE" {
-				if delErr := s.Client.AutoConversionRules.DeleteRule(s.Ctx, s.CustomerID, rules.Items[i].AutoConversionRuleID); delErr != nil {
-					s.T().Logf("Failed to delete auto conversion rule %s: %v", rules.Items[i].AutoConversionRuleID, delErr)
-				} else {
-					s.T().Logf("Deleted auto conversion rule: %s", rules.Items[i].AutoConversionRuleID)
-				}
-			}
-		}
-	}
-
-	// Clean up external accounts
-	accounts, err := s.Client.ExternalAccounts.ListExternalAccounts(s.Ctx, s.CustomerID, nil)
-	if err == nil && accounts != nil {
-		for i := range accounts {
-			if err := s.Client.ExternalAccounts.RemoveExternalAccount(s.Ctx, s.CustomerID, accounts[i].ExternalAccountID); err != nil {
-				s.T().Logf("Failed to delete external account %s: %v", accounts[i].ExternalAccountID, err)
-			} else {
-				s.T().Logf("Deleted external account: %s", accounts[i].ExternalAccountID)
-			}
-		}
-	}
-
-	s.T().Logf("Cleanup completed for customer: %s (Note: Customer cannot be deleted due to compliance requirements)", s.CustomerID)
+// Note: Cleanup is currently disabled as resources cannot be fully deleted due to compliance requirements.
+func (*CustomerDependentTestSuite) TearDownSuite() {
+	// No cleanup performed - customer and associated resources cannot be deleted due to compliance requirements
 }
 
 // CreateTestCustomer creates a new customer with all required data for testing.
@@ -600,7 +568,7 @@ func FakeAutoConversionRuleRequest() *auto_conversion_rules.CreateRuleRequest {
 		IdempotencyKey: uuid.New().String(),
 		Source: auto_conversion_rules.SourceAssetInfo{
 			Asset:   "USD",
-			Network: "ACH",
+			Network: "US_ACH",
 		},
 		Destination: auto_conversion_rules.DestinationAssetInfo{
 			Asset:   "USDC",

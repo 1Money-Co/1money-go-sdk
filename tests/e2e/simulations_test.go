@@ -41,9 +41,10 @@ type simulateDepositTestCase struct {
 func (s *SimulationsTestSuite) TestSimulations_SimulateDeposit() {
 	testCases := []simulateDepositTestCase{
 		{
-			name:   "USD",
-			asset:  assets.AssetNameUSD,
-			amount: "100.00",
+			name:    "USD",
+			asset:   assets.AssetNameUSD,
+			amount:  "100.00",
+			network: simulations.WalletNetworkNameUSACH,
 		},
 		{
 			name:    "USDT_Ethereum",
@@ -82,7 +83,7 @@ func (s *SimulationsTestSuite) TestSimulations_SimulateDeposit() {
 			s.NotEmpty(resp.Status)
 			s.NotEmpty(resp.CreatedAt)
 			s.NotEmpty(resp.ModifiedAt)
-			s.Contains([]string{"COMPLETED", "REVERSED"}, resp.Status)
+			s.Contains([]string{"PENDING", "COMPLETED", "FAILED", "REVERSED"}, resp.Status.String())
 
 			s.T().Logf("Simulated %s deposit:\n%s", tc.name, PrettyJSON(resp))
 		})

@@ -100,8 +100,8 @@ type (
 		Source TransactionEndpoint `json:"source"`
 		// Destination contains the transaction destination details.
 		Destination TransactionEndpoint `json:"destination"`
-		// Status is the current transaction status.
-		Status string `json:"status"`
+		// Status is the current transaction status: PENDING, COMPLETED, FAILED, or REVERSED.
+		Status TransactionStatus `json:"status"`
 		// CreatedAt is the transaction creation timestamp.
 		CreatedAt string `json:"created_at"`
 		// ModifiedAt is the transaction last modification timestamp.
@@ -170,10 +170,10 @@ func (s *serviceImpl) ListTransactions(
 			params["created_before"] = req.CreatedBefore
 		}
 		if req.Page > 0 {
-			params["pagination[page]"] = fmt.Sprintf("%d", req.Page)
+			params["page"] = fmt.Sprintf("%d", req.Page)
 		}
 		if req.Size > 0 {
-			params["pagination[size]"] = fmt.Sprintf("%d", req.Size)
+			params["size"] = fmt.Sprintf("%d", req.Size)
 		}
 	}
 
