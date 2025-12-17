@@ -2,30 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.6] - 2025-12-17
+
+### ⚙️ Miscellaneous
+
+- Make testdata package public for examples
+
 ## [0.0.1-beta.3] - 2025-12-17
 
 ### ⚙️ Miscellaneous
 
-- Update go.mod
-
-### 🐛 Bug Fixes
-
-- **ci:** Add base branch for release PR creation
-
-## [0.0.1-beta.2] - 2025-12-17
-
-### ⚙️ Miscellaneous
-
+- **ci:** Refactor release workflow to use PR-based process
+- **ci:** Handle branch push in release workflow for testing
+- Fix release workflow
+- **ci:** Re-enable test mode for release workflow
+- Remove debug
+- **ci:** Remove pkg.go.dev update step from release workflow
+- **ci:** Improve release PR body with more context
 - Explicitly specify .golangci.yml config in lint step
 - Solve lint issue
 - Support prerelease tags in release workflow
 - Temp work
 - Temp work
 - Make linter happy
+- Update go.mod
 
 ### 🐛 Bug Fixes
 
 - **test:** Improve e2e test robustness and fix type issues
+- **ci:** Add base branch for release PR creation
 
 ### 🔧 Refactor
 
@@ -35,31 +40,11 @@ All notable changes to this project will be documented in this file.
 
 ### 🚀 Features
 
+- **auth:** Add sandbox mode with Bearer token authentication
 - Add auto-conversion rules service and retry transport
 - Improve create_customer example and update default BaseURL
 - **customer:** Add redirectUri support to CreateTOSLink
 - Add wait helpers, improve examples, and clean up project structure
-
-## [dev] - 2025-12-05
-
-### ⚙️ Miscellaneous
-
-- Remove debug
-- **ci:** Remove pkg.go.dev update step from release workflow
-- **ci:** Improve release PR body with more context
-
-## [0.0.0-test-a709ac2] - 2025-12-05
-
-### ⚙️ Miscellaneous
-
-- **ci:** Refactor release workflow to use PR-based process
-- **ci:** Handle branch push in release workflow for testing
-- Fix release workflow
-- **ci:** Re-enable test mode for release workflow
-
-### 🚀 Features
-
-- **auth:** Add sandbox mode with Bearer token authentication
 
 ## [0.0.1] - 2025-12-03
 
