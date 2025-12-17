@@ -31,10 +31,10 @@ import (
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/joho/godotenv"
 
-	"github.com/1Money-Co/1money-go-sdk/internal/testdata"
 	"github.com/1Money-Co/1money-go-sdk/pkg/onemoney"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/customer"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/external_accounts"
+	"github.com/1Money-Co/1money-go-sdk/pkg/testdata"
 )
 
 func main() {
@@ -161,7 +161,7 @@ func buildCustomerRequest(signedAgreementID string) *customer.CreateCustomerRequ
 		SourceOfFunds:  []customer.SourceOfFunds{customer.SourceOfFundsSalesOfGoodsAndServices},
 		SourceOfWealth: []customer.SourceOfWealth{customer.SourceOfWealthBusinessDividendsOrProfits},
 		// Required documents for Corporation in US region
-		// Uses embedded test images from internal/testdata
+		// Uses embedded test images from pkg/testdata
 		Documents: []customer.Document{
 			{
 				DocType:     customer.DocumentTypeFlowOfFunds,

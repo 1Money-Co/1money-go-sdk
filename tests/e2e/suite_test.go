@@ -36,7 +36,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/xuri/excelize/v2"
 
-	"github.com/1Money-Co/1money-go-sdk/internal/testdata"
 	"github.com/1Money-Co/1money-go-sdk/internal/transport"
 	"github.com/1Money-Co/1money-go-sdk/internal/utils"
 	"github.com/1Money-Co/1money-go-sdk/pkg/onemoney"
@@ -45,6 +44,7 @@ import (
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/customer"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/external_accounts"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/simulations"
+	"github.com/1Money-Co/1money-go-sdk/pkg/testdata"
 )
 
 const (

@@ -50,6 +50,6 @@ export ONEMONEY_CUSTOMER_ID=<customer_id_from_output>
 
 ## Notes
 
-- This example uses test data from `internal/testdata` for ID documents and proof of address
+- This example uses test data from `pkg/testdata` for ID documents and proof of address
 - In production, you would collect real business information and documents
 - The customer structure includes associated persons (beneficial owners, directors, signers)
