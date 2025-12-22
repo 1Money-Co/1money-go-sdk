@@ -68,3 +68,5 @@ terraform.rc
 # planout
 
 data/
+
+output/

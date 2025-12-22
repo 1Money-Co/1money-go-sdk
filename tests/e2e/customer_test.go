@@ -40,9 +40,9 @@ type CustomerTestSuite struct {
 // TestCustomerService_TOSFlow tests the complete TOS signing flow.
 func (s *CustomerTestSuite) TestCustomerService_TOSFlow() {
 	// Step 1: Create TOS link
-	const exampleRedirectURI = "https://example.com/terms-of-service-completed"
+	const exampleRedirectURI = "https://google.com"
 	tosResp, err := s.Client.Customer.CreateTOSLink(s.Ctx, &customer.CreateTOSLinkRequest{
-		RedirectUri: exampleRedirectURI,
+		RedirectUrl: exampleRedirectURI,
 	})
 	s.Require().NoError(err, "CreateTOSLink should not return error")
 	s.Require().NotNil(tosResp, "CreateTOSLink response should not be nil")
@@ -337,16 +337,8 @@ func (s *CustomerTestSuite) TestCustomerService_GetCustomer() {
 // TestCustomerService_UpdateCustomer tests updating a customer with minimal fields.
 // Note: For approved customers, update is not allowed (409 Conflict or 500 with "KYB edit not allowed").
 func (s *CustomerTestSuite) TestCustomerService_UpdateCustomer() {
-	faker := gofakeit.New(0)
-
 	updateReq := &customer.UpdateCustomerRequest{
-		BusinessIndustry: utils.AsPtr("332999"),
-		AccountPurpose:   utils.AsPtr(customer.AccountPurposeTreasuryManagement),
-		AssociatedPersons: []customer.AssociatedPerson{
-			FakeAssociatedPerson(faker),
-			FakeAssociatedPerson(faker),
-			FakeAssociatedPerson(faker),
-		},
+		AccountPurpose: utils.AsPtr(customer.AccountPurposeTreasuryManagement),
 	}
 
 	updateResp, err := s.Client.Customer.UpdateCustomer(s.Ctx, s.CustomerID, updateReq)

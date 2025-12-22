@@ -40,7 +40,7 @@ func defaultHeaders(apiKey string) http.Header {
 // 1. Create TOS signing link
 func createTOSLinkTargeter(ctx *loadtestContext) vegeta.Targeter {
 	body, _ := json.Marshal(customer.CreateTOSLinkRequest{
-		RedirectUri: "https://example.com/redirect",
+		RedirectUrl: "https://example.com/redirect",
 	})
 	return vegeta.NewStaticTargeter(vegeta.Target{
 		Method: http.MethodPost,
@@ -140,7 +140,7 @@ func prepareSignedAgreements(ctx *loadtestContext, count int) error {
 func getSignedAgreementID(ctx *loadtestContext) (string, error) {
 	bgCtx := context.Background()
 	tosResp, err := ctx.client.Customer.CreateTOSLink(bgCtx, &customer.CreateTOSLinkRequest{
-		RedirectUri: "https://example.com/redirect",
+		RedirectUrl: "https://example.com/redirect",
 	})
 	if err != nil {
 		return "", err

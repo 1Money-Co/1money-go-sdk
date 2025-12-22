@@ -134,7 +134,7 @@ func (s *CustomerDependentTestSuite) GetOrCreateTestCustomer() (
 ) {
 	// Try to find an existing approved customer (prefer the most recently created one)
 	listResp, err := s.Client.Customer.ListCustomers(s.Ctx, &customer.ListCustomersRequest{
-		PageSize:  100,
+		PageSize:  2,
 		KybStatus: string(customer.KybStatusApproved),
 	})
 	if err == nil && listResp != nil && len(listResp.Customers) > 0 {
@@ -184,7 +184,7 @@ func (s *CustomerDependentTestSuite) CreateTestCustomer() (
 
 	// Step 1: Create TOS link
 	tosResp, err := s.Client.Customer.CreateTOSLink(s.Ctx, &customer.CreateTOSLinkRequest{
-		RedirectUri: "https://example.com/redirect",
+		RedirectUrl: "https://example.com/redirect",
 	})
 	if err != nil {
 		return "", nil, fmt.Errorf("CreateTOSLink failed: %w", err)
@@ -395,7 +395,7 @@ func (s *CustomerDependentTestSuite) EnsureAutoConversionRule() (string, error) 
 func (s *CustomerDependentTestSuite) EnsureSignedAgreement() (string, error) {
 	// Create TOS link
 	tosResp, err := s.Client.Customer.CreateTOSLink(s.Ctx, &customer.CreateTOSLinkRequest{
-		RedirectUri: "https://example.com/redirect",
+		RedirectUrl: "https://example.com/redirect",
 	})
 	if err != nil {
 		return "", fmt.Errorf("CreateTOSLink failed: %w", err)
@@ -575,6 +575,109 @@ func FakeAutoConversionRuleRequest() *auto_conversion_rules.CreateRuleRequest {
 			Network: &network,
 		},
 	}
+}
+
+// PendingCustomerTestSuite is a test suite for tests that require a customer WITHOUT KYB approval.
+// This is needed for tests that modify associated persons, which cannot be modified after KYB approval.
+type PendingCustomerTestSuite struct {
+	E2ETestSuite
+	CustomerID          string
+	AssociatedPersonIDs []string
+}
+
+// SetupSuite creates a new customer without waiting for KYB approval.
+func (s *PendingCustomerTestSuite) SetupSuite() {
+	s.E2ETestSuite.SetupSuite()
+
+	customerID, associatedPersonIDs, err := s.CreatePendingCustomer()
+	if err != nil {
+		s.T().Fatalf("failed to create pending customer: %v", err)
+	}
+
+	s.CustomerID = customerID
+	s.AssociatedPersonIDs = associatedPersonIDs
+}
+
+// CreatePendingCustomer creates a new customer with all required data but does NOT wait for KYB approval.
+// This allows tests to modify associated persons before the customer is approved.
+func (s *PendingCustomerTestSuite) CreatePendingCustomer() (
+	customerID string,
+	associatedPersonIDs []string,
+	err error,
+) {
+	faker := gofakeit.New(0)
+
+	// Step 1: Create TOS link
+	tosResp, err := s.Client.Customer.CreateTOSLink(s.Ctx, &customer.CreateTOSLinkRequest{
+		RedirectUrl: "https://example.com/redirect",
+	})
+	if err != nil {
+		return "", nil, fmt.Errorf("CreateTOSLink failed: %w", err)
+	}
+
+	// Step 2: Sign the agreement
+	signResp, err := s.Client.Customer.SignTOSAgreement(s.Ctx, tosResp.SessionToken)
+	if err != nil {
+		return "", nil, fmt.Errorf("SignTOSAgreement failed: %w", err)
+	}
+
+	// Step 3: Create customer with associated persons
+	associatedPersons := []customer.AssociatedPerson{
+		FakeAssociatedPerson(faker),
+		FakeAssociatedPerson(faker),
+	}
+
+	req := &customer.CreateCustomerRequest{
+		BusinessLegalName:          faker.Company(),
+		BusinessDescription:        faker.JobDescriptor() + " " + faker.BS(),
+		BusinessRegistrationNumber: fmt.Sprintf("%s-%d", faker.LetterN(3), faker.Number(100000, 999999)),
+		Email:                      faker.Email(),
+		BusinessType:               customer.BusinessTypeCorporation,
+		BusinessIndustry:           "332999",
+		RegisteredAddress: &customer.Address{
+			StreetLine1: faker.Street(),
+			StreetLine2: fmt.Sprintf("Suite %d", faker.Number(100, 999)),
+			City:        faker.City(),
+			State:       RandomGermanState(faker),
+			Country:     CountryDEU,
+			PostalCode:  faker.Zip(),
+			Subdivision: RandomGermanState(faker),
+		},
+		DateOfIncorporation:            faker.Date().Format("2006-01-02"),
+		SignedAgreementID:              signResp.SignedAgreementID,
+		AssociatedPersons:              associatedPersons,
+		SourceOfFunds:                  []customer.SourceOfFunds{customer.SourceOfFundsSalesOfGoodsAndServices},
+		SourceOfWealth:                 []customer.SourceOfWealth{customer.SourceOfWealthBusinessDividendsOrProfits},
+		Documents:                      FakeCustomerDocuments(),
+		AccountPurpose:                 customer.AccountPurposeTreasuryManagement,
+		IsDAO:                          false,
+		PubliclyTraded:                 false,
+		EstimatedAnnualRevenueUSD:      customer.MoneyRange099999,
+		ExpectedMonthlyFiatDeposits:    customer.MoneyRange099999,
+		ExpectedMonthlyFiatWithdrawals: customer.MoneyRange099999,
+		TaxID:                          fmt.Sprintf("%d-%d", faker.Number(10, 99), faker.Number(1000000, 9999999)),
+		TaxType:                        customer.TaxIDTypeEIN,
+		TaxCountry:                     CountryDEU,
+	}
+
+	resp, err := s.Client.Customer.CreateCustomer(s.Ctx, req)
+	if err != nil {
+		return "", nil, fmt.Errorf("CreateCustomer failed: %w", err)
+	}
+
+	s.T().Logf("Created pending customer: %s (NOT waiting for KYB approval)", resp.CustomerID)
+
+	// Get associated person IDs from the created customer
+	associatedPersonsResp, err := s.Client.Customer.ListAssociatedPersons(s.Ctx, resp.CustomerID)
+	if err != nil {
+		return "", nil, fmt.Errorf("ListAssociatedPersons failed: %w", err)
+	}
+
+	for i := range *associatedPersonsResp {
+		associatedPersonIDs = append(associatedPersonIDs, (*associatedPersonsResp)[i].AssociatedPersonID)
+	}
+
+	return resp.CustomerID, associatedPersonIDs, nil
 }
 
 // FakeAssociatedPerson generates a fake associated person for testing.

@@ -50,7 +50,7 @@ func main() {
 	// Step 1: Create TOS link and sign agreement
 	log.Println("creating TOS link")
 	tosResp, err := client.Customer.CreateTOSLink(ctx, &customer.CreateTOSLinkRequest{
-		RedirectUri: "https://example.com/redirect",
+		RedirectUrl: "https://example.com/redirect",
 	})
 	if err != nil {
 		log.Fatalf("failed to create TOS link: %v", err)

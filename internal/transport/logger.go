@@ -45,6 +45,12 @@ func debugEnabled() bool {
 	return os.Getenv("ONEMONEY_DEBUG") == "1"
 }
 
+// genReqEnabled returns true if ONEMONEY_GEN_REQ is set to "1".
+// When enabled, requests will be saved to the output directory as JSON files.
+func genReqEnabled() bool {
+	return os.Getenv("ONEMONEY_GEN_REQ") == "1"
+}
+
 // supportsColor checks if the current environment supports color output.
 // It returns false if:
 // - NO_COLOR environment variable is set

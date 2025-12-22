@@ -219,6 +219,11 @@ func (t *Transport) doOnce(ctx context.Context, req *Request) (*Response, error)
 		fmt.Fprintln(os.Stderr, buildCurlCommand(httpReq, req.Body))
 	}
 
+	// Save request to file if ONEMONEY_GEN_REQ=1 (async to avoid blocking)
+	if genReqEnabled() {
+		go saveRequestToFile(req)
+	}
+
 	// Execute request
 	httpResp, err := t.httpClient.Do(httpReq)
 	if err != nil {
@@ -436,13 +441,100 @@ func buildCurlCommand(req *http.Request, body []byte) string {
 
 // escapeShellString escapes single quotes for safe use in shell single-quoted strings.
 // In shell, single-quoted strings don't support escape sequences, so we need to
-// end the string, add an escaped quote, and start a new string: ' -> '\”
+// end the string, add an escaped quote, and start a new string: ' -> '\"
 func escapeShellString(s string) string {
 	result := ""
 	for _, c := range s {
 		if c == '\'' {
 			result += `'\''`
 		} else {
+			result += string(c)
+		}
+	}
+	return result
+}
+
+// Output directory and file permissions for generated request files.
+const (
+	genReqOutputDir = "output"
+	genReqDirPerm   = 0o755
+	genReqFilePerm  = 0o600
+)
+
+// saveRequestToFile saves the request body to a JSON file in the output directory.
+// The file name format is: {METHOD}_{path}_{timestamp}.json
+func saveRequestToFile(req *Request) {
+	log := getLogger()
+
+	// Skip if no body
+	if len(req.Body) == 0 {
+		return
+	}
+
+	// Create output directory if it doesn't exist
+	if err := os.MkdirAll(genReqOutputDir, genReqDirPerm); err != nil {
+		log.Error("failed to create output directory",
+			zap.String("dir", genReqOutputDir),
+			zap.Error(err),
+		)
+		return
+	}
+
+	// Generate timestamp
+	timestamp := time.Now().Format("20060102_150405")
+
+	// Generate name from method and path (e.g., "POST /v1/customers" -> "POST_v1_customers")
+	pathName := sanitizePath(req.Path)
+	if pathName == "" {
+		pathName = "request"
+	}
+	name := fmt.Sprintf("%s_%s", req.Method, pathName)
+
+	// Create filename
+	filename := fmt.Sprintf("%s/%s_%s.json", genReqOutputDir, name, timestamp)
+
+	// Format body as indented JSON if valid, otherwise write as-is
+	var data []byte
+	if json.Valid(req.Body) {
+		var parsed any
+		if err := json.Unmarshal(req.Body, &parsed); err == nil {
+			data, _ = json.MarshalIndent(parsed, "", "  ")
+		} else {
+			data = req.Body
+		}
+	} else {
+		data = req.Body
+	}
+
+	// Write to file
+	if err := os.WriteFile(filename, data, genReqFilePerm); err != nil {
+		log.Error("failed to write request file",
+			zap.String("filename", filename),
+			zap.Error(err),
+		)
+		return
+	}
+
+	log.Debug("saved request to file",
+		zap.String("filename", filename),
+	)
+}
+
+// sanitizePath converts a URL path to a valid filename component.
+// e.g., "/v1/customers/123" -> "v1_customers_123"
+func sanitizePath(path string) string {
+	// Remove leading slash
+	if path != "" && path[0] == '/' {
+		path = path[1:]
+	}
+
+	// Replace slashes with underscores
+	result := ""
+	for _, c := range path {
+		switch c {
+		case '/', '\\', ':', '*', '?', '"', '<', '>', '|':
+			result += "_"
+		default:
 			result += string(c)
 		}
 	}

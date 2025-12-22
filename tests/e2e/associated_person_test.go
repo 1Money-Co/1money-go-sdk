@@ -26,19 +26,25 @@ import (
 )
 
 // AssociatedPersonTestSuite tests associated person operations.
+// Uses PendingCustomerTestSuite because associated persons cannot be modified after KYB approval.
 type AssociatedPersonTestSuite struct {
-	CustomerDependentTestSuite
+	PendingCustomerTestSuite
 }
 
 // TestAssociatedPerson_Create tests creating an associated person.
+// Creates its own customer to avoid KYB approval timing issues.
 func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Create() {
 	faker := gofakeit.New(0)
+
+	// Create a fresh customer for this test
+	customerID, _, err := s.CreatePendingCustomer()
+	s.Require().NoError(err, "CreatePendingCustomer should succeed")
 
 	req := &customer.CreateAssociatedPersonRequest{
 		AssociatedPerson: FakeAssociatedPerson(faker),
 	}
 
-	resp, err := s.Client.Customer.CreateAssociatedPerson(s.Ctx, s.CustomerID, req)
+	resp, err := s.Client.Customer.CreateAssociatedPerson(s.Ctx, customerID, req)
 
 	s.Require().NoError(err, "CreateAssociatedPerson should not return error")
 	s.Require().NotNil(resp, "Response should not be nil")
@@ -66,12 +72,14 @@ func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Get() {
 }
 
 // TestAssociatedPerson_Update tests updating an associated person.
+// Creates its own customer and associated person to avoid KYB approval timing issues.
 func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Update() {
 	faker := gofakeit.New(0)
 
-	getResp, err := s.Client.Customer.GetAssociatedPerson(s.Ctx, s.CustomerID, s.AssociatedPersonIDs[0])
-	s.Require().NoError(err, "GetAssociatedPerson should succeed")
-	s.Require().NotNil(getResp, "Response should not be nil")
+	// Create a fresh customer for this test
+	customerID, associatedPersonIDs, err := s.CreatePendingCustomer()
+	s.Require().NoError(err, "CreatePendingCustomer should succeed")
+	s.Require().NotEmpty(associatedPersonIDs, "Should have associated persons")
 
 	newEmail := faker.Email()
 	hasControl := true
@@ -79,7 +87,7 @@ func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Update() {
 		Email:      &newEmail,
 		HasControl: &hasControl,
 	}
-	updateResp, err := s.Client.Customer.UpdateAssociatedPerson(s.Ctx, s.CustomerID, s.AssociatedPersonIDs[0], updateReq)
+	updateResp, err := s.Client.Customer.UpdateAssociatedPerson(s.Ctx, customerID, associatedPersonIDs[0], updateReq)
 	s.Require().NoError(err, "UpdateAssociatedPerson should succeed")
 	s.Require().NotNil(updateResp, "Response should not be nil")
 	s.Equal(newEmail, updateResp.Email, "Email should be updated")
@@ -88,27 +96,22 @@ func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Update() {
 }
 
 // TestAssociatedPerson_Delete tests deleting an associated person.
-// Creates its own associated person to delete, avoiding test order dependency.
+// Creates its own customer and associated person to avoid KYB approval timing issues.
 func (s *AssociatedPersonTestSuite) TestAssociatedPerson_Delete() {
-	// Create a new associated person specifically for deletion test
-	faker := gofakeit.New(0)
-	createReq := &customer.CreateAssociatedPersonRequest{
-		AssociatedPerson: FakeAssociatedPerson(faker),
-	}
+	// Create a fresh customer for this test
+	customerID, associatedPersonIDs, err := s.CreatePendingCustomer()
+	s.Require().NoError(err, "CreatePendingCustomer should succeed")
+	s.Require().NotEmpty(associatedPersonIDs, "Should have associated persons")
 
-	createResp, err := s.Client.Customer.CreateAssociatedPerson(s.Ctx, s.CustomerID, createReq)
-	s.Require().NoError(err, "CreateAssociatedPerson should succeed")
-	s.Require().NotNil(createResp, "Create response should not be nil")
+	personIDToDelete := associatedPersonIDs[0]
+	s.T().Logf("Will delete associated person: %s", personIDToDelete)
 
-	personIDToDelete := createResp.AssociatedPersonID
-	s.T().Logf("Created associated person for deletion: %s", personIDToDelete)
-
-	// Delete the newly created associated person
-	err = s.Client.Customer.DeleteAssociatedPerson(s.Ctx, s.CustomerID, personIDToDelete)
+	// Delete the associated person
+	err = s.Client.Customer.DeleteAssociatedPerson(s.Ctx, customerID, personIDToDelete)
 	s.Require().NoError(err, "DeleteAssociatedPerson should succeed")
 
 	// Verify deletion - should return error
-	getResp, err := s.Client.Customer.GetAssociatedPerson(s.Ctx, s.CustomerID, personIDToDelete)
+	getResp, err := s.Client.Customer.GetAssociatedPerson(s.Ctx, customerID, personIDToDelete)
 	s.Require().Error(err, "GetAssociatedPerson should return error after deletion")
 	s.Require().Nil(getResp, "Response should be nil")
 	s.T().Log("Associated person deleted successfully")
