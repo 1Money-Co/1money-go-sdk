@@ -21,4 +21,4 @@ package onemoney
 // For development builds, this will be "dev".
 // For release builds, run: just version-update
 // This will update the version based on the latest git tag.
-const Version = "0.0.1-beta.3"
+const Version = "0.0.2"
