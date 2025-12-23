@@ -595,9 +595,9 @@ type (
 type (
 	// CreateTOSLinkRequest represents the request body for creating a TOS signing link.
 	CreateTOSLinkRequest struct {
-		// RedirectUri is the URL where the user will be redirected after signing the TOS.
+		// RedirectUrl is the URL where the user will be redirected after signing the TOS.
 		// The URL will be appended to the TOS link as a query parameter.
-		RedirectUri string `json:"redirect_uri,omitempty"`
+		RedirectUrl string `json:"redirect_url,omitempty"`
 	}
 
 	// TOSLinkResponse represents the response data for creating a TOS signing link.
