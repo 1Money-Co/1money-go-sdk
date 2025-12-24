@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package external_accounts
+// Package common provides shared types and enums used across multiple service packages.
+package common
 
 //go:generate go tool go-enum -f=$GOFILE --marshal --names --nocase
 
@@ -22,7 +23,7 @@ package external_accounts
 // ENUM(US_ACH, SWIFT, US_FEDWIRE)
 type BankNetworkName string
 
-// Currency represents the supported currencies for external accounts.
+// Currency represents the supported fiat currencies.
 // ENUM(USD)
 type Currency string
 

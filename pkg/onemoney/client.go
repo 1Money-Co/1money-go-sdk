@@ -35,6 +35,7 @@ import (
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/echo"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/external_accounts"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/instructions"
+	"github.com/1Money-Co/1money-go-sdk/pkg/service/recipient"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/simulations"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/transactions"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/withdraws"
@@ -54,6 +55,7 @@ type Client struct {
 	Echo                echo.Service
 	ExternalAccounts    external_accounts.Service
 	Instructions        instructions.Service
+	Recipient           recipient.Service
 	Simulations         simulations.Service
 	Transactions        transactions.Service
 	Withdrawals         withdraws.Service
@@ -282,6 +284,7 @@ func NewClient(cfg *Config, opts ...Option) (*Client, error) {
 		Echo:                echo.NewService(base),
 		ExternalAccounts:    external_accounts.NewService(base),
 		Instructions:        instructions.NewService(base),
+		Recipient:           recipient.NewService(base),
 		Simulations:         simulations.NewService(base),
 		Transactions:        transactions.NewService(base),
 		Withdrawals:         withdraws.NewService(base),

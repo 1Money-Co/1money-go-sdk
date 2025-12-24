@@ -16,6 +16,45 @@
 
 package service
 
-// CustomerID is a type alias for customer identifiers.
-// Using this alias improves code readability by making the purpose of string parameters clear.
-type CustomerID = string
+// ID type aliases improve code readability by making the purpose of string parameters clear.
+// These are type aliases (not new types), so they are fully compatible with plain strings.
+type (
+	// CustomerID is a type alias for customer identifiers.
+	CustomerID = string
+
+	// ExternalAccountID is a type alias for external bank account identifiers.
+	ExternalAccountID = string
+
+	// RecipientID is a type alias for recipient identifiers.
+	RecipientID = string
+
+	// WalletAddressID is a type alias for wallet address identifiers.
+	WalletAddressID = string
+
+	// TransactionID is a type alias for transaction identifiers.
+	TransactionID = string
+
+	// AssociatedPersonID is a type alias for associated person identifiers.
+	AssociatedPersonID = string
+
+	// SignedAgreementID is a type alias for signed agreement identifiers.
+	SignedAgreementID = string
+
+	// AutoConversionRuleID is a type alias for auto conversion rule identifiers.
+	AutoConversionRuleID = string
+
+	// AutoConversionOrderID is a type alias for auto conversion order identifiers.
+	AutoConversionOrderID = string
+
+	// QuoteID is a type alias for conversion quote identifiers.
+	QuoteID = string
+
+	// OrderID is a type alias for conversion order identifiers.
+	OrderID = string
+
+	// SimulationID is a type alias for simulation identifiers.
+	SimulationID = string
+
+	// IdempotencyKey is a type alias for idempotency keys used in API requests.
+	IdempotencyKey = string
+)

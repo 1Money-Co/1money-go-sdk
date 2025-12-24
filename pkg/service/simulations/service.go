@@ -62,7 +62,7 @@ import (
 type Service interface {
 	// SimulateDeposit simulates a deposit transaction for testing purposes.
 	// Only available in non-production environments.
-	SimulateDeposit(ctx context.Context, id svc.CustomerID, req *SimulateDepositRequest) (*SimulateDepositResponse, error)
+	SimulateDeposit(ctx context.Context, cid svc.CustomerID, req *SimulateDepositRequest) (*SimulateDepositResponse, error)
 }
 
 // SimulateDeposit request and response types.
@@ -108,9 +108,9 @@ func NewService(base *svc.BaseService) Service {
 // SimulateDeposit simulates a deposit transaction for testing purposes.
 func (s *serviceImpl) SimulateDeposit(
 	ctx context.Context,
-	id svc.CustomerID,
+	cid svc.CustomerID,
 	req *SimulateDepositRequest,
 ) (*SimulateDepositResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/simulate-transactions", id)
+	path := fmt.Sprintf("/v1/customers/%s/simulate-transactions", cid)
 	return svc.PostJSON[SimulateDepositRequest, SimulateDepositResponse](ctx, s.BaseService, path, *req)
 }

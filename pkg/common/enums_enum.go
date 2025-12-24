@@ -3,7 +3,7 @@
 
 // Built By: go install
 
-package external_accounts
+package common
 
 import (
 	"fmt"

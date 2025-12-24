@@ -59,14 +59,12 @@ import (
 // Service defines the withdrawals service interface for managing withdrawal transactions.
 type Service interface {
 	// CreateWithdrawal creates a new withdrawal transaction.
-	CreateWithdrawal(
-		ctx context.Context, id svc.CustomerID, req *CreateWithdrawalRequest,
-	) (*WithdrawalResponse, error)
+	CreateWithdrawal(ctx context.Context, cid svc.CustomerID, req *CreateWithdrawalRequest) (*WithdrawalResponse, error)
 	// GetWithdrawal retrieves a specific withdrawal by ID.
-	GetWithdrawal(ctx context.Context, id svc.CustomerID, transactionID string) (*WithdrawalResponse, error)
+	GetWithdrawal(ctx context.Context, cid svc.CustomerID, tid svc.TransactionID) (*WithdrawalResponse, error)
 	// GetWithdrawalByIdempotencyKey retrieves a withdrawal by its idempotency key.
 	GetWithdrawalByIdempotencyKey(
-		ctx context.Context, id svc.CustomerID, idempotencyKey string,
+		ctx context.Context, cid svc.CustomerID, key svc.IdempotencyKey,
 	) (*WithdrawalResponse, error)
 }
 
@@ -148,10 +146,10 @@ func NewService(base *svc.BaseService) Service {
 // CreateWithdrawal creates a new withdrawal transaction.
 func (s *serviceImpl) CreateWithdrawal(
 	ctx context.Context,
-	id svc.CustomerID,
+	cid svc.CustomerID,
 	req *CreateWithdrawalRequest,
 ) (*WithdrawalResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/withdrawals", id)
+	path := fmt.Sprintf("/v1/customers/%s/withdrawals", cid)
 
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -184,22 +182,22 @@ func (s *serviceImpl) CreateWithdrawal(
 // GetWithdrawal retrieves a specific withdrawal by ID.
 func (s *serviceImpl) GetWithdrawal(
 	ctx context.Context,
-	id svc.CustomerID,
-	withdrawalID string,
+	cid svc.CustomerID,
+	tid svc.TransactionID,
 ) (*WithdrawalResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/withdrawals/%s", id, withdrawalID)
+	path := fmt.Sprintf("/v1/customers/%s/withdrawals/%s", cid, tid)
 	return svc.GetJSON[WithdrawalResponse](ctx, s.BaseService, path)
 }
 
 // GetWithdrawalByIdempotencyKey retrieves a withdrawal by its idempotency key.
 func (s *serviceImpl) GetWithdrawalByIdempotencyKey(
 	ctx context.Context,
-	id svc.CustomerID,
-	idempotencyKey string,
+	cid svc.CustomerID,
+	key svc.IdempotencyKey,
 ) (*WithdrawalResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/withdrawals", id)
+	path := fmt.Sprintf("/v1/customers/%s/withdrawals", cid)
 	params := map[string]string{
-		"idempotency_key": idempotencyKey,
+		"idempotency_key": key,
 	}
 	return svc.GetJSONWithParams[WithdrawalResponse](ctx, s.BaseService, path, params)
 }

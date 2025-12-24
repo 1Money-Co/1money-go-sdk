@@ -57,11 +57,11 @@ import (
 // Service defines the conversions service interface for managing asset conversions.
 type Service interface {
 	// CreateQuote creates a quote for converting between assets.
-	CreateQuote(ctx context.Context, id svc.CustomerID, req *CreateQuoteRequest) (*QuoteResponse, error)
+	CreateQuote(ctx context.Context, cid svc.CustomerID, req *CreateQuoteRequest) (*QuoteResponse, error)
 	// CreateHedge executes a hedge for a conversion quote.
-	CreateHedge(ctx context.Context, id svc.CustomerID, req *CreateHedgeRequest) (*OrderResponse, error)
+	CreateHedge(ctx context.Context, cid svc.CustomerID, req *CreateHedgeRequest) (*OrderResponse, error)
 	// GetOrder retrieves a conversion order by ID.
-	GetOrder(ctx context.Context, id svc.CustomerID, orderID string) (*OrderResponse, error)
+	GetOrder(ctx context.Context, cid svc.CustomerID, oid svc.OrderID) (*OrderResponse, error)
 }
 
 // AssetInfo represents asset information for conversion quotes.
@@ -160,32 +160,32 @@ func NewService(base *svc.BaseService) Service {
 // CreateQuote creates a quote for converting between assets.
 func (s *serviceImpl) CreateQuote(
 	ctx context.Context,
-	id svc.CustomerID,
+	cid svc.CustomerID,
 	req *CreateQuoteRequest,
 ) (*QuoteResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/conversions/quote", id)
+	path := fmt.Sprintf("/v1/customers/%s/conversions/quote", cid)
 	return svc.PostJSON[CreateQuoteRequest, QuoteResponse](ctx, s.BaseService, path, *req)
 }
 
 // CreateHedge executes a hedge for a conversion quote.
 func (s *serviceImpl) CreateHedge(
 	ctx context.Context,
-	id svc.CustomerID,
+	cid svc.CustomerID,
 	req *CreateHedgeRequest,
 ) (*OrderResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/conversions/hedge", id)
+	path := fmt.Sprintf("/v1/customers/%s/conversions/hedge", cid)
 	return svc.PostJSON[CreateHedgeRequest, OrderResponse](ctx, s.BaseService, path, *req)
 }
 
 // GetOrder retrieves a conversion order by ID.
 func (s *serviceImpl) GetOrder(
 	ctx context.Context,
-	id svc.CustomerID,
-	orderID string,
+	cid svc.CustomerID,
+	oid svc.OrderID,
 ) (*OrderResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/conversions/order", id)
+	path := fmt.Sprintf("/v1/customers/%s/conversions/order", cid)
 	params := map[string]string{
-		"order_id": orderID,
+		"order_id": oid,
 	}
 	return svc.GetJSONWithParams[OrderResponse](ctx, s.BaseService, path, params)
 }

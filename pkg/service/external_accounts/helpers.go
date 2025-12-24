@@ -24,6 +24,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/1Money-Co/1money-go-sdk/internal/utils"
+	"github.com/1Money-Co/1money-go-sdk/pkg/common"
 	svc "github.com/1Money-Co/1money-go-sdk/pkg/service"
 )
 
@@ -57,7 +58,7 @@ func WaitFor(
 	ctx context.Context,
 	service Service,
 	customerID svc.CustomerID,
-	externalAccountID string,
+	id svc.ExternalAccountID,
 	condition ExternalAccountCondition,
 	opts *WaitOptions,
 ) (*Resp, error) {
@@ -77,12 +78,12 @@ func WaitFor(
 	return utils.WaitFor(
 		ctx,
 		func(ctx context.Context) (*Resp, error) {
-			return service.GetExternalAccount(ctx, customerID, externalAccountID)
+			return service.GetExternalAccount(ctx, customerID, id)
 		},
 		utils.Condition[Resp](condition),
 		func(a *Resp) string { return a.Status },
 		"external_account",
-		externalAccountID,
+		id,
 		utilOpts,
 	)
 }
@@ -93,18 +94,18 @@ func WaitForApproved(
 	ctx context.Context,
 	service Service,
 	customerID svc.CustomerID,
-	externalAccountID string,
+	id svc.ExternalAccountID,
 	opts *WaitOptions,
 ) (*Resp, error) {
-	account, err := WaitFor(ctx, service, customerID, externalAccountID, func(a *Resp) bool {
-		return a.Status == string(BankAccountStatusAPPROVED) || a.Status == string(BankAccountStatusFAILED)
+	account, err := WaitFor(ctx, service, customerID, id, func(a *Resp) bool {
+		return a.Status == string(common.BankAccountStatusAPPROVED) || a.Status == string(common.BankAccountStatusFAILED)
 	}, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	if account.Status == string(BankAccountStatusFAILED) {
-		return account, fmt.Errorf("external account %s approval failed", externalAccountID)
+	if account.Status == string(common.BankAccountStatusFAILED) {
+		return account, fmt.Errorf("external account %s approval failed", id)
 	}
 
 	return account, nil

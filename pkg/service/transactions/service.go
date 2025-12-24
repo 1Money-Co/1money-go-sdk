@@ -51,9 +51,9 @@ import (
 // Service defines the transactions service interface for retrieving transaction history.
 type Service interface {
 	// ListTransactions retrieves a list of transactions for a customer.
-	ListTransactions(ctx context.Context, id svc.CustomerID, req *ListTransactionsRequest) (*ListTransactionsResponse, error)
+	ListTransactions(ctx context.Context, cid svc.CustomerID, req *ListTransactionsRequest) (*ListTransactionsResponse, error)
 	// GetTransaction retrieves a specific transaction by ID.
-	GetTransaction(ctx context.Context, id svc.CustomerID, transactionID string) (*TransactionResponse, error)
+	GetTransaction(ctx context.Context, cid svc.CustomerID, tid svc.TransactionID) (*TransactionResponse, error)
 }
 
 // Common types for transaction operations.
@@ -150,10 +150,10 @@ func NewService(base *svc.BaseService) Service {
 // ListTransactions retrieves a list of transactions for a customer.
 func (s *serviceImpl) ListTransactions(
 	ctx context.Context,
-	id svc.CustomerID,
+	cid svc.CustomerID,
 	req *ListTransactionsRequest,
 ) (*ListTransactionsResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/transactions", id)
+	path := fmt.Sprintf("/v1/customers/%s/transactions", cid)
 
 	params := make(map[string]string)
 	if req != nil {
@@ -183,9 +183,9 @@ func (s *serviceImpl) ListTransactions(
 // GetTransaction retrieves a specific transaction by ID.
 func (s *serviceImpl) GetTransaction(
 	ctx context.Context,
-	id svc.CustomerID,
-	transactionID string,
+	cid svc.CustomerID,
+	tid svc.TransactionID,
 ) (*TransactionResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/transactions/%s", id, transactionID)
+	path := fmt.Sprintf("/v1/customers/%s/transactions/%s", cid, tid)
 	return svc.GetJSON[TransactionResponse](ctx, s.BaseService, path)
 }
