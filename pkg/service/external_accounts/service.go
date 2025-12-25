@@ -36,9 +36,9 @@
 //	// Create an external bank account
 //	account, err := client.ExternalAccounts.CreateExternalAccount(ctx, "customer-id", &external_accounts.CreateReq{
 //	    IdempotencyKey:  "unique-key",
-//	    Network:         external_accounts.BankNetworkNameUSACH,
-//	    Currency:        external_accounts.CurrencyUSD,
-//	    CountryCode:     external_accounts.CountryCodeUSA,
+//	    Network:         common.BankNetworkNameUSACH,
+//	    Currency:        common.CurrencyUSD,
+//	    CountryCode:     common.CountryCodeUSA,
 //	    AccountNumber:   "123456789",
 //	    InstitutionID:   "021000021",
 //	    InstitutionName: "Bank of America",
@@ -52,6 +52,7 @@ import (
 	"net/http"
 
 	"github.com/1Money-Co/1money-go-sdk/internal/transport"
+	"github.com/1Money-Co/1money-go-sdk/pkg/common"
 	svc "github.com/1Money-Co/1money-go-sdk/pkg/service"
 )
 
@@ -59,15 +60,17 @@ import (
 type Service interface {
 	// CreateExternalAccount creates a new external bank account for a customer.
 	// The IdempotencyKey in the request is used to ensure idempotent creation.
-	CreateExternalAccount(ctx context.Context, id svc.CustomerID, req *CreateReq) (*Resp, error)
+	CreateExternalAccount(ctx context.Context, customerID svc.CustomerID, req *CreateReq) (*Resp, error)
 	// GetExternalAccount retrieves a specific external account by ID.
-	GetExternalAccount(ctx context.Context, id svc.CustomerID, externalAccountID string) (*Resp, error)
+	GetExternalAccount(ctx context.Context, customerID svc.CustomerID, id svc.ExternalAccountID) (*Resp, error)
 	// GetExternalAccountByIdempotencyKey retrieves an external account by its idempotency key.
-	GetExternalAccountByIdempotencyKey(ctx context.Context, id svc.CustomerID, idempotencyKey string) (*Resp, error)
+	GetExternalAccountByIdempotencyKey(
+		ctx context.Context, customerID svc.CustomerID, key svc.IdempotencyKey,
+	) (*Resp, error)
 	// ListExternalAccounts retrieves all external accounts for a customer.
-	ListExternalAccounts(ctx context.Context, id svc.CustomerID, req *ListReq) ([]Resp, error)
+	ListExternalAccounts(ctx context.Context, customerID svc.CustomerID, req *ListReq) ([]Resp, error)
 	// RemoveExternalAccount deletes an external bank account.
-	RemoveExternalAccount(ctx context.Context, id svc.CustomerID, externalAccountID string) error
+	RemoveExternalAccount(ctx context.Context, customerID svc.CustomerID, id svc.ExternalAccountID) error
 }
 
 // IntermediaryBank represents intermediary bank details for international wire transfers.
@@ -86,11 +89,11 @@ type (
 		// This is sent as a header, not in the body.
 		IdempotencyKey string `json:"-"`
 		// Network is the bank network type (US_ACH, SWIFT, US_FEDWIRE).
-		Network BankNetworkName `json:"network"`
+		Network common.BankNetworkName `json:"network"`
 		// Currency is the currency of the account (USD).
-		Currency Currency `json:"currency"`
+		Currency common.Currency `json:"currency"`
 		// CountryCode is the ISO 3166-1 alpha-3 country code where the bank account is held.
-		CountryCode CountryCode `json:"country_code"`
+		CountryCode common.CountryCode `json:"country_code"`
 		// AccountNumber is the bank account number or IBAN.
 		AccountNumber string `json:"account_number"`
 		// InstitutionID is the routing identifier (ABA routing number or SWIFT/BIC code).
@@ -147,9 +150,9 @@ type (
 // ListReq represents optional query parameters for listing external accounts.
 type ListReq struct {
 	// Currency filters by currency code (e.g., USD).
-	Currency Currency `json:"currency,omitempty"`
+	Currency common.Currency `json:"currency,omitempty"`
 	// Network filters by bank network type (US_ACH, SWIFT, US_FEDWIRE).
-	Network BankNetworkName `json:"network,omitempty"`
+	Network common.BankNetworkName `json:"network,omitempty"`
 }
 
 type serviceImpl struct {
@@ -166,10 +169,10 @@ func NewService(base *svc.BaseService) Service {
 // CreateExternalAccount creates a new external bank account for a customer.
 func (s *serviceImpl) CreateExternalAccount(
 	ctx context.Context,
-	id svc.CustomerID,
+	customerID svc.CustomerID,
 	req *CreateReq,
 ) (*Resp, error) {
-	path := fmt.Sprintf("/v1/customers/%s/external-accounts", id)
+	path := fmt.Sprintf("/v1/customers/%s/external-accounts", customerID)
 
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -202,22 +205,22 @@ func (s *serviceImpl) CreateExternalAccount(
 // GetExternalAccount retrieves a specific external account by ID.
 func (s *serviceImpl) GetExternalAccount(
 	ctx context.Context,
-	id svc.CustomerID,
-	externalAccountID string,
+	customerID svc.CustomerID,
+	id svc.ExternalAccountID,
 ) (*Resp, error) {
-	path := fmt.Sprintf("/v1/customers/%s/external-accounts/%s", id, externalAccountID)
+	path := fmt.Sprintf("/v1/customers/%s/external-accounts/%s", customerID, id)
 	return svc.GetJSON[Resp](ctx, s.BaseService, path)
 }
 
 // GetExternalAccountByIdempotencyKey retrieves an external account by its idempotency key.
 func (s *serviceImpl) GetExternalAccountByIdempotencyKey(
 	ctx context.Context,
-	id svc.CustomerID,
-	idempotencyKey string,
+	customerID svc.CustomerID,
+	key svc.IdempotencyKey,
 ) (*Resp, error) {
-	path := fmt.Sprintf("/v1/customers/%s/external-accounts", id)
+	path := fmt.Sprintf("/v1/customers/%s/external-accounts", customerID)
 	params := map[string]string{
-		"idempotency_key": idempotencyKey,
+		"idempotency_key": key,
 	}
 	return svc.GetJSONWithParams[Resp](ctx, s.BaseService, path, params)
 }
@@ -225,10 +228,10 @@ func (s *serviceImpl) GetExternalAccountByIdempotencyKey(
 // ListExternalAccounts retrieves all external accounts for a customer.
 func (s *serviceImpl) ListExternalAccounts(
 	ctx context.Context,
-	id svc.CustomerID,
+	customerID svc.CustomerID,
 	req *ListReq,
 ) ([]Resp, error) {
-	path := fmt.Sprintf("/v1/customers/%s/external-accounts/list", id)
+	path := fmt.Sprintf("/v1/customers/%s/external-accounts/list", customerID)
 
 	params := make(map[string]string)
 	if req != nil {
@@ -250,10 +253,10 @@ func (s *serviceImpl) ListExternalAccounts(
 // RemoveExternalAccount deletes an external bank account.
 func (s *serviceImpl) RemoveExternalAccount(
 	ctx context.Context,
-	id svc.CustomerID,
-	externalAccountID string,
+	customerID svc.CustomerID,
+	id svc.ExternalAccountID,
 ) error {
-	path := fmt.Sprintf("/v1/customers/%s/external-accounts/%s", id, externalAccountID)
+	path := fmt.Sprintf("/v1/customers/%s/external-accounts/%s", customerID, id)
 	_, err := svc.DeleteJSON[any](ctx, s.BaseService, path)
 	return err
 }

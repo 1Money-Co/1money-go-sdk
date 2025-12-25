@@ -164,15 +164,13 @@ type Service interface {
 	// ListAssociatedPersons retrieves all associated persons for a specific customer.
 	ListAssociatedPersons(ctx context.Context, id svc.CustomerID) (*ListAssociatedPersonsResponse, error)
 	// GetAssociatedPerson retrieves a specific associated person by ID.
-	GetAssociatedPerson(
-		ctx context.Context, id svc.CustomerID, associatedPersonID string,
-	) (*AssociatedPersonResponse, error)
+	GetAssociatedPerson(ctx context.Context, cid svc.CustomerID, aid svc.AssociatedPersonID) (*AssociatedPersonResponse, error)
 	// UpdateAssociatedPerson updates an existing associated person with partial data.
 	UpdateAssociatedPerson(
-		ctx context.Context, id svc.CustomerID, associatedPersonID string, req *UpdateAssociatedPersonRequest,
+		ctx context.Context, cid svc.CustomerID, aid svc.AssociatedPersonID, req *UpdateAssociatedPersonRequest,
 	) (*AssociatedPersonResponse, error)
 	// DeleteAssociatedPerson soft-deletes a specific associated person.
-	DeleteAssociatedPerson(ctx context.Context, id svc.CustomerID, associatedPersonID string) error
+	DeleteAssociatedPerson(ctx context.Context, cid svc.CustomerID, aid svc.AssociatedPersonID) error
 }
 
 // Common types for customer and associated person operations.
@@ -735,10 +733,10 @@ func (s *serviceImpl) ListAssociatedPersons(ctx context.Context, id svc.Customer
 // GetAssociatedPerson retrieves a specific associated person by ID.
 func (s *serviceImpl) GetAssociatedPerson(
 	ctx context.Context,
-	id svc.CustomerID,
-	associatedPersonID string,
+	cid svc.CustomerID,
+	aid svc.AssociatedPersonID,
 ) (*AssociatedPersonResponse, error) {
-	path := fmt.Sprintf("%s/%s/associated_persons/%s", ROUTE_PREFIX, id, associatedPersonID)
+	path := fmt.Sprintf("%s/%s/associated_persons/%s", ROUTE_PREFIX, cid, aid)
 	return svc.GetJSON[AssociatedPersonResponse](ctx, s.BaseService, path)
 }
 
@@ -746,11 +744,11 @@ func (s *serviceImpl) GetAssociatedPerson(
 // Only the fields provided in the request will be updated; nil/omitted fields remain unchanged.
 func (s *serviceImpl) UpdateAssociatedPerson(
 	ctx context.Context,
-	id svc.CustomerID,
-	associatedPersonID string,
+	cid svc.CustomerID,
+	aid svc.AssociatedPersonID,
 	req *UpdateAssociatedPersonRequest,
 ) (*AssociatedPersonResponse, error) {
-	path := fmt.Sprintf("%s/%s/associated_persons/%s", ROUTE_PREFIX, id, associatedPersonID)
+	path := fmt.Sprintf("%s/%s/associated_persons/%s", ROUTE_PREFIX, cid, aid)
 	return svc.PutJSON[*UpdateAssociatedPersonRequest, AssociatedPersonResponse](
 		ctx,
 		s.BaseService,
@@ -762,10 +760,10 @@ func (s *serviceImpl) UpdateAssociatedPerson(
 // DeleteAssociatedPerson soft-deletes a specific associated person.
 func (s *serviceImpl) DeleteAssociatedPerson(
 	ctx context.Context,
-	id svc.CustomerID,
-	associatedPersonID string,
+	cid svc.CustomerID,
+	aid svc.AssociatedPersonID,
 ) error {
-	path := fmt.Sprintf("%s/%s/associated_persons/%s", ROUTE_PREFIX, id, associatedPersonID)
+	path := fmt.Sprintf("%s/%s/associated_persons/%s", ROUTE_PREFIX, cid, aid)
 	_, err := svc.DeleteJSON[any](ctx, s.BaseService, path)
 	return err
 }

@@ -38,6 +38,7 @@ import (
 
 	"github.com/1Money-Co/1money-go-sdk/internal/transport"
 	"github.com/1Money-Co/1money-go-sdk/internal/utils"
+	"github.com/1Money-Co/1money-go-sdk/pkg/common"
 	"github.com/1Money-Co/1money-go-sdk/pkg/onemoney"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/assets"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/auto_conversion_rules"
@@ -284,11 +285,11 @@ func (s *CustomerDependentTestSuite) EnsureExternalAccount() (string, error) {
 	// If we have an approved account, return it
 	for i := range accounts {
 		acc := &accounts[i]
-		if acc.Status == string(external_accounts.BankAccountStatusAPPROVED) {
+		if acc.Status == string(common.BankAccountStatusAPPROVED) {
 			return acc.ExternalAccountID, nil
 		}
 		// Remember a pending account to poll
-		if acc.Status == string(external_accounts.BankAccountStatusPENDING) && accountID == "" {
+		if acc.Status == string(common.BankAccountStatusPENDING) && accountID == "" {
 			accountID = acc.ExternalAccountID
 		}
 	}
@@ -317,9 +318,9 @@ func (s *CustomerDependentTestSuite) EnsureExternalAccount() (string, error) {
 		}
 
 		switch acc.Status {
-		case string(external_accounts.BankAccountStatusAPPROVED):
+		case string(common.BankAccountStatusAPPROVED):
 			return accountID, nil
-		case string(external_accounts.BankAccountStatusFAILED):
+		case string(common.BankAccountStatusFAILED):
 			return "", fmt.Errorf("external account %s approval failed", accountID)
 		}
 
@@ -415,9 +416,9 @@ func (s *CustomerDependentTestSuite) EnsureSignedAgreement() (string, error) {
 func FakeExternalAccountRequest() *external_accounts.CreateReq {
 	return &external_accounts.CreateReq{
 		IdempotencyKey: uuid.New().String(),
-		Network:        external_accounts.BankNetworkNameUSACH,
-		Currency:       external_accounts.CurrencyUSD,
-		CountryCode:    external_accounts.CountryCodeUSA,
+		Network:        common.BankNetworkNameUSACH,
+		Currency:       common.CurrencyUSD,
+		CountryCode:    common.CountryCodeUSA,
 		// https://qodex.ai/all-tools/routing-number-generator
 		AccountNumber:   "5097935393",
 		InstitutionID:   "327984566",
@@ -713,7 +714,7 @@ func FakeAssociatedPerson(faker *gofakeit.Faker) customer.AssociatedPerson {
 		IdentifyingInformation: []customer.IdentifyingInformation{
 			{
 				Type:                   customer.IDTypeNationalId,
-				IssuingCountry:         external_accounts.CountryCodeDEU.String(),
+				IssuingCountry:         common.CountryCodeDEU.String(),
 				ImageFront:             testdata.IDFront(),
 				ImageBack:              testdata.IDBack(),
 				NationalIdentityNumber: faker.LetterN(8) + faker.DigitN(4),

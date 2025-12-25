@@ -31,9 +31,9 @@ import (
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/joho/godotenv"
 
+	"github.com/1Money-Co/1money-go-sdk/pkg/common"
 	"github.com/1Money-Co/1money-go-sdk/pkg/onemoney"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/customer"
-	"github.com/1Money-Co/1money-go-sdk/pkg/service/external_accounts"
 	"github.com/1Money-Co/1money-go-sdk/pkg/testdata"
 )
 
@@ -135,8 +135,8 @@ func buildCustomerRequest(signedAgreementID string) *customer.CreateCustomerRequ
 					Subdivision: "BY",
 				},
 				BirthDate:           "1985-06-15",
-				CountryOfBirth:      string(external_accounts.CountryCodeDEU),
-				PrimaryNationality:  string(external_accounts.CountryCodeDEU),
+				CountryOfBirth:      string(common.CountryCodeDEU),
+				PrimaryNationality:  string(common.CountryCodeDEU),
 				HasOwnership:        true,
 				OwnershipPercentage: 100,
 				HasControl:          true,
@@ -145,13 +145,13 @@ func buildCustomerRequest(signedAgreementID string) *customer.CreateCustomerRequ
 				IdentifyingInformation: []customer.IdentifyingInformation{
 					{
 						Type:                   customer.IDTypeNationalId,
-						IssuingCountry:         string(external_accounts.CountryCodeDEU),
+						IssuingCountry:         string(common.CountryCodeDEU),
 						ImageFront:             testdata.IDFront(),
 						ImageBack:              testdata.IDBack(),
 						NationalIdentityNumber: gofakeit.LetterN(nationalIDLength),
 					},
 				},
-				CountryOfTax: string(external_accounts.CountryCodeDEU),
+				CountryOfTax: string(common.CountryCodeDEU),
 				TaxType:      customer.TaxIDTypeSSN,
 				TaxID:        "123-45-6789",
 				POA:          testdata.POA(),

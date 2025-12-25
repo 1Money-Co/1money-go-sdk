@@ -26,6 +26,7 @@ import (
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 
+	"github.com/1Money-Co/1money-go-sdk/pkg/common"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/auto_conversion_rules"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/customer"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/external_accounts"
@@ -232,9 +233,9 @@ func FakeCreateCustomerRequest(faker *gofakeit.Faker, signedAgreementID string) 
 func FakeExternalAccountRequest(faker *gofakeit.Faker) *external_accounts.CreateReq {
 	return &external_accounts.CreateReq{
 		IdempotencyKey:  uuid.New().String(),
-		Network:         external_accounts.BankNetworkNameUSACH,
-		Currency:        external_accounts.CurrencyUSD,
-		CountryCode:     external_accounts.CountryCodeUSA,
+		Network:         common.BankNetworkNameUSACH,
+		Currency:        common.CurrencyUSD,
+		CountryCode:     common.CountryCodeUSA,
 		AccountNumber:   faker.DigitN(accountNumberDigits),
 		InstitutionID:   faker.DigitN(accountNumberDigits),
 		InstitutionName: faker.Company() + " Bank",

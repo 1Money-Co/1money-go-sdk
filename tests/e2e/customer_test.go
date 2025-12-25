@@ -28,8 +28,8 @@ import (
 
 	"github.com/1Money-Co/1money-go-sdk/internal/transport"
 	"github.com/1Money-Co/1money-go-sdk/internal/utils"
+	"github.com/1Money-Co/1money-go-sdk/pkg/common"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/customer"
-	"github.com/1Money-Co/1money-go-sdk/pkg/service/external_accounts"
 )
 
 // CustomerTestSuite tests customer service operations.
@@ -78,7 +78,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer() {
 			StreetLine2: fmt.Sprintf("Suite %d", faker.Number(100, 999)),
 			City:        faker.City(),
 			State:       faker.StateAbr(),
-			Country:     external_accounts.CountryCodeDEU.String(),
+			Country:     common.CountryCodeDEU.String(),
 			PostalCode:  faker.Zip(),
 			Subdivision: faker.StateAbr(),
 		},
@@ -101,7 +101,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer() {
 		ExpectedMonthlyFiatWithdrawals: customer.MoneyRange099999,
 		TaxID:                          fmt.Sprintf("%d-%d", faker.Number(10, 99), faker.Number(1000000, 9999999)),
 		TaxType:                        customer.TaxIDTypeEIN,
-		TaxCountry:                     external_accounts.CountryCodeDEU.String(),
+		TaxCountry:                     common.CountryCodeDEU.String(),
 	}
 
 	resp, err := s.Client.Customer.CreateCustomer(s.Ctx, req)
@@ -143,7 +143,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidFileFormat
 			StreetLine1: faker.Street(),
 			City:        faker.City(),
 			State:       faker.StateAbr(),
-			Country:     external_accounts.CountryCodeDEU.String(),
+			Country:     common.CountryCodeDEU.String(),
 			PostalCode:  faker.Zip(),
 			Subdivision: faker.StateAbr(),
 		},
@@ -167,7 +167,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidFileFormat
 		ExpectedMonthlyFiatWithdrawals: customer.MoneyRange099999,
 		TaxID:                          fmt.Sprintf("%d-%d", faker.Number(10, 99), faker.Number(1000000, 9999999)),
 		TaxType:                        customer.TaxIDTypeEIN,
-		TaxCountry:                     external_accounts.CountryCodeDEU.String(),
+		TaxCountry:                     common.CountryCodeDEU.String(),
 	}
 
 	_, err = s.Client.Customer.CreateCustomer(s.Ctx, req)
@@ -197,7 +197,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidBase64() {
 			StreetLine1: faker.Street(),
 			City:        faker.City(),
 			State:       faker.StateAbr(),
-			Country:     external_accounts.CountryCodeDEU.String(),
+			Country:     common.CountryCodeDEU.String(),
 			PostalCode:  faker.Zip(),
 			Subdivision: faker.StateAbr(),
 		},
@@ -221,7 +221,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_InvalidBase64() {
 		ExpectedMonthlyFiatWithdrawals: customer.MoneyRange099999,
 		TaxID:                          fmt.Sprintf("%d-%d", faker.Number(10, 99), faker.Number(1000000, 9999999)),
 		TaxType:                        customer.TaxIDTypeEIN,
-		TaxCountry:                     external_accounts.CountryCodeDEU.String(),
+		TaxCountry:                     common.CountryCodeDEU.String(),
 	}
 
 	_, err = s.Client.Customer.CreateCustomer(s.Ctx, req)
@@ -263,7 +263,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_CorruptedXLSX() {
 			StreetLine1: faker.Street(),
 			City:        faker.City(),
 			State:       faker.StateAbr(),
-			Country:     external_accounts.CountryCodeDEU.String(),
+			Country:     common.CountryCodeDEU.String(),
 			PostalCode:  faker.Zip(),
 			Subdivision: faker.StateAbr(),
 		},
@@ -281,7 +281,7 @@ func (s *CustomerTestSuite) TestCustomerService_CreateCustomer_CorruptedXLSX() {
 		ExpectedMonthlyFiatWithdrawals: customer.MoneyRange099999,
 		TaxID:                          fmt.Sprintf("%d-%d", faker.Number(10, 99), faker.Number(1000000, 9999999)),
 		TaxType:                        customer.TaxIDTypeEIN,
-		TaxCountry:                     external_accounts.CountryCodeDEU.String(),
+		TaxCountry:                     common.CountryCodeDEU.String(),
 	}
 
 	_, err = s.Client.Customer.CreateCustomer(s.Ctx, req)

@@ -54,7 +54,7 @@ import (
 type Service interface {
 	// ListAssets retrieves all assets for a specific customer.
 	// Supports optional filtering by asset name, network, and sort order.
-	ListAssets(ctx context.Context, id svc.CustomerID, req *ListAssetsRequest) ([]AssetResponse, error)
+	ListAssets(ctx context.Context, cid svc.CustomerID, req *ListAssetsRequest) ([]AssetResponse, error)
 }
 
 // ListAssets request and response types.
@@ -102,8 +102,8 @@ func NewService(base *svc.BaseService) Service {
 }
 
 // ListAssets retrieves all assets for a specific customer.
-func (s *serviceImpl) ListAssets(ctx context.Context, id svc.CustomerID, req *ListAssetsRequest) ([]AssetResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/assets", id)
+func (s *serviceImpl) ListAssets(ctx context.Context, cid svc.CustomerID, req *ListAssetsRequest) ([]AssetResponse, error) {
+	path := fmt.Sprintf("/v1/customers/%s/assets", cid)
 
 	params := make(map[string]string)
 	if req != nil {

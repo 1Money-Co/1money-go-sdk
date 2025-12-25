@@ -38,6 +38,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 
+	"github.com/1Money-Co/1money-go-sdk/pkg/common"
 	"github.com/1Money-Co/1money-go-sdk/pkg/onemoney"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/assets"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/conversions"
@@ -120,9 +121,9 @@ func main() {
 	log.Println("step 4: creating external bank account")
 	externalAccount, err := client.ExternalAccounts.CreateExternalAccount(ctx, customerID, &external_accounts.CreateReq{
 		IdempotencyKey:  uuid.New().String(),
-		Network:         external_accounts.BankNetworkNameUSACH,
-		Currency:        external_accounts.CurrencyUSD,
-		CountryCode:     external_accounts.CountryCodeUSA,
+		Network:         common.BankNetworkNameUSACH,
+		Currency:        common.CurrencyUSD,
+		CountryCode:     common.CountryCodeUSA,
 		AccountNumber:   "5097935393",
 		InstitutionID:   "327984566",
 		InstitutionName: gofakeit.Company() + " Bank",
@@ -134,7 +135,7 @@ func main() {
 		externalAccount.ExternalAccountID, externalAccount.Status)
 
 	// Wait for external account approval (usually instant in sandbox)
-	if externalAccount.Status != string(external_accounts.BankAccountStatusAPPROVED) {
+	if externalAccount.Status != string(common.BankAccountStatusAPPROVED) {
 		log.Println("waiting for external account approval...")
 		externalAccount, err = external_accounts.WaitForApproved(
 			ctx, client.ExternalAccounts, customerID, externalAccount.ExternalAccountID,

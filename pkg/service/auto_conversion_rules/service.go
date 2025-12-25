@@ -72,25 +72,29 @@ import (
 type Service interface {
 	// CreateRule creates a new auto conversion rule for a customer.
 	// The IdempotencyKey in the request is used to ensure idempotent creation.
-	CreateRule(ctx context.Context, customerID string, req *CreateRuleRequest) (*RuleResponse, error)
+	CreateRule(ctx context.Context, cid svc.CustomerID, req *CreateRuleRequest) (*RuleResponse, error)
 
 	// GetRule retrieves a specific auto conversion rule by ID.
-	GetRule(ctx context.Context, customerID, ruleID string) (*RuleResponse, error)
+	GetRule(ctx context.Context, cid svc.CustomerID, rid svc.AutoConversionRuleID) (*RuleResponse, error)
 
 	// GetRuleByIdempotencyKey retrieves an auto conversion rule by its idempotency key.
-	GetRuleByIdempotencyKey(ctx context.Context, customerID, idempotencyKey string) (*RuleResponse, error)
+	GetRuleByIdempotencyKey(ctx context.Context, cid svc.CustomerID, key svc.IdempotencyKey) (*RuleResponse, error)
 
 	// ListRules retrieves all auto conversion rules for a customer with pagination.
-	ListRules(ctx context.Context, customerID string, req *ListRulesRequest) (*ListRulesResponse, error)
+	ListRules(ctx context.Context, cid svc.CustomerID, req *ListRulesRequest) (*ListRulesResponse, error)
 
 	// DeleteRule soft-deletes an auto conversion rule (marks as inactive).
-	DeleteRule(ctx context.Context, customerID, ruleID string) error
+	DeleteRule(ctx context.Context, cid svc.CustomerID, rid svc.AutoConversionRuleID) error
 
 	// ListOrders retrieves the execution history (orders) for a specific auto conversion rule.
-	ListOrders(ctx context.Context, customerID, ruleID string, req *ListOrdersRequest) (*ListOrdersResponse, error)
+	ListOrders(
+		ctx context.Context, cid svc.CustomerID, rid svc.AutoConversionRuleID, req *ListOrdersRequest,
+	) (*ListOrdersResponse, error)
 
 	// GetOrder retrieves detailed information about a specific auto conversion order.
-	GetOrder(ctx context.Context, customerID, ruleID, orderID string) (*OrderResponse, error)
+	GetOrder(
+		ctx context.Context, cid svc.CustomerID, rid svc.AutoConversionRuleID, oid svc.AutoConversionOrderID,
+	) (*OrderResponse, error)
 }
 
 // Common types for asset and amount information.
@@ -344,10 +348,10 @@ func NewService(base *svc.BaseService) Service {
 // CreateRule creates a new auto conversion rule for a customer.
 func (s *serviceImpl) CreateRule(
 	ctx context.Context,
-	customerID string,
+	cid svc.CustomerID,
 	req *CreateRuleRequest,
 ) (*RuleResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/auto-conversion-rules", customerID)
+	path := fmt.Sprintf("/v1/customers/%s/auto-conversion-rules", cid)
 
 	headers := make(map[string]string)
 	if req.IdempotencyKey != "" {
@@ -365,20 +369,22 @@ func (s *serviceImpl) CreateRule(
 // GetRule retrieves a specific auto conversion rule by ID.
 func (s *serviceImpl) GetRule(
 	ctx context.Context,
-	customerID, ruleID string,
+	cid svc.CustomerID,
+	rid svc.AutoConversionRuleID,
 ) (*RuleResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/auto-conversion-rules/%s", customerID, ruleID)
+	path := fmt.Sprintf("/v1/customers/%s/auto-conversion-rules/%s", cid, rid)
 	return svc.GetJSON[RuleResponse](ctx, s.BaseService, path)
 }
 
 // GetRuleByIdempotencyKey retrieves an auto conversion rule by its idempotency key.
 func (s *serviceImpl) GetRuleByIdempotencyKey(
 	ctx context.Context,
-	customerID, idempotencyKey string,
+	cid svc.CustomerID,
+	key svc.IdempotencyKey,
 ) (*RuleResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/auto-conversion-rules", customerID)
+	path := fmt.Sprintf("/v1/customers/%s/auto-conversion-rules", cid)
 	params := map[string]string{
-		"idempotency_key": idempotencyKey,
+		"idempotency_key": key,
 	}
 	return svc.GetJSONWithParams[RuleResponse](ctx, s.BaseService, path, params)
 }
@@ -386,10 +392,10 @@ func (s *serviceImpl) GetRuleByIdempotencyKey(
 // ListRules retrieves all auto conversion rules for a customer with pagination.
 func (s *serviceImpl) ListRules(
 	ctx context.Context,
-	customerID string,
+	cid svc.CustomerID,
 	req *ListRulesRequest,
 ) (*ListRulesResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/auto-conversion-rules/list", customerID)
+	path := fmt.Sprintf("/v1/customers/%s/auto-conversion-rules/list", cid)
 
 	params := make(map[string]string)
 	if req != nil {
@@ -407,9 +413,10 @@ func (s *serviceImpl) ListRules(
 // DeleteRule soft-deletes an auto conversion rule (marks as inactive).
 func (s *serviceImpl) DeleteRule(
 	ctx context.Context,
-	customerID, ruleID string,
+	cid svc.CustomerID,
+	rid svc.AutoConversionRuleID,
 ) error {
-	path := fmt.Sprintf("/v1/customers/%s/auto-conversion-rules/%s", customerID, ruleID)
+	path := fmt.Sprintf("/v1/customers/%s/auto-conversion-rules/%s", cid, rid)
 	_, err := svc.DeleteJSON[any](ctx, s.BaseService, path)
 	return err
 }
@@ -417,10 +424,11 @@ func (s *serviceImpl) DeleteRule(
 // ListOrders retrieves the execution history (orders) for a specific auto conversion rule.
 func (s *serviceImpl) ListOrders(
 	ctx context.Context,
-	customerID, ruleID string,
+	cid svc.CustomerID,
+	rid svc.AutoConversionRuleID,
 	req *ListOrdersRequest,
 ) (*ListOrdersResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/auto-conversion-rules/%s/orders", customerID, ruleID)
+	path := fmt.Sprintf("/v1/customers/%s/auto-conversion-rules/%s/orders", cid, rid)
 
 	params := make(map[string]string)
 	if req != nil {
@@ -441,8 +449,10 @@ func (s *serviceImpl) ListOrders(
 // GetOrder retrieves detailed information about a specific auto conversion order.
 func (s *serviceImpl) GetOrder(
 	ctx context.Context,
-	customerID, ruleID, orderID string,
+	cid svc.CustomerID,
+	rid svc.AutoConversionRuleID,
+	oid svc.AutoConversionOrderID,
 ) (*OrderResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/auto-conversion-rules/%s/orders/%s", customerID, ruleID, orderID)
+	path := fmt.Sprintf("/v1/customers/%s/auto-conversion-rules/%s/orders/%s", cid, rid, oid)
 	return svc.GetJSON[OrderResponse](ctx, s.BaseService, path)
 }

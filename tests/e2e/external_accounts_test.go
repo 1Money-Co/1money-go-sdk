@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/1Money-Co/1money-go-sdk/internal/transport"
+	"github.com/1Money-Co/1money-go-sdk/pkg/common"
 	"github.com/1Money-Co/1money-go-sdk/pkg/service/external_accounts"
 )
 
@@ -69,10 +70,10 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_List() {
 	})
 
 	s.Run("FilterByNetwork", func() {
-		networks := []external_accounts.BankNetworkName{
-			external_accounts.BankNetworkNameUSACH,
-			external_accounts.BankNetworkNameSWIFT,
-			external_accounts.BankNetworkNameUSFEDWIRE,
+		networks := []common.BankNetworkName{
+			common.BankNetworkNameUSACH,
+			common.BankNetworkNameSWIFT,
+			common.BankNetworkNameUSFEDWIRE,
 		}
 
 		for _, network := range networks {
@@ -105,10 +106,10 @@ func (s *ExternalAccountsTestSuite) pollExternalAccountStatus(
 		s.T().Logf("Polling external account %s: status=%s", accountID, finalStatus)
 
 		switch finalStatus {
-		case string(external_accounts.BankAccountStatusAPPROVED):
+		case string(common.BankAccountStatusAPPROVED):
 			s.T().Logf("External account approved after polling")
 			return finalStatus
-		case string(external_accounts.BankAccountStatusFAILED):
+		case string(common.BankAccountStatusFAILED):
 			s.Require().Fail("External account approval failed")
 		}
 
@@ -180,7 +181,7 @@ func (s *ExternalAccountsTestSuite) TestExternalAccounts_CreateAndGet() {
 	s.Equal(createResp.Network, getResp.Network, "Network should match")
 	s.Equal(createResp.Currency, getResp.Currency, "Currency should match")
 	s.Equal(createResp.InstitutionName, getResp.InstitutionName, "InstitutionName should match")
-	s.Equal(string(external_accounts.BankAccountStatusAPPROVED), getResp.Status, "Status should be APPROVED")
+	s.Equal(string(common.BankAccountStatusAPPROVED), getResp.Status, "Status should be APPROVED")
 
 	s.T().Logf("Retrieved external account:\n%s", PrettyJSON(getResp))
 

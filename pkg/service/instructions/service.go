@@ -50,7 +50,7 @@ import (
 type Service interface {
 	// GetDepositInstruction retrieves deposit instructions for a specific asset and network.
 	GetDepositInstruction(
-		ctx context.Context, id svc.CustomerID, asset assets.AssetName, network assets.NetworkName,
+		ctx context.Context, cid svc.CustomerID, asset assets.AssetName, network assets.NetworkName,
 	) (*InstructionResponse, error)
 }
 
@@ -135,11 +135,11 @@ func NewService(base *svc.BaseService) Service {
 // GetDepositInstruction retrieves deposit instructions for a specific asset and network.
 func (s *serviceImpl) GetDepositInstruction(
 	ctx context.Context,
-	id svc.CustomerID,
+	cid svc.CustomerID,
 	asset assets.AssetName,
 	network assets.NetworkName,
 ) (*InstructionResponse, error) {
-	path := fmt.Sprintf("/v1/customers/%s/deposit_instructions", id)
+	path := fmt.Sprintf("/v1/customers/%s/deposit_instructions", cid)
 	params := map[string]string{
 		"asset":   string(asset),
 		"network": string(network),
